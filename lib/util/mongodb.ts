@@ -20,10 +20,10 @@ if (!MONGODB_DB) {
  * in development. This prevents connections growing exponentially
  * during API Route usage.
  */
-let cached = global.mongo
+let cached: any = (global as any).mongo
 
 if (!cached) {
-  cached = global.mongo = { conn: null, promise: null }
+  cached = (global as any).mongo = { conn: null, promise: null }
 }
 
 export async function connectToDatabase() {
