@@ -53,7 +53,6 @@ export default async function handler(
       .collection("walmart")
       .find({})
       .sort({dateTime:-1})
-      .limit(10)
       .toArray();
     //TODO: put status code in constants
     return res.status(200).json(prices);
