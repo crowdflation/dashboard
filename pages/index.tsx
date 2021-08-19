@@ -16,7 +16,7 @@ const Home: NextPage = () => {
         </h1>
 
         <p className={styles.description}>
-          You can join the group by visiting the <a href="https://discord.gg/NJuxWvS9">Discord Chanel</a>. Dont be surprised by the "Hackaton Projects" title
+          You can join the group by visiting the <a href="https://discord.gg/NJuxWvS9">Discord Chanel</a>. Dont be surprised by the &quot;Hackaton Projects&quot; title
         </p>
 
         <p className={styles.description}>
