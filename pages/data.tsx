@@ -15,6 +15,7 @@ class Data extends Component {
       column: null,
       data: [],
       direction: null,
+      errors: null,
     };
 
     this.handleChange = this.handleChange.bind(this);
@@ -22,7 +23,10 @@ class Data extends Component {
   }
 
   handleChange = (e: any) => {
-    this.setState({[e.target.name]: e.target.value});
+    this.setState({
+      ...this.state,
+      [e.target.name]: e.target.value
+    });
   }
 
   handleSort = (column:string, state: any) => {
@@ -45,46 +49,77 @@ class Data extends Component {
 
   buildQueryURL = (state) => {
     return ['find', 'sort', 'aggregate'].reduce((str, key) => {
+      if(!state[key]) {
+        return str;
+      }
       if(str!=='') {
         str +='&';
       }
-      str += key + '=' + encodeURIComponent(JSON.stringify(state[key]));
+      str += key + '=' + encodeURIComponent(state[key]);
       return str;
     }, '');
   }
 
+  tryGetErrorMessage(error) {
+    try {
+      return JSON.stringify(error?.response?.data, null, 2);
+    } catch (e) {
+      return error.toString();
+    }
+  }
+
   handleReload = (state) => {
+    let errors: any = ['find', 'sort', 'aggregate'].reduce((errors, key) => {
+      if(!state[key]) {
+        return errors;
+      }
+      try {
+        JSON.parse(state[key]);
+      } catch (e) {
+        errors[key] = e.toString();
+      }
+      return errors;
+    }, {});
+    if(_.isEmpty(errors)) {
+      errors = null;
+    } else {
+      this.setState({
+        ...state,
+        errors
+      });
+      return;
+    }
+
     // Make a request for a user with a given ID
     axios.get('/api/walmart?' + this.buildQueryURL(state))
       .then((response) => {
         // handle success
         this.setState({
           ...state,
+          aggregateResult: state.aggregate,
+          errors,
+          error: null,
           data: response.data
         });
+      }).catch((error) => {
+        this.setState({
+          ...state,
+          error: this.tryGetErrorMessage(error),
+          data: []
       });
+    });
   }
 
   render = () => {
-    const { column, data, direction } = this.state as any;
-    return (
-      <div className={styles.container}>
-        <Head>
-          <title>Untitled Inflation Calculation Group Dashboard - DATA</title>
-        </Head>
+    const { column, data, direction, aggregateResult } = this.state as any;
 
-        {/*
+    let representation = (<p>{JSON.stringify(data, null, 2)}</p>)
 
-        <p>Find:</p>
-        <textarea name='find' onChange={this.handleChange}></textarea>
-        <p>Sort:</p>
-        <textarea name='sort' onChange={this.handleChange}></textarea>
-        <p>Aggregate:</p>
-        <textarea name='aggregate' onChange={this.handleChange}></textarea>
 
-        */}
-        <button onClick={() =>this.handleReload(this.state)}>Reload</button>
-        <Table sortable celled fixed>
+    // If it is an array we can show a table
+    if(data?.map && !aggregateResult) {
+      representation =
+        (<Table sortable celled fixed>
           <Table.Header>
             <Table.Row>
               <Table.HeaderCell
@@ -120,7 +155,7 @@ class Data extends Component {
             </Table.Row>
           </Table.Header>
           <Table.Body>
-            {data.map(({ _id, name, price, pricePerUnit, location, dateTime  }) => (
+            {data && data.map(({ _id, name, price, pricePerUnit, location, dateTime  }) => (
               <Table.Row key={_id}>
                 <Table.Cell>{name}</Table.Cell>
                 <Table.Cell>{price}</Table.Cell>
@@ -130,7 +165,26 @@ class Data extends Component {
               </Table.Row>
             ))}
           </Table.Body>
-        </Table>
+        </Table>);
+    }
+
+    return (
+      <div className={styles.container}>
+        <Head>
+          <title>Untitled Inflation Calculation Group Dashboard - DATA</title>
+        </Head>
+        <p><a href="https://docs.mongodb.com/manual/reference/method/db.collection.find/" target="_blank">Find</a> example:<br/> &#123;&quot;price&quot;: &quot;$2.99&quot;&#125;</p>
+        <span className={styles.error}>{this.state.errors && this.state.errors["find"]}</span>
+        <textarea name='find' onChange={this.handleChange}>{}</textarea>
+        <p>Sort example:<br/>&#123;&quot;dateTime&quot;:1&#125;</p>
+        <span className={styles.error}>{this.state.errors && this.state.errors["sort"]}</span>
+        <textarea name='sort' onChange={this.handleChange}>{}</textarea>
+        <p><a href="https://docs.mongodb.com/manual/reference/method/db.collection.aggregate/" target="_blank">Aggregate</a> example:<br/>[&#123;&quot;$group&quot;:&#123;&quot;_id&quot;:&quot;name&quot;,&quot;count&quot;:&#123;&quot;$sum&quot;:1&#125;&#125;&#125;]</p>
+        <span className={styles.error}>{this.state.errors && this.state.errors["aggregate"]}</span>
+        <textarea name='aggregate' onChange={this.handleChange}></textarea>
+        <span className={styles.error}>{this.state.error && this.state.error}</span>
+        <button onClick={() =>this.handleReload(this.state)}>Reload</button>
+        {representation}
       </div>
     )
   }

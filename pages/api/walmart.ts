@@ -34,6 +34,14 @@ function validateAndDenormalise(location:{latitude:number,longitude:number }) {
   }
 }
 
+function tryParse(parse, substitute) {
+  try {
+    return JSON.parse(parse);
+  } catch (e) {
+    return substitute;
+  }
+}
+
 
 //TODO: Validation and assigning to a user
 import { connectToDatabase } from "../../lib/util/mongodb";
@@ -48,14 +56,34 @@ export default async function handler(
   const {db} = await connectToDatabase();
   //TODO: put methods in constants
   if(req.method === 'GET') {
-    const prices = await db
-    //TODO: put shops in db or constants
-      .collection("walmart")
-      .find({})
-      .sort({dateTime:-1})
-      .toArray();
-    //TODO: put status code in constants
-    return res.status(200).json(prices);
+    console.log('query', req.query);
+
+    try {
+      let prices = null;
+      if (req.query.aggregate) {
+        let what = tryParse(req.query.aggregate, null);
+        if (what) {
+          prices = await db
+          //TODO: put shops in db or constants
+            .collection("walmart")
+            .aggregate(what)
+            .toArray();
+        }
+      } else {
+        prices = await db
+        //TODO: put shops in db or constants
+          .collection("walmart")
+          .find(tryParse(req.query.find, {}))
+          .sort(tryParse(req.query.sort, {dateTime: -1}))
+          .toArray();
+      }
+
+      //TODO: put status code in constants
+      return res.status(200).json(prices);
+    } catch(e) {
+      console.log(JSON.stringify(e, null, 2), e.toString());
+      return res.status(400).json({error: e?.toString()});
+    }
   } else if(req.method === 'POST') {
     const enriched = req.body.data.map(validateAndDenormalise(req.body.location));
     //Add each item from the list
