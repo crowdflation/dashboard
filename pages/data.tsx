@@ -173,13 +173,13 @@ class Data extends Component {
         <Head>
           <title>Untitled Inflation Calculation Group Dashboard - DATA</title>
         </Head>
-        <p><a href="https://docs.mongodb.com/manual/reference/method/db.collection.find/" target="_blank">Find</a> example:<br/> &#123;&quot;price&quot;: &quot;$2.99&quot;&#125;</p>
+        <p><a href="https://docs.mongodb.com/manual/reference/method/db.collection.find/" target="_blank" rel="noreferrer">Find</a> example:<br/> &#123;&quot;price&quot;: &quot;$2.99&quot;&#125;</p>
         <span className={styles.error}>{this.state.errors && this.state.errors["find"]}</span>
         <textarea name='find' onChange={this.handleChange}>{}</textarea>
         <p>Sort example:<br/>&#123;&quot;dateTime&quot;:1&#125;</p>
         <span className={styles.error}>{this.state.errors && this.state.errors["sort"]}</span>
         <textarea name='sort' onChange={this.handleChange}>{}</textarea>
-        <p><a href="https://docs.mongodb.com/manual/reference/method/db.collection.aggregate/" target="_blank">Aggregate</a> example:<br/>[&#123;&quot;$group&quot;:&#123;&quot;_id&quot;:&quot;name&quot;,&quot;count&quot;:&#123;&quot;$sum&quot;:1&#125;&#125;&#125;]</p>
+        <p><a href="https://docs.mongodb.com/manual/reference/method/db.collection.aggregate/" target="_blank" rel="noreferrer">Aggregate</a> example:<br/>[&#123;&quot;$group&quot;:&#123;&quot;_id&quot;:&quot;name&quot;,&quot;count&quot;:&#123;&quot;$sum&quot;:1&#125;&#125;&#125;]</p>
         <span className={styles.error}>{this.state.errors && this.state.errors["aggregate"]}</span>
         <textarea name='aggregate' onChange={this.handleChange}></textarea>
         <span className={styles.error}>{this.state.error && this.state.error}</span>
