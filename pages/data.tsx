@@ -4,6 +4,7 @@ import React, { Component } from 'react'
 import { Table } from 'semantic-ui-react'
 import _ from 'lodash'
 import axios from 'axios'
+import {XYPlot, XAxis, YAxis, HorizontalGridLines, LineSeries, DiscreteColorLegend} from 'react-vis'
 
 class Data extends Component {
 
@@ -110,10 +111,18 @@ class Data extends Component {
     });
   }
 
+  parsePrice = (price) => {
+    if(!price) {
+      return 0;
+    }
+    return parseFloat(price.substring(1));
+  }
+
   render = () => {
     const { column, data, direction, aggregateResult, errors, error } = this.state as any;
 
-    let representation = (<p>{JSON.stringify(data, null, 2)}</p>)
+    let representation = (<p>{JSON.stringify(data, null, 2)}</p>);
+    let chart:any = null;
 
 
     // If it is an array we can show a table
@@ -166,6 +175,48 @@ class Data extends Component {
             ))}
           </Table.Body>
         </Table>);
+      let categories = {};
+      data.forEach((item) => {
+        if(!item.dateTime) {
+          return;
+        }
+        if(!categories[item.name]) {
+          categories[item.name] = [];
+        }
+        categories[item.name].push({x: new Date(item.dateTime), y: this.parsePrice(item.price) })
+      });
+
+      const series = _.map(categories, (value, key) => {
+        return (
+          <LineSeries
+            data={value}/>
+        )
+      });
+
+      const legends = _.map(categories, (value, key) => {
+        return {
+          title: key,
+          disabled: false,
+          data: value
+        }
+      });
+
+      chart = (
+        <div>
+          <DiscreteColorLegend
+            width={180}
+            items={legends}
+          />
+          <XYPlot
+          xType="time"
+          width={300}
+          height={300}>
+          <HorizontalGridLines />
+          {series}
+          <XAxis />
+          <YAxis />
+        </XYPlot>
+        </div>);
     }
 
     return (
@@ -185,6 +236,7 @@ class Data extends Component {
         <span className={styles.error}>{error}</span>
         <button onClick={() =>this.handleReload(this.state)}>Reload</button>
         {representation}
+        {chart}
       </div>
     )
   }
