@@ -12,7 +12,7 @@ const Home: NextPage = () => {
 
       <main className={styles.main}>
         <h1 className={styles.title}>
-          Welcome to Inflation Calculation group Dashboard Page. This page was built with
+          Welcome to Inflation Calculation group Dashboard Page. This page was built with <a href="https://nextjs.org/">Next.JS</a>
         </h1>
 
         <p className={styles.description}>
