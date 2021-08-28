@@ -52,6 +52,7 @@ export default async function handler(
 
   // Run the middleware
   await runMiddleware(req, res, cors);
+  const { vendor } = req.query
 
   const {db} = await connectToDatabase();
   //TODO: put methods in constants
@@ -65,14 +66,14 @@ export default async function handler(
         if (what) {
           prices = await db
           //TODO: put shops in db or constants
-            .collection("walmart")
+            .collection(vendor)
             .aggregate(what)
             .toArray();
         }
       } else {
         prices = await db
         //TODO: put shops in db or constants
-          .collection("walmart")
+          .collection(vendor)
           .find(tryParse(req.query.find, {}))
           .sort(tryParse(req.query.sort, {dateTime: -1}))
           .toArray();
@@ -89,13 +90,13 @@ export default async function handler(
     //Add each item from the list
     enriched.forEach(async function(item:any) {
       const found = await db
-        .collection("walmart").findOne(item);
+        .collection(vendor).findOne(item);
       console.log('found', found);
       if(!found) {
-        await db.collection("walmart").insertOne(item);
+        await db.collection(vendor).insertOne(item);
       } else {
         //If item is found just increment the counter
-        await db.collection("walmart").updateOne(item, {$inc: {count: 1}});
+        await db.collection(vendor).updateOne(item, {$inc: {count: 1}});
       }
     });
 
