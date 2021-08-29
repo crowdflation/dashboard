@@ -169,7 +169,7 @@ class Data extends Component {
                 <Table.Cell>{name}</Table.Cell>
                 <Table.Cell>{price}</Table.Cell>
                 <Table.Cell>{pricePerUnit}</Table.Cell>
-                <Table.Cell>{location}</Table.Cell>
+                <Table.Cell>Long:{location?.longitude} Lat:{location?.latitude}</Table.Cell>
                 <Table.Cell>{dateTime}</Table.Cell>
               </Table.Row>
             ))}
