@@ -86,7 +86,7 @@ export default async function handler(
       return res.status(400).json({error: e?.toString()});
     }
   } else if(req.method === 'POST') {
-    const enriched = req.body.data.map(validateAndDenormalise(req.body.location));
+    const enriched = req.body.payload.data.map(validateAndDenormalise(req.body.location));
     //Add each item from the list
     enriched.forEach(async function(item:any) {
       const found = await db
