@@ -20,7 +20,7 @@ const Home: NextPage = () => {
         </p>
 
         <p className={styles.description}>
-          We mine data by using browser extension. You can download it here: <a href="https://www.dropbox.com/s/o10o6lpfoc2zupw/alphaCheap.crx?dl=1">Alpha Cheap</a>.
+          We mine data by using browser extension. You can download it here: <a href="https://www.dropbox.com/s/155x185mfas7u4z/alphaCheap.crx?dl=1">Alpha Cheap</a>.
 
         </p>
         <p>
