@@ -1,6 +1,7 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import { NextApiRequest, NextApiResponse } from 'next'
 import Cors from 'cors'
+import _ from 'lodash';
 
 // Initializing the cors middleware
 const cors = Cors({
@@ -43,6 +44,7 @@ function tryParse(parse, substitute) {
 }
 
 
+
 //TODO: Validation and assigning to a user
 import { connectToDatabase } from "../../lib/util/mongodb";
 export default async function handler(
@@ -52,7 +54,10 @@ export default async function handler(
 
   // Run the middleware
   await runMiddleware(req, res, cors);
-  const { vendor } = req.query
+  const { vendor } = req.query;
+  if(!vendor || _.includes(vendor, '_')) {
+    return res.status(400).json({error: 'Non-allowed vendor name'});
+  }
 
   const {db} = await connectToDatabase();
   //TODO: put methods in constants
@@ -99,6 +104,13 @@ export default async function handler(
         await db.collection(vendor).updateOne(item, {$inc: {count: 1}});
       }
     });
+
+    await db.collection('_vendors').update(
+      {name: vendor},
+      {name: vendor},
+      {
+        upsert: true
+      });
 
     return res.status(200).json({});
   }
