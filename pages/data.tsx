@@ -148,7 +148,7 @@ class Data extends Component {
       return (<Link href={{
         pathname: '/data',
         search: `?v=${v}`,
-      }}
+      }} key={v}
       ><a onClick={() =>setTimeout(() =>this.handleReload(this.state), 200)}>{v}</a></Link>)
     });
 
