@@ -105,9 +105,9 @@ export default async function handler(
       }
     });
 
-    await db.collection('_vendors').update(
+    await db.collection('_vendors').updateOne(
       {name: vendor},
-      {name: vendor},
+      { $set: {name: vendor}},
       {
         upsert: true
       });
