@@ -9,6 +9,15 @@ const cors = Cors({
   methods: ['GET', 'POST'],
 });
 
+function getFloat(str) {
+  const regex = /[+-]?\d+(\.\d+)?/g;
+  const parsed = str?.match(regex);
+  if(!parsed || !parsed[0]) {
+    return null;
+  }
+  return parseFloat(parsed[0]);
+}
+
 function getDates(startDate, stopDate) {
   var dateArray = new Array();
   var currentDate = new Date(startDate);
@@ -125,7 +134,12 @@ export default async function handler(
         pricesByDate[priceDate][productKey] = [];
       }
 
-      pricesByDate[priceDate][productKey].push(vendor, price.name, price.price);
+      const priceFloat = getFloat(price.price);
+      if(!priceFloat) {
+        return;
+      }
+
+      pricesByDate[priceDate][productKey].push(vendor, price.name, priceFloat);
     });
   }));
 
@@ -140,6 +154,7 @@ export default async function handler(
     const pricesByCategory = {};
     _.map(current, (productPrices, key) => {
       //Product not found
+      // console.log(key, next);
       if(!next[key]) {
         return;
       }
