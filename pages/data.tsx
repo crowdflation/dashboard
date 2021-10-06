@@ -112,7 +112,7 @@ class Data extends Component {
     }
 
     // Make a request for a user with a given ID
-    axios.get('/api/'+this.getVendor()+'?' + this.buildQueryURL(state))
+    axios.get('/api/vendors/'+this.getVendor()+'?' + this.buildQueryURL(state))
       .then((response) => {
         // handle success
         this.setState({
