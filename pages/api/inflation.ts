@@ -43,13 +43,13 @@ function getCategoryCPIWeight(category, which) {
 
 
 //This function takes in latitude and longitude of two location and returns the distance between them as the crow flies (in km)
-function calcCrow(lat1, lon1, lat2, lon2)
+function calcCrow(lat11, lon11, lat22, lon22)
 {
   var R = 6371; // km
-  var dLat = toRad(lat2-lat1);
-  var dLon = toRad(lon2-lon1);
-  var lat1 = toRad(lat1);
-  var lat2 = toRad(lat2);
+  var dLat = toRad(lat22-lat11);
+  var dLon = toRad(lon22-lon11);
+  var lat1 = toRad(lat11);
+  var lat2 = toRad(lat22);
 
   var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
     Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(lat1) * Math.cos(lat2);
@@ -59,7 +59,7 @@ function calcCrow(lat1, lon1, lat2, lon2)
 }
 
 // Converts numeric degrees to radians
-function toRad(Value)
+function toRad(Value): number
 {
   return Value * Math.PI / 180;
 }
@@ -156,7 +156,7 @@ export default async function handler(
 
     let totalInflation = 0;
 
-    _.map(pricesByCategory, (prices, category) => {
+    _.map(pricesByCategory, (prices:any[], category) => {
       const currPrices = _.sum(prices.map(p => p.currPricesMean));
       const nextPrices = _.sum(prices.map(p => p.nextPricesMean));
       const inflactionChange = nextPrices / currPrices;
