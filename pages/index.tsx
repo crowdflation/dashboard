@@ -7,7 +7,7 @@ const Home: NextPage = () => {
   return (
     <div className={styles.container}>
       <Head>
-        <title>Untitled Inflation Calculation Group Dashboard</title>
+        <title>Crowdflation - Crowdsourced Inflation Calculation Group Dashboard</title>
       </Head>
 
       <main className={styles.main}>

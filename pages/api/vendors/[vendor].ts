@@ -2,25 +2,12 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 import Cors from 'cors'
 import _ from 'lodash';
+import { runMiddleware, tryParse } from '../../../lib/util/middleware'
 
 // Initializing the cors middleware
 const cors = Cors({
   methods: ['GET', 'POST'],
 });
-
-// Helper method to wait for a middleware to execute before continuing
-// And to throw an error when an error happens in a middleware
-function runMiddleware(req: any, res: any, fn: any) {
-  return new Promise((resolve, reject) => {
-    fn(req, res, (result: any) => {
-      if (result instanceof Error) {
-        return reject(result)
-      }
-
-      return resolve(result)
-    })
-  })
-}
 
 function validateAndDenormalise(location:{latitude:number,longitude:number }) {
   const dateTime = new Date();
@@ -31,22 +18,17 @@ function validateAndDenormalise(location:{latitude:number,longitude:number }) {
   //TODO: use kilomoters for roughtness and check with Ekon team how rought it should be
   const roughLocation = location?{latitude:parseFloat(location.latitude?.toString()).toFixed(3), longitude: parseFloat(location.longitude?.toString()).toFixed(3)}:null;
   return function(item:any) {
+    if(!item.name || !item.price) {
+      throw new Error('Submission data must have name and price fields');
+    }
     return {...item, location: roughLocation, dateTime}
-  }
-}
-
-function tryParse(parse, substitute) {
-  try {
-    return JSON.parse(parse);
-  } catch (e) {
-    return substitute;
   }
 }
 
 
 
 //TODO: Validation and assigning to a user
-import { connectToDatabase } from "../../lib/util/mongodb";
+import { connectToDatabase } from "../../../lib/util/mongodb";
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<any>
