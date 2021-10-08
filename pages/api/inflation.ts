@@ -200,5 +200,5 @@ export default async function handler(
     inflationInDayPercent[dates[i]] = rounded;
   }
 
-  return res.status(200).json(JSON.stringify({inflationInDay: inflationInDayPercent}, null, 2));
+  return res.status(200).json(JSON.stringify({inflationInDayPercent}, null, 2));
 }
