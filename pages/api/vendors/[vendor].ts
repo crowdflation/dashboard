@@ -67,7 +67,7 @@ export default async function handler(
       }
 
       //TODO: put status code in constants
-      return res.status(200).json(prices);
+      return res.status(200).json(JSON.stringify(prices, null, 2));
     } catch(e) {
       console.log(JSON.stringify(e, null, 2), e.toString());
       return res.status(400).json({error: e?.toString()});

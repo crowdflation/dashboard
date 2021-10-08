@@ -162,7 +162,7 @@ export default async function handler(
     });
   }));
 
-  const inflationInDay = {};
+  const inflationInDayPercent = {};
 
   for(let i = dates.length-1; i>=1; i--) {
     const current = pricesByDate[dates[i]];
@@ -197,8 +197,8 @@ export default async function handler(
 
     console.log(totalInflation, rounded);
 
-    inflationInDay[dates[i]] = rounded;
+    inflationInDayPercent[dates[i]] = rounded;
   }
 
-  return res.status(200).json({inflationInDay});
+  return res.status(200).json(JSON.stringify({inflationInDay: inflationInDayPercent}, null, 2));
 }
