@@ -73,6 +73,25 @@ function toRad(Value): number
   return Value * Math.PI / 180;
 }
 
+function findPrevPrice(i, pricesByDate, dates, key, productPrices, pricesByCategory) {
+  for (let p = i - 1; p >= 0; p--) {
+    const prev = pricesByDate[dates[p]];
+    if (!prev || !prev[key]) {
+      continue;
+    }
+    const currPricesMean = _.mean(productPrices.map((i) => i.price));
+    const prevPricesMean = _.mean(prev[key].map((i) => i.price));
+
+    const category = getCategory(productPrices[0].vendor, productPrices[0].name) as string;
+    if (!pricesByCategory[category]) {
+      pricesByCategory[category] = [];
+    }
+
+    pricesByCategory[category].push({currPricesMean, prevPricesMean});
+    return;
+  }
+}
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<any>
@@ -139,47 +158,46 @@ export default async function handler(
         return;
       }
 
-      pricesByDate[priceDate][productKey].push(vendor, price.name, priceFloat);
+      pricesByDate[priceDate][productKey].push({vendor, name: price.name, price: priceFloat});
     });
   }));
 
   const inflationInDay = {};
 
-  for(let i = 0; i<dates.length-1; i++) {
+  for(let i = dates.length-1; i>=1; i--) {
     const current = pricesByDate[dates[i]];
-    const next = pricesByDate[dates[i+1]];
-    if(!next) {
-      continue;
-    }
     const pricesByCategory = {};
     _.map(current, (productPrices, key) => {
       //Product not found
       // console.log(key, next);
-      if(!next[key]) {
-        return;
-      }
-      const currPricesMean = _.mean(productPrices.map((i) => i.price));
-      const nextPricesMean = _.mean(next[key].map((i) => i.price));
-
-      const category = getCategory(productPrices[0].vendor, productPrices[0].name) as string;
-      if(!pricesByCategory[category]) {
-        pricesByCategory[category] = [];
-      }
-
-      pricesByCategory[category].push({currPricesMean, nextPricesMean});
+      findPrevPrice(i, pricesByDate, dates, key, productPrices, pricesByCategory);
     });
 
     let totalInflation = 0;
 
     _.map(pricesByCategory, (prices:any[], category) => {
-      const currPrices = _.sum(prices.map(p => p.currPricesMean));
-      const nextPrices = _.sum(prices.map(p => p.nextPricesMean));
-      const inflactionChange = nextPrices / currPrices;
-      const inflationCategoryImportance = getCategoryCPIWeight(category,'CPI-U') as number;
-      totalInflation += inflactionChange * inflationCategoryImportance;
+      const currPrices = _.mean(prices.map(p => p.currPricesMean));
+      const prevPrices = _.mean(prices.map(p => p.prevPricesMean));
+      console.log('Curr, prev', currPrices, prevPrices, prices);
+
+      if(!prevPrices) {
+        return;
+      }
+
+      const inflationChange = 1- (prevPrices / currPrices);
+      const inflationCategoryImportance = getCategoryCPIWeight(category,'CPI-U') as number /100;
+      const inflationChangeByImportance = inflationChange * inflationCategoryImportance;
+      console.log('inflationChangeByImportance', currPrices, prevPrices, inflationChange, inflationCategoryImportance, inflationChangeByImportance, totalInflation);
+      totalInflation += inflationChangeByImportance;
+      console.log(totalInflation);
     });
 
-    inflationInDay[dates[i+1]] = totalInflation;
+
+    const rounded = Math.round((totalInflation * 10000))/100;
+
+    console.log(totalInflation, rounded);
+
+    inflationInDay[dates[i]] = rounded;
   }
 
   return res.status(200).json({inflationInDay});
