@@ -2,6 +2,7 @@ import { connectToDatabase } from "../../lib/util/mongodb";
 import {NextApiRequest, NextApiResponse} from "next";
 import _ from 'lodash';
 import { runMiddleware, tryParse } from '../../lib/util/middleware';
+import { getDates, formatDate } from '../../lib/util/dates';
 import Cors from 'cors';
 
 // Initializing the cors middleware
@@ -16,22 +17,6 @@ function getFloat(str) {
     return null;
   }
   return parseFloat(parsed[0]);
-}
-
-function getDates(startDate, stopDate) {
-  var dateArray = new Array();
-  var currentDate = new Date(startDate);
-  currentDate.setHours(0,0,0,0);
-  while (currentDate <= stopDate) {
-    dateArray.push(formatDate(currentDate));
-    currentDate.setDate(currentDate.getDate() + 1);
-    currentDate.setHours(0,0,0,0);
-  }
-  return dateArray;
-}
-
-function formatDate(date) {
-  return date.toISOString().slice(0, 10);
 }
 
 function getCategory(vendor, name) {
@@ -200,5 +185,5 @@ export default async function handler(
     inflationInDayPercent[dates[i]] = rounded;
   }
 
-  return res.status(200).json(JSON.stringify({inflationInDayPercent}, null, 2));
+  return res.status(200).json(JSON.stringify({inflationInDayPercent, from: dates[0], to: dates[dates.length-1], country:'US'}, null, 2));
 }
