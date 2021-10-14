@@ -6,6 +6,19 @@ import axios from 'axios'
 import {AutoSizer, List} from 'react-virtualized'
 import { FlexibleWidthXYPlot, XAxis, YAxis, HorizontalGridLines, LineSeries, DiscreteColorLegend} from 'react-vis'
 import { getDates } from '../lib/util/dates';
+import DayPickerInput from 'react-day-picker/DayPickerInput';
+import 'react-day-picker/lib/style.css';
+import moment from 'moment';
+import { formatDate, parseDate } from 'react-day-picker/moment';
+import Helmet from 'react-helmet';
+import {calculateInflation} from './api/inflation';
+
+export async function getServerSideProps() {
+  const resultObject = await calculateInflation({});
+  return {
+    props: {resultObject}, // will be passed to the page component as props
+  }
+}
 
 class Inflation extends Component {
 
@@ -13,13 +26,37 @@ class Inflation extends Component {
     super(props);
     this.state = {
       column: null,
-      data: [],
+      inflationInDayPercent: props.resultObject.inflationInDayPercent,
       direction: null,
       errors: null,
+      from: props.resultObject.from,
+      to: props.resultObject.to,
     };
 
     this.handleChange = this.handleChange.bind(this);
     this.handleReload(this.state);
+    this.handleFromChange = this.handleFromChange.bind(this);
+    this.handleToChange = this.handleToChange.bind(this);
+  }
+
+
+  showFromMonth() {
+    const { from, to } = this.state as any;
+    if (!from) {
+      return;
+    }
+    if (moment(to).diff(moment(from), 'months') < 2) {
+      this.to.getDayPicker().showMonth(from);
+    }
+  }
+
+  handleFromChange(from) {
+    // Change the from date and focus the "to" input field
+    this.setState({ from });
+  }
+
+  handleToChange(to) {
+    this.setState({ to }, this.showFromMonth);
   }
 
   handleChange = (e: any) => {
@@ -27,7 +64,7 @@ class Inflation extends Component {
       ...this.state,
       [e.target.name]: e.target.value
     });
-  }
+  };
 
   buildQueryURL = (state) => {
     return ['find', 'sort', 'aggregate'].reduce((str, key) => {
@@ -40,7 +77,7 @@ class Inflation extends Component {
       str += key + '=' + encodeURIComponent(state[key]);
       return str;
     }, '');
-  }
+  };
 
   tryGetErrorMessage(error) {
     try {
@@ -95,8 +132,13 @@ class Inflation extends Component {
   };
 
   render = () => {
-    const { inflationInDayPercent, from, to, country } = this.state as any;
-    const days = getDates(new Date(from), new Date(to));
+    const { inflationInDayPercent, country } = this.state as any;
+    let {from, to} = this.state as any;
+    from = new Date(from);
+    to = new Date(to);
+    const days = getDates(from, to);
+
+    const modifiers = { start: from, end: to };
 
     let chart:any;
 
@@ -119,9 +161,72 @@ class Inflation extends Component {
     chart = (
       <div style={{width:'100%'}}>
         <h1>Inflation in US</h1>
+        <div className="InputFromTo">
+          <DayPickerInput
+            value={from}
+            placeholder="From"
+            format="LL"
+            formatDate={formatDate}
+            parseDate={parseDate}
+            dayPickerProps={{
+              selectedDays: [from, { from, to }],
+              disabledDays: { after: new Date() },
+              toMonth: to,
+              modifiers,
+              numberOfMonths: 2,
+              onDayClick: () => this.to.getInput().focus(),
+            }}
+            onDayChange={this.handleFromChange}
+          />{' '}
+          —{' '}
+          <span className="InputFromTo-to">
+          <DayPickerInput
+            ref={el => (this.to = el)}
+            value={to}
+            placeholder="To"
+            format="LL"
+            formatDate={formatDate}
+            parseDate={parseDate}
+            dayPickerProps={{
+              selectedDays: [from, { from, to }],
+              disabledDays: { before: from },
+              modifiers,
+              month: from,
+              fromMonth: from,
+              numberOfMonths: 2,
+            }}
+            onDayChange={this.handleToChange}
+          />
+        </span>
+          <Helmet>
+            <style>{`
+  .InputFromTo .DayPicker-Day--selected:not(.DayPicker-Day--start):not(.DayPicker-Day--end):not(.DayPicker-Day--outside) {
+    background-color: #f0f8ff !important;
+    color: #4a90e2;
+  }
+  .InputFromTo .DayPicker-Day {
+    border-radius: 0 !important;
+  }
+  .InputFromTo .DayPicker-Day--start {
+    border-top-left-radius: 50% !important;
+    border-bottom-left-radius: 50% !important;
+  }
+  .InputFromTo .DayPicker-Day--end {
+    border-top-right-radius: 50% !important;
+    border-bottom-right-radius: 50% !important;
+  }
+  .InputFromTo .DayPickerInput-Overlay {
+    width: 550px;
+  }
+  .InputFromTo-to .DayPickerInput-Overlay {
+    margin-left: -198px;
+  }
+`}</style>
+          </Helmet>
+        </div>
         <FlexibleWidthXYPlot
           xType="ordinal"
-          height="300">
+          height={300}>
           <HorizontalGridLines />
           {series}
           <XAxis tickLabelAngle={-25}/>

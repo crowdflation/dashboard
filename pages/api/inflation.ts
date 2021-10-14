@@ -77,28 +77,22 @@ function findPrevPrice(i, pricesByDate, dates, key, productPrices, pricesByCateg
   }
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<any>
-) {
-  // Run the middleware
-  await runMiddleware(req, res, cors);
-
+export async function calculateInflation(query) {
   const {db} = await connectToDatabase();
 
   var d = new Date();
   d.setMonth(d.getMonth() - 1);
 
-  const from = tryParse(req.query.from, d);
-  const to = tryParse(req.query.to, new Date());
+  const from = tryParse(query.from, d);
+  const to = tryParse(query.to, new Date());
   const dates = getDates(from, to);
-  if(dates.length<=1) {
+  if (dates.length <= 1) {
     throw new Error('Dates range should contain at least 2 days');
   }
 
-  const latitude = tryParse(req.query.latitude, null);
-  const longitude = tryParse(req.query.longitude, null)
-  const distance = tryParse(req.query.distance, null);
+  const latitude = tryParse(query.latitude, null);
+  const longitude = tryParse(query.longitude, null)
+  const distance = tryParse(query.distance, null);
 
   let vendors = await db.collection('_vendors').find().toArray();
   vendors = vendors.map(v => v.name);
@@ -111,17 +105,17 @@ export default async function handler(
     let prices = await db
     //TODO: put shops in db or constants
       .collection(vendor)
-      .find({dateTime:{$gte:from,$lt:to}})
+      .find({dateTime: {$gte: from, $lt: to}})
       .toArray();
 
     prices.forEach((price) => {
-      if(latitude && longitude) {
+      if (latitude && longitude) {
         //Skip item with no location data
         if (!price.longitude || !price.latitude) {
           return;
         } else {
           const distanceCalculated = calcCrow(price.latitude, price.longitude, latitude, longitude);
-          if(distanceCalculated>distance) {
+          if (distanceCalculated > distance) {
             //Measurement too far away
             return;
           }
@@ -129,17 +123,17 @@ export default async function handler(
       }
 
       const priceDate = formatDate(price.dateTime);
-      if(!pricesByDate[priceDate]) {
+      if (!pricesByDate[priceDate]) {
         pricesByDate[priceDate] = {};
       }
 
       const productKey = vendor + '-' + price.name;
-      if(!pricesByDate[priceDate][productKey]) {
+      if (!pricesByDate[priceDate][productKey]) {
         pricesByDate[priceDate][productKey] = [];
       }
 
       const priceFloat = getFloat(price.price);
-      if(!priceFloat) {
+      if (!priceFloat) {
         return;
       }
 
@@ -149,7 +143,7 @@ export default async function handler(
 
   const inflationInDayPercent = {};
 
-  for(let i = dates.length-1; i>=1; i--) {
+  for (let i = dates.length - 1; i >= 1; i--) {
     const current = pricesByDate[dates[i]];
     const pricesByCategory = {};
     _.map(current, (productPrices, key) => {
@@ -160,17 +154,17 @@ export default async function handler(
 
     let totalInflation = 0;
 
-    _.map(pricesByCategory, (prices:any[], category) => {
+    _.map(pricesByCategory, (prices: any[], category) => {
       const currPrices = _.mean(prices.map(p => p.currPricesMean));
       const prevPrices = _.mean(prices.map(p => p.prevPricesMean));
       console.log('Curr, prev', currPrices, prevPrices, prices);
 
-      if(!prevPrices) {
+      if (!prevPrices) {
         return;
       }
 
-      const inflationChange = 1- (prevPrices / currPrices);
-      const inflationCategoryImportance = getCategoryCPIWeight(category,'CPI-U') as number /100;
+      const inflationChange = 1 - (prevPrices / currPrices);
+      const inflationCategoryImportance = getCategoryCPIWeight(category, 'CPI-U') as number / 100;
       const inflationChangeByImportance = inflationChange * inflationCategoryImportance;
       console.log('inflationChangeByImportance', currPrices, prevPrices, inflationChange, inflationCategoryImportance, inflationChangeByImportance, totalInflation);
       totalInflation += inflationChangeByImportance;
@@ -178,12 +172,32 @@ export default async function handler(
     });
 
 
-    const rounded = Math.round((totalInflation * 10000))/100;
+    const rounded = Math.round((totalInflation * 10000)) / 100;
 
     console.log(totalInflation, rounded);
 
     inflationInDayPercent[dates[i]] = rounded;
   }
 
-  return res.status(200).json(JSON.stringify({inflationInDayPercent, from: dates[0], to: dates[dates.length-1], country:'US'}, null, 2));
+  const dataObj = {
+    inflationInDayPercent,
+    from: dates[0],
+    to: dates[dates.length - 1],
+    country: 'US',
+    latitude,
+    longitude,
+    distance
+  };
+  return dataObj;
+}
+
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse<any>
+) {
+  // Run the middleware
+  await runMiddleware(req, res, cors);
+  const dataObj = await calculateInflation(req.query);
+
+  return res.status(200).json(JSON.stringify(dataObj, null, 2));
 }
