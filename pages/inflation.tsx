@@ -9,6 +9,7 @@ import { getDates } from '../lib/util/dates';
 import DayPickerInput from 'react-day-picker/DayPickerInput';
 import 'react-day-picker/lib/style.css';
 import moment from 'moment';
+// @ts-ignore
 import { formatDate, parseDate } from 'react-day-picker/moment';
 import Helmet from 'react-helmet';
 import {calculateInflation} from './api/inflation';
@@ -46,7 +47,7 @@ class Inflation extends Component {
       return;
     }
     if (moment(to).diff(moment(from), 'months') < 2) {
-      this.to.getDayPicker().showMonth(from);
+      (this as any).to.getDayPicker().showMonth(from);
     }
   }
 
@@ -174,14 +175,14 @@ class Inflation extends Component {
               toMonth: to,
               modifiers,
               numberOfMonths: 2,
-              onDayClick: () => this.to.getInput().focus(),
+              onDayClick: () => (this as any).to.getInput().focus(),
             }}
             onDayChange={this.handleFromChange}
           />{' '}
           —{' '}
           <span className="InputFromTo-to">
           <DayPickerInput
-            ref={el => (this.to = el)}
+            ref={el => ((this as any).to = el)}
             value={to}
             placeholder="To"
             format="LL"
