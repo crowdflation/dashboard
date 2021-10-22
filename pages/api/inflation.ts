@@ -4,6 +4,7 @@ import _ from 'lodash';
 import { runMiddleware, tryParse } from '../../lib/util/middleware';
 import { getDates, formatDate } from '../../lib/util/dates';
 import Cors from 'cors';
+import categoriesMap from '../../data/map';
 
 // Initializing the cors middleware
 const cors = Cors({
@@ -19,22 +20,28 @@ function getFloat(str) {
   return parseFloat(parsed[0]);
 }
 
-function getCategory(vendor, name) {
+function getCategory(vendor, name, categoryByProduct) {
+  if(categoryByProduct[name]) {
+    return categoryByProduct[name];
+  }
   switch (vendor) {
-    case 'walmart': return ' Food and beverages';
-    case 'kroger': return ' Food and beverages';
-    case 'zillow': return ' Housing';
+    case 'walmart': return 'Food and beverages';
+    case 'kroger': return 'Food and beverages';
+    case 'zillow': return 'Housing';
   }
 }
 
-function getCategoryCPIWeight(category, which) {
+function getCategoryCPIWeight(category, vendor, which) {
+  category = _.trim(category);
   //TODO: CPI-U vs CPI-W
+  if(categoriesMap[category]) {
+    return categoriesMap[category][which];
+  }
   switch (category) {
-    case ' Food and beverages': return 15.157;
-    case ' Housing': return 42.385;
+    case 'Food and beverages': return 15.157;
+    case 'Housing': return 42.385;
   }
 }
-
 
 //This function takes in latitude and longitude of two location and returns the distance between them as the crow flies (in km)
 function calcCrow(lat11, lon11, lat22, lon22)
@@ -58,16 +65,39 @@ function toRad(Value): number
   return Value * Math.PI / 180;
 }
 
-function findPrevPrice(i, pricesByDate, dates, key, productPrices, pricesByCategory) {
+
+
+function findParent(name, where) {
+  if(where[name]) {
+    return true;
+  }
+
+  if(!categoriesMap[name]) {
+    return false;
+  }
+
+  if(categoriesMap[name].parent) {
+    return findParent(categoriesMap[name].parent, where);
+  }
+  return false;
+}
+
+function findPrevPrice(i, pricesByDate, dates, key, productPrices, pricesByCategory, categoryByProduct, categoriesLimitObject) {
   for (let p = i - 1; p >= 0; p--) {
+
     const prev = pricesByDate[dates[p]];
     if (!prev || !prev[key]) {
       continue;
     }
+
     const currPricesMean = _.mean(productPrices.map((i) => i.price));
     const prevPricesMean = _.mean(prev[key].map((i) => i.price));
 
-    const category = getCategory(productPrices[0].vendor, productPrices[0].name) as string;
+    const category = getCategory(productPrices[0].vendor, productPrices[0].name, categoryByProduct) as string;
+    if (categoriesLimitObject && !findParent(category, categoriesLimitObject)) {
+      return;
+    }
+
     if (!pricesByCategory[category]) {
       pricesByCategory[category] = [];
     }
@@ -90,13 +120,38 @@ export async function calculateInflation(query) {
     throw new Error('Dates range should contain at least 2 days');
   }
 
-  const latitude = tryParse(query.latitude, null);
-  const longitude = tryParse(query.longitude, null)
-  const distance = tryParse(query.distance, null);
+  const latitude = tryParse(query.lat, null);
+  const longitude = tryParse(query.lng, null)
+  let distance = tryParse(query.radius, null);
+  const categoriesLimit = tryParse(query.basket, null);
+
+  if(distance>=1900) {
+    distance = null;
+  }
+
+  if(distance) {
+    // Miles to km
+    distance = distance / 1.60934;
+  }
 
   let vendors = await db.collection('_vendors').find().toArray();
   vendors = vendors.map(v => v.name);
   vendors = _.union(vendors, ['walmart', 'kroger', 'zillow']);
+
+  let categories = await db.collection('_categories').find().toArray();
+  let categoryByProduct = {};
+  categories.reduce((r, item) => {
+    categoryByProduct[item.name] = item.category;
+  }, {});
+
+
+  let categoriesLimitObject:any = null;
+  if(categoriesLimit && categoriesLimit.length) {
+    categoriesLimitObject = {};
+    for(const c in categoriesLimit) {
+      categoriesLimitObject[categoriesLimit[c]] = true;
+    }
+  }
 
   // Make a map for accessing prices by date and product/vendor
   const pricesByDate = {};
@@ -109,7 +164,7 @@ export async function calculateInflation(query) {
       .toArray();
 
     prices.forEach((price) => {
-      if (latitude && longitude) {
+      if (latitude && longitude && distance) {
         //Skip item with no location data
         if (!price.longitude || !price.latitude) {
           return;
@@ -149,7 +204,7 @@ export async function calculateInflation(query) {
     _.map(current, (productPrices, key) => {
       //Product not found
       // console.log(key, next);
-      findPrevPrice(i, pricesByDate, dates, key, productPrices, pricesByCategory);
+      findPrevPrice(i, pricesByDate, dates, key, productPrices, pricesByCategory, categoryByProduct, categoriesLimitObject);
     });
 
     let totalInflation = 0;
@@ -157,24 +212,24 @@ export async function calculateInflation(query) {
     _.map(pricesByCategory, (prices: any[], category) => {
       const currPrices = _.mean(prices.map(p => p.currPricesMean));
       const prevPrices = _.mean(prices.map(p => p.prevPricesMean));
-      console.log('Curr, prev', currPrices, prevPrices, prices);
+      //console.log('Curr, prev', currPrices, prevPrices, prices);
 
       if (!prevPrices) {
         return;
       }
 
       const inflationChange = 1 - (prevPrices / currPrices);
-      const inflationCategoryImportance = getCategoryCPIWeight(category, 'CPI-U') as number / 100;
+      const inflationCategoryImportance = getCategoryCPIWeight(category, current.vendor,'cpiu') as number / 100;
       const inflationChangeByImportance = inflationChange * inflationCategoryImportance;
-      console.log('inflationChangeByImportance', currPrices, prevPrices, inflationChange, inflationCategoryImportance, inflationChangeByImportance, totalInflation);
+      //console.log('inflationChangeByImportance', currPrices, prevPrices, inflationChange, inflationCategoryImportance, inflationChangeByImportance, totalInflation);
       totalInflation += inflationChangeByImportance;
-      console.log(totalInflation);
+      //console.log(totalInflation);
     });
 
 
     const rounded = Math.round((totalInflation * 10000)) / 100;
 
-    console.log(totalInflation, rounded);
+    //console.log(totalInflation, rounded);
 
     inflationInDayPercent[dates[i]] = rounded;
   }
