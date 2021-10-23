@@ -12,5 +12,10 @@ export function getDates(startDate, stopDate) {
 }
 
 export function formatDate(date) {
+  date.setHours(12);
   return date.toISOString().slice(0, 10);
+}
+
+export function parseDateString(date) {
+  return new Date(Date.parse(date))
 }

@@ -6,6 +6,7 @@ import { getDates, formatDate } from '../../lib/util/dates';
 import Cors from 'cors';
 import categoriesMap from '../../data/map';
 
+
 // Initializing the cors middleware
 const cors = Cors({
   methods: ['GET', 'POST'],
@@ -119,6 +120,7 @@ export async function calculateInflation(query) {
   if (dates.length <= 1) {
     throw new Error('Dates range should contain at least 2 days');
   }
+
 
   const latitude = tryParse(query.lat, null);
   const longitude = tryParse(query.lng, null)
@@ -241,7 +243,9 @@ export async function calculateInflation(query) {
     country: 'US',
     latitude,
     longitude,
-    distance
+    distance,
+    basket: categoriesLimit,
+    inflationOnLastDay: inflationInDayPercent[dates[dates.length - 1]]
   };
   return dataObj;
 }

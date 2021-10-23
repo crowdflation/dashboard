@@ -1,6 +1,5 @@
+import {parseDateString} from "./dates";
 
-// Helper method to wait for a middleware to execute before continuing
-// And to throw an error when an error happens in a middleware
 export function runMiddleware(req: any, res: any, fn: any) {
   return new Promise((resolve, reject) => {
     fn(req, res, (result: any) => {
@@ -15,8 +14,14 @@ export function runMiddleware(req: any, res: any, fn: any) {
 
 export function tryParse(parse, substitute) {
   try {
-    return JSON.parse(parse);
+    try {
+      return JSON.parse(parse);
+    } catch (e1) {
+
+      return parseDateString(parse);
+    }
   } catch (e) {
+    console.error('Parse error', e);
     return substitute;
   }
 }

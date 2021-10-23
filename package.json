@@ -6,12 +6,19 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start -p $PORT",
-    "lint": "next lint --fix"
+    "lint": "next lint --fix",
+    "cypress": "cypress open",
+    "cypress:headless": "cypress run",
+    "e2e": "start-server-and-test start http://localhost:3000 cypress",
+    "e2e:headless": "start-server-and-test start http://localhost:3000 cypress:headless",
+    "test": "jest",
+    "test-watch": "jest --watch"
   },
   "dependencies": {
     "@types/cors": "^2.8.12",
     "axios": "^0.21.1",
     "cors": "^2.8.5",
+    "dayjs": "^1.10.7",
     "dns": "^0.2.2",
     "google-maps-react": "^2.0.6",
     "gun": "^0.2020.1235",
@@ -32,10 +39,18 @@
     "tls": "0.0.1"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^5.14.1",
+    "@testing-library/react": "^12.1.2",
     "@types/lodash": "^4.14.172",
     "@types/react": "17.0.17",
+    "babel-jest": "^27.3.1",
+    "cypress": "^8.6.0",
     "eslint": "7.32.0",
     "eslint-config-next": "11.1.0",
+    "identity-obj-proxy": "^3.0.0",
+    "jest": "^27.3.1",
+    "node-mocks-http": "^1.11.0",
+    "react-test-renderer": "^17.0.2",
     "typescript": "4.3.5"
   }
 }
