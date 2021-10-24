@@ -21,5 +21,5 @@ export function parseDateString(date) {
 }
 
 export function isValidDate(d) {
-  return d instanceof Date && !isNaN(d);
+  return d instanceof Date && !isNaN(d as unknown as number);
 }

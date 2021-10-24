@@ -131,7 +131,7 @@ export async function calculateInflation(query) {
     let distance = tryParse(query.radius, null);
   const categoriesLimit = tryParse(query.basket, null);
 
-  let distanceMiles = null;
+  let distanceMiles: any = null;
 
   if(distance && distance<1900) {
     distanceMiles = distance / 1.60934;
