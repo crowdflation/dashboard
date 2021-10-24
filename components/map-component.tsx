@@ -30,8 +30,10 @@ class MapComponent extends Component<any, any> {
 }
 
 
+const apiKey: string = (process.env as any).GOOGLE_MAPS_API_KEY as string;
+
 export default GoogleApiWrapper(
 (props: any) => ({
-    apiKey: 'AIzaSyDBwah5fqi65xFCicbz_58yM_DqKOQ-VTs'
+    apiKey
   }
 ))(MapComponent)
