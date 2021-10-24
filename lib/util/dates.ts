@@ -19,3 +19,7 @@ export function formatDate(date) {
 export function parseDateString(date) {
   return new Date(Date.parse(date))
 }
+
+export function isValidDate(d) {
+  return d instanceof Date && !isNaN(d);
+}

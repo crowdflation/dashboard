@@ -121,19 +121,22 @@ export async function calculateInflation(query) {
     throw new Error('Dates range should contain at least 2 days');
   }
 
-
   const latitude = tryParse(query.lat, null);
-  const longitude = tryParse(query.lng, null)
-  let distance = tryParse(query.radius, null);
-  const categoriesLimit = tryParse(query.basket, null);
-
-  if(distance>=1900) {
-    distance = null;
+  const longitude = tryParse(query.lng, null);
+  let type = query.type;
+  if(type!=='cpiu' && type!=='cpiw') {
+    type = 'cpiu';
   }
 
-  if(distance) {
-    // Miles to km
-    distance = distance / 1.60934;
+    let distance = tryParse(query.radius, null);
+  const categoriesLimit = tryParse(query.basket, null);
+
+  let distanceMiles = null;
+
+  if(distance && distance<1900) {
+    distanceMiles = distance / 1.60934;
+  } else {
+    distance = null;
   }
 
   let vendors = await db.collection('_vendors').find().toArray();
@@ -166,13 +169,13 @@ export async function calculateInflation(query) {
       .toArray();
 
     prices.forEach((price) => {
-      if (latitude && longitude && distance) {
+      if (latitude && longitude && distanceMiles) {
         //Skip item with no location data
         if (!price.longitude || !price.latitude) {
           return;
         } else {
           const distanceCalculated = calcCrow(price.latitude, price.longitude, latitude, longitude);
-          if (distanceCalculated > distance) {
+          if (distanceCalculated > distanceMiles) {
             //Measurement too far away
             return;
           }
@@ -221,7 +224,7 @@ export async function calculateInflation(query) {
       }
 
       const inflationChange = 1 - (prevPrices / currPrices);
-      const inflationCategoryImportance = getCategoryCPIWeight(category, current.vendor,'cpiu') as number / 100;
+      const inflationCategoryImportance = getCategoryCPIWeight(category, current.vendor, type) as number / 100;
       const inflationChangeByImportance = inflationChange * inflationCategoryImportance;
       //console.log('inflationChangeByImportance', currPrices, prevPrices, inflationChange, inflationCategoryImportance, inflationChangeByImportance, totalInflation);
       totalInflation += inflationChangeByImportance;
@@ -241,11 +244,12 @@ export async function calculateInflation(query) {
     from: dates[0],
     to: dates[dates.length - 1],
     country: 'US',
-    latitude,
-    longitude,
-    distance,
+    lat: latitude,
+    lng: longitude,
+    radius: distance,
     basket: categoriesLimit,
-    inflationOnLastDay: inflationInDayPercent[dates[dates.length - 1]]
+    inflationOnLastDay: inflationInDayPercent[dates[dates.length - 1]],
+    type
   };
   return dataObj;
 }

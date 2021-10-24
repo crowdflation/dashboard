@@ -1,21 +1,39 @@
 // __tests__/animal.test.js
 // 🚨 Remember to keep your `*.test.js` files out of your `/pages` directory!
-import { createMocks } from 'node-mocks-http';
+import {createMocks} from 'node-mocks-http';
+import * as dep from "../../lib/util/mongodb";
+import categoriesMap from '../../data/map';
 import handler from '../../pages/api/inflation';
-
+import {parseDateString} from "../../lib/util/dates";
 
 jest.mock("mongodb");
 
-import * as dep from "../../lib/util/mongodb";
 jest.mock("../../lib/util/mongodb");
 
 const connectToDatabase = dep.connectToDatabase as jest.Mock<any>;
 
 
+const mockCollection = (items) => {
+  const mocked = {
+    collection: (name: string) => {
+      return mocked;
+    },
+    find: (obj: any) => {
+      return mocked;
+    },
+    toArray: () => {
+      return items;
+    }
+  }
+  return mocked;
+};
+
+const emptyCollection = mockCollection([]);
+
 
 describe('/api/[inflation]', () => {
   test('returns empty list with no data', async () => {
-    const { req, res } = createMocks({
+    const {req, res} = createMocks({
       method: 'GET',
       query: {
         from: '2021-09-21',
@@ -24,19 +42,9 @@ describe('/api/[inflation]', () => {
     });
 
 
-    const db = {
-      collection: (name: string) => {
-        return db;
-      },
-      find: (obj: any) => {
-        return db;
-      },
-      toArray: () => {
-        return [];
-      }
-    };
+    const db = emptyCollection;
 
-    connectToDatabase.mockResolvedValue({ db });
+    connectToDatabase.mockResolvedValue({db});
 
     await handler(req, res);
 
@@ -78,10 +86,10 @@ describe('/api/[inflation]', () => {
         },
         "from": "2021-09-21",
         "to": "2021-10-21",
-        "country": "US",
-        "latitude": null,
-        "longitude": null,
-        "distance": null,
+        "country": "US", "type": "cpiu",
+        "lat": null,
+        "lng": null,
+        "radius": null,
         "basket": null,
         "inflationOnLastDay": 0
       }),
@@ -89,7 +97,7 @@ describe('/api/[inflation]', () => {
   });
 
   test('returns shorter period', async () => {
-    const { req, res } = createMocks({
+    const {req, res} = createMocks({
       method: 'GET',
       query: {
         from: '2021-10-21',
@@ -98,19 +106,9 @@ describe('/api/[inflation]', () => {
     });
 
 
-    const db = {
-      collection: (name: string) => {
-        return db;
-      },
-      find: (obj: any) => {
-        return db;
-      },
-      toArray: () => {
-        return [];
-      }
-    };
+    const db = emptyCollection;
 
-    connectToDatabase.mockResolvedValue({ db });
+    connectToDatabase.mockResolvedValue({db});
 
     await handler(req, res);
 
@@ -123,12 +121,461 @@ describe('/api/[inflation]', () => {
         },
         "from": "2021-10-21",
         "to": "2021-10-22",
-        "country": "US",
-        "latitude": null,
-        "longitude": null,
-        "distance": null,
+        "country": "US", "type": "cpiu",
+        "lat": null,
+        "lng": null,
+        "radius": null,
         "basket": null,
         "inflationOnLastDay": 0
+      }),
+    );
+  });
+
+  test('reads and returns all params', async () => {
+    const params = {
+      from: '2021-10-21',
+      to: '2021-10-22',
+      lat: 1.2,
+      lng: 1.1,
+      radius: 200,
+      basket: JSON.stringify(['Bread', 'Butter'])
+    };
+
+    const {req, res} = createMocks({
+      method: 'GET',
+      query: params,
+    });
+
+
+    const db = emptyCollection;
+
+    connectToDatabase.mockResolvedValue({db});
+
+    await handler(req, res);
+
+    expect(res._getStatusCode()).toBe(200);
+    //Fixme: Why parsing twice?
+    expect(JSON.parse(JSON.parse(res._getData()))).toEqual(
+      expect.objectContaining({
+        "inflationInDayPercent": {
+          "2021-10-22": 0,
+        },
+        "country": "US", "type": "cpiu",
+        "inflationOnLastDay": 0,
+        ...params,
+        basket: JSON.parse(params.basket)
+      }),
+    );
+  });
+
+
+  test('reads and returns all params', async () => {
+    const params = {
+      from: '2021-10-21',
+      to: '2021-10-22',
+      lat: 1.2,
+      lng: 1.1,
+      radius: 200,
+      basket: JSON.stringify(['Bread', 'Butter'])
+    };
+
+    const {req, res} = createMocks({
+      method: 'GET',
+      query: params,
+    });
+
+
+    const db = emptyCollection;
+
+    connectToDatabase.mockResolvedValue({db});
+
+    await handler(req, res);
+
+    expect(res._getStatusCode()).toBe(200);
+    //Fixme: Why parsing twice?
+    expect(JSON.parse(JSON.parse(res._getData()))).toEqual(
+      expect.objectContaining({
+        "inflationInDayPercent": {
+          "2021-10-22": 0,
+        },
+        "country": "US", "type": "cpiu",
+        "inflationOnLastDay": 0,
+        ...params,
+        basket: JSON.parse(params.basket)
+      }),
+    );
+  });
+
+
+  test('calculate inflation', async () => {
+    const params = {
+      from: '2021-10-21',
+      to: '2021-10-22',
+      lat: null,
+      lng: null,
+      radius: null
+    };
+
+    const {req, res} = createMocks({
+      method: 'GET',
+      query: params,
+    });
+
+
+    const prices = [{
+      name: 'bananas',
+      dateTime: parseDateString('21 Oct 2021 1:00:00 GMT'),
+      price: '1'
+    }, {
+      name: 'bananas',
+      dateTime: parseDateString('22 Oct 2021 1:00:00 GMT'),
+      price: '2'
+    }];
+
+    const db = {
+      collection: (name: string) => {
+        switch (name) {
+          case '_categories':
+            return mockCollection([{name: 'bananas', category: 'Food'}]);
+          case 'walmart':
+            return mockCollection(prices);
+        }
+        return emptyCollection;
+      },
+    };
+
+    connectToDatabase.mockResolvedValue({db});
+
+    //Fixme: use a proper mock
+    categoriesMap['Food'] = {
+      "label": "Food",
+      "value": "Food",
+      "cpiu": 100,
+      "cpiw": 100,
+      "level": 2,
+      'parent': ''
+    };
+
+    await handler(req, res);
+
+    expect(res._getStatusCode()).toBe(200);
+    //Fixme: Why parsing twice?
+    expect(JSON.parse(JSON.parse(res._getData()))).toEqual(
+      expect.objectContaining({
+        "inflationInDayPercent": {
+          "2021-10-22": 50,
+        },
+        "country": "US", "type": "cpiu",
+        "inflationOnLastDay": 50,
+        ...params
+      }),
+    );
+  });
+
+
+  test('apply weights', async () => {
+    const params = {
+      from: '2021-10-21',
+      to: '2021-10-22',
+      lat: null,
+      lng: null,
+      radius: null
+    };
+
+    const {req, res} = createMocks({
+      method: 'GET',
+      query: params,
+    });
+
+
+    const prices = [{
+      name: 'bananas',
+      dateTime: parseDateString('21 Oct 2021 1:00:00 GMT'),
+      price: '1'
+    }, {
+      name: 'bananas',
+      dateTime: parseDateString('22 Oct 2021 1:00:00 GMT'),
+      price: '2'
+    }];
+
+    const db = {
+      collection: (name: string) => {
+        switch (name) {
+          case '_categories':
+            return mockCollection([{name: 'bananas', category: 'Food'}]);
+          case 'walmart':
+            return mockCollection(prices);
+        }
+        return emptyCollection;
+      },
+    };
+
+    connectToDatabase.mockResolvedValue({db});
+
+    //Fixme: use a proper mock
+    categoriesMap['Food'] = {
+      "label": "Food",
+      "value": "Food",
+      "cpiu": 50,
+      "cpiw": 50,
+      "level": 2,
+      'parent': ''
+    };
+
+    await handler(req, res);
+
+    expect(res._getStatusCode()).toBe(200);
+    //Fixme: Why parsing twice?
+    expect(JSON.parse(JSON.parse(res._getData()))).toEqual(
+      expect.objectContaining({
+        "inflationInDayPercent": {
+          "2021-10-22": 25,
+        },
+        "country": "US", "type": "cpiu",
+        "inflationOnLastDay": 25,
+        ...params
+      }),
+    );
+  });
+
+
+  test('test basket working', async () => {
+    const params = {
+      from: '2021-10-21',
+      to: '2021-10-22',
+      lat: null,
+      lng: null,
+      radius: null,
+      basket: JSON.stringify(['Food'])
+    };
+
+    const {req, res} = createMocks({
+      method: 'GET',
+      query: params,
+    });
+
+
+    const prices = [{
+      name: 'bananas',
+      dateTime: parseDateString('21 Oct 2021 1:00:00 GMT'),
+      price: '1'
+    }, {
+      name: 'bananas',
+      dateTime: parseDateString('22 Oct 2021 1:00:00 GMT'),
+      price: '2'
+    },
+      {
+        name: 'pants',
+        dateTime: parseDateString('21 Oct 2021 1:00:00 GMT'),
+        price: '1'
+      }, {
+        name: 'pants',
+        dateTime: parseDateString('22 Oct 2021 1:00:00 GMT'),
+        price: '2'
+      }];
+
+    const db = {
+      collection: (name: string) => {
+        switch (name) {
+          case '_categories':
+            return mockCollection([{name: 'bananas', category: 'Food'}, {name: 'pants', category: 'Apparel'}]);
+          case 'walmart':
+            return mockCollection(prices);
+        }
+        return emptyCollection;
+      },
+    };
+
+    connectToDatabase.mockResolvedValue({db});
+
+    //Fixme: use a proper mock
+    categoriesMap['Food'] = {
+      "label": "Food",
+      "value": "Food",
+      "cpiu": 50,
+      "cpiw": 50,
+      "level": 2,
+      'parent': ''
+    };
+
+    categoriesMap['Apparel'] = {
+      "label": "Apparel",
+      "value": "Apparel",
+      "cpiu": 50,
+      "cpiw": 50,
+      "level": 2,
+      'parent': ''
+    };
+
+    await handler(req, res);
+
+    expect(res._getStatusCode()).toBe(200);
+    //Fixme: Why parsing twice?
+    expect(JSON.parse(JSON.parse(res._getData()))).toEqual(
+      expect.objectContaining({
+        "inflationInDayPercent": {
+          "2021-10-22": 25,
+        },
+        "country": "US", "type": "cpiu",
+        "inflationOnLastDay": 25,
+        ...params,
+        basket: JSON.parse(params.basket)
+      }),
+    );
+  });
+
+
+  test('test radius working', async () => {
+    const params = {
+      from: '2021-10-21',
+      to: '2021-10-22',
+      lat: 1,
+      lng: 1,
+      radius: 2,
+    };
+
+    const {req, res} = createMocks({
+      method: 'GET',
+      query: params,
+    });
+
+
+    const prices = [{
+      name: 'bananas',
+      dateTime: parseDateString('21 Oct 2021 1:00:00 GMT'),
+      price: '1',
+      latitude: 1,
+      longitude: 1.
+    }, {
+      name: 'bananas',
+      dateTime: parseDateString('22 Oct 2021 1:00:00 GMT'),
+      price: '2',
+      latitude: 1,
+      longitude: 1.
+    },
+      {
+        name: 'bananas',
+        dateTime: parseDateString('21 Oct 2021 1:00:00 GMT'),
+        price: '1',
+        latitude: 400,
+        longitude: 1.
+      }, {
+        name: 'pants',
+        dateTime: parseDateString('22 Oct 2021 1:00:00 GMT'),
+        price: '20',
+        latitude: 400,
+        longitude: 1.
+      }];
+
+    const db = {
+      collection: (name: string) => {
+        switch (name) {
+          case '_categories':
+            return mockCollection([{name: 'bananas', category: 'Food'}, {name: 'pants', category: 'Apparel'}]);
+          case 'walmart':
+            return mockCollection(prices);
+        }
+        return emptyCollection;
+      },
+    };
+
+    connectToDatabase.mockResolvedValue({db});
+
+    //Fixme: use a proper mock
+    categoriesMap['Food'] = {
+      "label": "Food",
+      "value": "Food",
+      "cpiu": 50,
+      "cpiw": 50,
+      "level": 2,
+      'parent': ''
+    };
+
+    categoriesMap['Apparel'] = {
+      "label": "Apparel",
+      "value": "Apparel",
+      "cpiu": 50,
+      "cpiw": 50,
+      "level": 2,
+      'parent': ''
+    };
+
+    await handler(req, res);
+
+    expect(res._getStatusCode()).toBe(200);
+    //Fixme: Why parsing twice?
+    expect(JSON.parse(JSON.parse(res._getData()))).toEqual(
+      expect.objectContaining({
+        "inflationInDayPercent": {
+          "2021-10-22": 25,
+        },
+        "country": "US", "type": "cpiu",
+        "inflationOnLastDay": 25,
+        ...params
+      }),
+    );
+  });
+
+
+  test('test cpi type is working', async () => {
+    const params = {
+      from: '2021-10-21',
+      to: '2021-10-22',
+      type: 'cpiw',
+    };
+
+    const {req, res} = createMocks({
+      method: 'GET',
+      query: params,
+    });
+
+
+    const prices = [{
+      name: 'bananas',
+      dateTime: parseDateString('21 Oct 2021 1:00:00 GMT'),
+      price: '1',
+    }, {
+      name: 'bananas',
+      dateTime: parseDateString('22 Oct 2021 1:00:00 GMT'),
+      price: '2',
+    }];
+
+    const db = {
+      collection: (name: string) => {
+        switch (name) {
+          case '_categories':
+            return mockCollection([{name: 'bananas', category: 'Food'}, {name: 'pants', category: 'Apparel'}]);
+          case 'walmart':
+            return mockCollection(prices);
+        }
+        return emptyCollection;
+      },
+    };
+
+    connectToDatabase.mockResolvedValue({db});
+
+    //Fixme: use a proper mock
+    categoriesMap['Food'] = {
+      "label": "Food",
+      "value": "Food",
+      "cpiu": 0,
+      "cpiw": 50,
+      "level": 2,
+      'parent': ''
+    };
+
+    await handler(req, res);
+
+    expect(res._getStatusCode()).toBe(200);
+    //Fixme: Why parsing twice?
+    expect(JSON.parse(JSON.parse(res._getData()))).toEqual(
+      expect.objectContaining({
+        "inflationInDayPercent": {
+          "2021-10-22": 25,
+        },
+        "country": "US",
+        "inflationOnLastDay": 25,
+        ...params
       }),
     );
   });

@@ -1,4 +1,4 @@
-import {parseDateString} from "./dates";
+import {parseDateString, isValidDate} from "./dates";
 
 export function runMiddleware(req: any, res: any, fn: any) {
   return new Promise((resolve, reject) => {
@@ -13,15 +13,20 @@ export function runMiddleware(req: any, res: any, fn: any) {
 }
 
 export function tryParse(parse, substitute) {
+  let jsonErr = null;
   try {
     try {
       return JSON.parse(parse);
     } catch (e1) {
-
-      return parseDateString(parse);
+      jsonErr = e1;
+      const date = parseDateString(parse);
+      if(isValidDate(date)) {
+        return date;
+      }
+      throw 'Date is invalid';
     }
   } catch (e) {
-    console.error('Parse error', e);
+    // console.warn('Parse error', e, jsonErr);
     return substitute;
   }
 }
