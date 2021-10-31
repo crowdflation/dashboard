@@ -21,8 +21,10 @@ import data, {default as categories} from '../data/categories';
 
 export async function getServerSideProps() {
   const resultObject = await calculateInflation({});
+  const apiKey: string = (process.env as any).GOOGLE_MAPS_API_KEY as string;
+  console.log('apiKey', apiKey);
   return {
-    props: {resultObject}, // will be passed to the page component as props
+    props: {resultObject, apiKey}, // will be passed to the page component as props
   }
 }
 
@@ -220,7 +222,7 @@ class Inflation extends Component<any, any> {
           <input name='radius' onChange={this.handleChange} value={radius}/>
         </div>
         <div style={{position: 'relative', height: '500px'}}>
-          <MapComponent lat={lat} lng={lng} radius={radius * 1609.34}/>
+          <MapComponent lat={lat} lng={lng} radius={radius * 1609.34} apiKey={this.props.apiKey}/>
         </div>
         <p>Select individual basket of goods:</p>
         <DropdownTreeSelect data={data} onChange={that.onChange.bind(that)} onAction={this.onAction}

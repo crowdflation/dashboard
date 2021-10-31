@@ -1,7 +1,6 @@
 import Head from 'next/head'
 import styles from '../styles/Home.module.css'
 import React, { Component } from 'react'
-import { useRouter } from 'next/router'
 import { Table } from 'semantic-ui-react'
 import _ from 'lodash'
 import axios from 'axios'
