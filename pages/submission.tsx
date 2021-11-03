@@ -24,7 +24,7 @@ const Submission: NextPage = (props) => {
 
       <main className={styles.main}>
         <h1 className={styles.title}>
-          Welcome to Crowdflation Inc submission for the 1729 Inflation Dashboard challenge.
+          Welcome to Crowdflation Inc <br/>Submission for the 1729 Inflation Dashboard challenge.
         </h1>
 
         <h2>The following video introduces our approach</h2>

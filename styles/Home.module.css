@@ -87,6 +87,8 @@
 .title a {
   color: #0070f3;
   text-decoration: none;
+  margin-left: 20px;
+  margin-right: 20px;
 }
 
 .title a:hover,
