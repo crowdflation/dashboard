@@ -247,9 +247,6 @@ class Data extends Component {
 
     return (
       <div className={styles.container}>
-        <Head>
-          <title>Untitled Inflation Calculation Group Dashboard - DATA</title>
-        </Head>
         <p>Vendor:{this.getVendor()}</p>
         {vendorsComp}
         <p><a href="https://docs.mongodb.com/manual/reference/method/db.collection.find/" target="_blank" rel="noreferrer">Find</a> example: <pre>&#123;&quot;price&quot;: &quot;$2.99&quot;&#125;</pre></p>
