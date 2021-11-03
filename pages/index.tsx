@@ -12,16 +12,18 @@ const Home: NextPage = () => {
 
       <main className={styles.main}>
         <h1 className={styles.title}>
-          Welcome to Crowdflation Inc - a better Inflation Calculation Dashboard Page.
+          Welcome to Crowdflation Inc
         </h1>
+
+        <h2>Better Inflation Calculation Dashboard Page</h2>
 
         <iframe width="560" height="315" src="https://www.youtube.com/embed/AidIdovi7ok" title="Crowdflation Community"
                 frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen></iframe>
 
-        <p>
-          Check out the <Link href='/inflation'>FAQ here </Link>
+        <p className={styles.description}>
+          Check out the <Link href='/faq'>FAQ here </Link>
         </p>
 
         <p className={styles.description}>
