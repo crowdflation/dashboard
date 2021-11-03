@@ -23,7 +23,7 @@ import AccordionDetails from '@mui/material/AccordionDetails';
 import Typography from '@mui/material/Typography';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Image from "next/dist/client/image";
-import Button from "@mui/material/Button/Button";
+import Button from "@mui/material/Button";
 import CachedIcon from '@mui/icons-material/Cached';
 
 
