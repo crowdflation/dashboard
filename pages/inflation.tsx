@@ -226,7 +226,7 @@ class Inflation extends Component<any, any> {
             <Typography>Area</Typography>
           </AccordionSummary>
           <AccordionDetails>
-            <div>
+            <div className={styles.inputs}>
               <span className={styles.error}>{errors && errors["lng"]}</span>
               <p>Area to calculate inflation in (US only for now):</p>
               <span>Longitude</span>
