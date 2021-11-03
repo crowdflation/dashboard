@@ -25,6 +25,9 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Image from "next/dist/client/image";
 import Button from "@mui/material/Button";
 import CachedIcon from '@mui/icons-material/Cached';
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@material-ui/core/Select";
 
 
 
@@ -51,7 +54,7 @@ class Inflation extends Component<any, any> {
       lat: 37.09024,
       lng: -95.712891,
       radius: 1900,
-      basket: [],
+      basket: ['Food and beverages', 'Housing', 'Apparel', 'Transportation', 'Medical care', 'Recreation', 'Education and communication', 'Other goods and services'],
     };
 
     this.handleChange = this.handleChange.bind(this);
@@ -216,7 +219,18 @@ class Inflation extends Component<any, any> {
 
     chart = (
       <div style={{width: '100%'}} className={styles.inflation}>
-        <h2>USA Inflation <div  className={styles["header-image"]}><Image src='/usa-flag.png' width='20px' height='20px'/></div> - {inflationOnLastDay || 0}% compared to last day</h2>
+        <h2> <div  className={styles["header-image"]}><Image src='/usa-flag.png' width='20px' height='20px'/></div>
+          <Select
+            labelId="demo-simple-select-label"
+            id="demo-simple-select"
+            label="Country"
+            defaultValue={10}
+            className={styles["MuiSelect-select"]}
+          >
+            <MenuItem value={10}>USA</MenuItem>
+            <MenuItem value={20} disabled={true}>More Countries Coming Soon...</MenuItem>
+          </Select> {' '}
+          Inflation - {inflationOnLastDay || 0}% compared to last day</h2>
         <Accordion>
           <AccordionSummary
             expandIcon={<ExpandMoreIcon />}

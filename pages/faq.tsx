@@ -3,7 +3,7 @@ import Head from 'next/head'
 import Link from 'next/link'
 import styles from '../styles/Home.module.css'
 
-const Home: NextPage = () => {
+const FAQ: NextPage = () => {
   return (
     <div className={styles.container}>
       <Head>
@@ -12,7 +12,7 @@ const Home: NextPage = () => {
 
       <main className={styles.main}>
         <h1 className={styles.title}>
-          Welcome to Crowdflation FAQ.
+          Crowdflation FAQ
         </h1>
         <h2>
           What do you do?
@@ -49,4 +49,4 @@ const Home: NextPage = () => {
   )
 }
 
-export default Home
+export default FAQ

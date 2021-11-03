@@ -36,7 +36,11 @@
   color: #011DB4;
 }
 
-
+.MuiSelect-select {
+  font-size: 1.71428571rem !important;
+  padding-bottom: 0  !important;
+  margin-right: 5px;
+}
 
 .inflation h2 {
   display: flex;
@@ -51,6 +55,7 @@
   flex-direction: row;
   justify-content: center;
   padding: 5px;
+  margin:10px !important;
 }
 
 .inputs input {
