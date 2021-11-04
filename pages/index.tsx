@@ -31,7 +31,7 @@ const Home: NextPage = () => {
         </p>
 
         <p className={styles.description}>
-          We mine data by using browser extension. You can download it here: <a href="https://www.dropbox.com/s/jpedyk5hoz18ct8/alphaCheap.zip?dl=1">Alpha Cheap</a>.
+          We mine data by using browser extension. You can download it here: <a href="https://www.dropbox.com/s/jpedyk5hoz18ct8/alphaCheap.zip?dl=1">Alpha Cheap</a>. You will need to load it as unpacked in development mode.
         </p>
         <p className={styles.description}>
           Check out our inflation calculation for the US: <Link href='/inflation'>Dashboard Page </Link>
