@@ -5,6 +5,7 @@ import FAQ from "./faq";
 import Inflation from "./inflation";
 import {calculateInflation} from "./api/inflation";
 import Link from "next/dist/client/link";
+import Code from "./code";
 
 
 export async function getServerSideProps() {
@@ -40,7 +41,7 @@ const Submission: NextPage = (props) => {
 
           <p>In our current iteration, only the U.S. is seen. We have built this through the scraping of major websites and channels that could reflect how prices are behaving.</p>
 
-          <p>A weakness of the approach we have constructed is in &lsquo;offline&rsquo; prices and in determining sentiment. However we are planning to develop a mobile app for capturing offline data. Sentiment can also be constructed via voting behaviours which would help account for this factor.</p>
+          <p>A weakness of the approach we have constructed is in &lsquo;offline&rsquo; prices and in determining sentiment. However we are planning to develop a mobile app for capturing offline data. Sentiment can also be constructed via voting/betting behaviours which would help account for this factor and create a more granular futures market.</p>
 
         </div>
         <h2>Our Approach Explained Via 80 Second Video</h2>
@@ -55,10 +56,11 @@ const Submission: NextPage = (props) => {
 
 
         <h2>
-          The Future of Crowdflation & FAQ
+          The Future of Crowdflation Inc & FAQ
         </h2>
-        <p className={styles.description}>You can check out our presentation <a href={'https://www.dropbox.com/s/fhf04mvmuv4elkk/Crowdflation%20Inc.%20Deck.pdf?dl=0'} target={'_blank'} rel="noreferrer">here</a></p>
+        <p className={styles.description}>You can check out our presentation about our company <a href={'https://www.dropbox.com/s/fhf04mvmuv4elkk/Crowdflation%20Inc.%20Deck.pdf?dl=0'} target={'_blank'} rel="noreferrer">here</a></p>
         <FAQ untitled={true}/>
+        <Code untitled={true}/>
       </main>
 
     </div>

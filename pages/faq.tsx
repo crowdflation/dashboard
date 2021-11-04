@@ -26,7 +26,7 @@ const FAQ: NextPage = (props) => {
           How do you obtain data?
         </h2>
         <p className={styles.description}>
-          We mine data by using browser extension. You can download it here: <a href="https://www.dropbox.com/s/155x185mfas7u4z/alphaCheap.crx?dl=1">Alpha Cheap</a>.
+          We mine data by using browser extension. You can download it here: <a href="https://www.dropbox.com/s/jpedyk5hoz18ct8/alphaCheap.zip?dl=1">Alpha Cheap</a>.
         </p>
         <h2>
           Where can I find raw uploaded data?

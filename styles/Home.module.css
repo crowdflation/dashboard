@@ -32,7 +32,7 @@
 .header {
   display: grid;
   padding: 0 5rem;
-  grid-template-columns: 1fr 200px;
+  grid-template-columns: 1fr 280px;
 }
 
 @import url('http://fonts.cdnfonts.com/css/iceberg');
@@ -167,6 +167,12 @@
 .card h2 {
   margin: 0 0 1rem 0;
   font-size: 1.5rem;
+}
+
+.code {
+  font: inherit;
+  text-align: left;
+  justify-content: start;
 }
 
 .card p {

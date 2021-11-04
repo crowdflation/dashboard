@@ -31,10 +31,13 @@ const Home: NextPage = () => {
         </p>
 
         <p className={styles.description}>
-          We mine data by using browser extension. You can download it here: <a href="https://www.dropbox.com/s/155x185mfas7u4z/alphaCheap.crx?dl=1">Alpha Cheap</a>.
+          We mine data by using browser extension. You can download it here: <a href="https://www.dropbox.com/s/jpedyk5hoz18ct8/alphaCheap.zip?dl=1">Alpha Cheap</a>.
         </p>
         <p className={styles.description}>
           Check out our inflation calculation for the US: <Link href='/inflation'>Dashboard Page </Link>
+        </p>
+        <p className={styles.description}>
+          All of our code is open source as is available on github: <a href={'https://github.com/crowdflation'}>https://github.com/crowdflation</a>
         </p>
         <p className={styles.description}>
           You can look at the uploaded data here: <Link href='/data'>Data Page </Link>

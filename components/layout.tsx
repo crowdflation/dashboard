@@ -43,6 +43,7 @@ export class Layout extends Component {
             <Tabs value={value} onChange={this.handleChange} aria-label="nav tabs example">
               <LinkTab label="Dashboard" href="/inflation" />
               <LinkTab label="FAQ" href="/faq" />
+              <LinkTab label="Code" href="/code" />
             </Tabs>
           </div>
         </div>
