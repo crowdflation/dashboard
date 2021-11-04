@@ -16,7 +16,7 @@ const Code: NextPage<Untitlable> = (props:Untitlable) => {
     <div className={styles.container}>
       <Head>
         <title>Crowdflation - Crowdsourced Inflation Calculation Group Dashboard</title>
-        <link rel='stylesheet' href='https://highlightjs.org/static/demo/styles/railscasts.css'/>
+        <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.2/styles/railscasts.min.css'/>
       </Head>
 
       <main className={styles.main}>
