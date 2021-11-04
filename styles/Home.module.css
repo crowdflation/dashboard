@@ -4,12 +4,17 @@
 
 .container {
   min-height: 100vh;
-  padding: 0 0.5rem;
+  padding: 0 5rem;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
 }
+
+.container p {
+  text-align: left;
+}
+
 
 .main {
   padding: 5rem 0;
@@ -26,13 +31,21 @@
 
 .header {
   display: grid;
+  padding: 0 5rem;
   grid-template-columns: 1fr 200px;
 }
 
+@import url('http://fonts.cdnfonts.com/css/iceberg');
+
+
 .header h1 {
   font-size: x-large;
-  padding: 18px;
-  font-weight: 900;
+  padding: 18px 0;
+  font-family: Iceberg;
+  font-style: normal;
+  font-weight: normal;
+  font-size: 32px;
+  line-height: 39px;
   color: #011DB4;
 }
 
@@ -75,6 +88,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 0 5rem;
 }
 
 .footer a {

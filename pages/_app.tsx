@@ -11,7 +11,7 @@ function MyApp({ Component, pageProps }: AppProps) {
     <Layout>
       <Component {...pageProps} />
     </Layout>
-    <footer className={styles.footer}>Powered by sheer willpower. ©Crowdflation Inc. 2021. All rights Reserved.
+    <footer className={styles.footer}>©Crowdflation Inc. 2021. All rights Reserved.
   </footer></div>);
 }
 

@@ -12,10 +12,10 @@ const Home: NextPage = () => {
 
       <main className={styles.main}>
         <h1 className={styles.title}>
-          Welcome to Crowdflation Inc
+          Welcome to the Crowdflation Community
         </h1>
 
-        <h2>Better Inflation Calculation Dashboard Page</h2>
+        <h2>Transparent & Decentralised Inflation Dashboard Page</h2>
 
         <iframe width="560" height="315" src="https://www.youtube.com/embed/AidIdovi7ok" title="Crowdflation Community"
                 frameBorder="0"

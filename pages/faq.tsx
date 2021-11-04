@@ -3,7 +3,7 @@ import Head from 'next/head'
 import Link from 'next/link'
 import styles from '../styles/Home.module.css'
 
-const FAQ: NextPage = () => {
+const FAQ: NextPage = (props) => {
   return (
     <div className={styles.container}>
       <Head>
@@ -11,9 +11,11 @@ const FAQ: NextPage = () => {
       </Head>
 
       <main className={styles.main}>
-        <h1 className={styles.title}>
+        {!(props as any).untitled?(
+          < h1 className={styles.title}>
           Crowdflation FAQ
-        </h1>
+          </h1>):null
+        }
         <h2>
           What do you do?
         </h2>
