@@ -47,12 +47,12 @@ const Code: NextPage<Untitlable> = (props:Untitlable) => {
           <p>We first initialize the request itself, by passing the <em>jobId</em> and the address of the caller contract,
             which is our contract, the one we are using to perform the call to the oracle. Here we also pass
             the <code>fulfill</code> function, which is defined later in the contract. This function would be instead
-            called by the oracle to know how and where to sent the data it has previously retrieved.</p>
+            called by the oracle to know how and where to send the data it has previously retrieved.</p>
           <p>We then define what url should be called to fetch the data, and how that data should be parsed before return
             it back on-chain. To make sure the value we are operating with doesn&#39;t get rounded, we multiply it by a
             large number. </p>
           <p>The <code>fulfill</code> function, as previously mentioned, is a function defined inside our contract but
-            that would be used by the oracle as the way to pass the data it has retrieved off-chian to the contract
+            that would be used by the oracle as the way to pass the data it has retrieved off-chain to the contract
             on-chain - and in this case, to store the data in the <em>lastDayValue</em> variable. </p>
           <h2 id="more-info">MORE INFO</h2>
           <p>For more information or additional tutorial, please refer to the Chainlink Documentation <a

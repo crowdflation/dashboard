@@ -36,7 +36,7 @@ const Submission: NextPage = (props) => {
             is a project born out of the 1729 challenge.</p>
 
           <p>As described on the page of the 1729 challenge, inflation is a monetary phenomenon that is both a function of
-            money printing and the mass psychology of people&rsquo;s beliefs on the the direction of how goods and
+            money printing and the mass psychology of people&rsquo;s beliefs on the direction of how goods and
             services
             will be priced. In certain circumstances and certain places such as Argentina and Venezuela, discussion of
             inflation may be censored for this reason. Other countries such as Afghanistan might attempt to ban all

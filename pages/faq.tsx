@@ -77,21 +77,21 @@ const FAQ: NextPage<Untitlable> = (props:Untitlable) => {
             Do you offer an API for your data?
           </h2>
           <p className={styles.description}>
-            If you want to get the raw data, you can use this base url `&apos;`https://www.crowdflation.io/api/vendors/&#123;vendor_name&#125;`&apos;` and replace the *&#123;vendor_name&#125;* with whichever vendor you are interested in.<br/>
+            If you want to get the raw data, you can use this base url &apos;https://www.crowdflation.io/api/vendors/&#123;vendor_name&#125;&apos; and replace the *&#123;vendor_name&#125;* with whichever vendor you are interested in.<br/>
             You will get a JSON containing the all the data scraped from the vendor you selected.
           </p>
           <h2>
             What does this chart/plot/dashboard exactly show?
           </h2>
           <p className={styles.description}>
-            The dashboard shows an estimate of the inflation happening at any given point in time, for the geographic area and the time-period selected. So, when you select a region and a certain period, the dashboard will display a measure of the inflation over that period in that region. Positive values means that inflation is likely occurringoccuring, and negative values represent a deflationary trend. If the line stays flat, i.e. the values are zeros, this indicates that neither an increase nor a decrease in prices was detected.
+            The dashboard shows an estimate of the inflation happening at any given point in time, for the geographic area and the time-period selected. So, when you select a region and a certain period, the dashboard will display a measure of the inflation over that period in that region. Positive values means that inflation is likely occurring, and negative values represent a deflationary trend. If the line stays flat, i.e. the values are zeros, this indicates that neither an increase nor a decrease in prices was detected.
             Please, always keep in mind that the value displayed/provided by the dashboard is an estimate/measure, and that measure can only be as good as the underlying data is based on. Moreover, that measure is as informative and reflective
           </p>
           <h2>
             How is the inflation estimate/measure calculated?
           </h2>
           <p className={styles.description}>
-            The exact method we use to calculate the measure is at the moment quite simplistic and primitive, but still effective in providing a correct idea of what`&apos;`s happening.
+            The exact method we use to calculate the measure is at the moment quite simplistic and primitive, but still effective in providing a correct idea of what&apos;s happening.
             In more detail, we currently just detect fluctuations in prices of the same product. So if we have a price for a particular type of tomatoes at time T, and then we get a new price for that exact type of tomatoes at time T+1, we use these two prices taken at different points in time to detect and calculate what has been the change (positive, negative or no change) over that time-period.
             As always, if you want to verify it yourself, you can consult the source source for this <a href='https://github.com/crowdflation/dashboard/blob/main/pages/api/inflation.ts' target='_blank' rel="noreferrer">here</a>          </p>
           <h2>
