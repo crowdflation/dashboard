@@ -3,7 +3,6 @@
 }
 
 .container {
-  min-height: 100vh;
   padding: 0 5rem;
   display: flex;
   flex-direction: column;
@@ -17,7 +16,7 @@
 
 
 .main {
-  padding: 5rem 0;
+  padding: 1rem 0;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -50,7 +49,7 @@
 }
 
 .MuiSelect-select {
-  font-size: 1.71428571rem !important;
+  font-size: 1.6rem !important;
   padding-bottom: 0  !important;
   margin-right: 5px;
 }
@@ -60,6 +59,24 @@
   align-items: center;
   flex-direction: row;
   justify-content: center;
+}
+
+.container h3 {
+  font-size: 1.6rem !important;
+}
+
+.inflation h3 {
+  font-size: 1.6rem !important;
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  justify-content: center;
+}
+
+
+
+.submission h3 {
+  font-size: 1.6rem;
 }
 
 .recalculateButton {

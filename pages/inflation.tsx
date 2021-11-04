@@ -219,7 +219,7 @@ class Inflation extends Component<any, any> {
 
     chart = (
       <div style={{width: '100%'}} className={styles.inflation}>
-        <h2> <div  className={styles["header-image"]}><Image src='/usa-flag.png' width='20px' height='20px' alt={'USA Flag'}/></div>
+        <h3> <div  className={styles["header-image"]}><Image src='/usa-flag.png' width='20px' height='20px' alt={'USA Flag'}/></div>
           <Select
             labelId="demo-simple-select-label"
             id="demo-simple-select"
@@ -230,7 +230,7 @@ class Inflation extends Component<any, any> {
             <MenuItem value={10}>USA</MenuItem>
             <MenuItem value={20} disabled={true}>More Countries Coming Soon...</MenuItem>
           </Select> {' '}
-          Inflation - {inflationOnLastDay || 0}% compared to last day</h2>
+          Inflation - {inflationOnLastDay || 0}% compared to last day</h3>
         <Accordion>
           <AccordionSummary
             expandIcon={<ExpandMoreIcon />}

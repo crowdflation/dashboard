@@ -84,7 +84,7 @@ const Submission: NextPage = (props) => {
       <h2>
         The Future of Crowdflation Inc & FAQ
       </h2>
-      <p className={styles.description}>You can check out our presentation about our company <a
+      <p className={styles.description}>You can check out the presentation about our company <a
         href={'https://www.dropbox.com/s/fhf04mvmuv4elkk/Crowdflation%20Inc.%20Deck.pdf?dl=0'} target={'_blank'}
         rel="noreferrer">here</a></p>
       <FAQ untitled={true}/>

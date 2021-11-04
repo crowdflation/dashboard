@@ -26,7 +26,7 @@ const Code: NextPage<Untitlable> = (props:Untitlable) => {
           </h1>) : null
         }
         <div className={styles.description}>
-          <h2 id="a-consumer-contract-example">A CONSUMER CONTRACT EXAMPLE</h2>
+          <h2 id="a-consumer-contract-example">A Consumer Contract Example</h2>
           <p>The following contract is an example of how you can, in a very simple way, bring data on-chain from our
             dashboard.
             We are showing this contract just as a demonstration of how data can be brought on-chain in a consumer
@@ -37,7 +37,7 @@ const Code: NextPage<Untitlable> = (props:Untitlable) => {
             {content}
           </Highlight>
 
-          <h3 id="the-contract">THE CONTRACT</h3>
+          <h3 id="the-contract">The Contract</h3>
           <p>In the <code>constructor</code> function, we set the oracle address and the appropriate <em>jobId</em>, so
             that the chainlink protocol knows which node we want to send our request to, and additionally with
             the <em>jobId</em> we tell the node which job has to be run to carry out our request successfully.
@@ -51,14 +51,13 @@ const Code: NextPage<Untitlable> = (props:Untitlable) => {
           <p>We then define what url should be called to fetch the data, and how that data should be parsed before return
             it back on-chain. To make sure the value we are operating with doesn&#39;t get rounded, we multiply it by a
             large number. </p>
-          <p>The <code>fulfill</code> function, as previously mentioned, is a function defined inside our contract but
-            that would be used by the oracle as the way to pass the data it has retrieved off-chain to the contract
+          <p>The <code>fulfill</code> function would be used by the oracle as the way to pass the data it has retrieved off-chain to the contract
             on-chain - and in this case, to store the data in the <em>lastDayValue</em> variable. </p>
-          <h2 id="more-info">MORE INFO</h2>
+          <h2 id="more-info">More Information</h2>
           <p>For more information or additional tutorial, please refer to the Chainlink Documentation <a
             href="https://docs.chain.link" target={'_blank'} rel="noreferrer">page</a>, where you can also find a very similar <a
             href="https://docs.chain.link/docs/advanced-tutorial/" target={'_blank'} rel="noreferrer">example</a> to the one we just showed.</p>
-          <h2 id="final-note">FINAL NOTE</h2>
+          <h2 id="final-note">Final Note</h2>
           <p>
             As stated at the before, this example does not represent the ultimate way we imagine to bring accurate inflation
             data reliably on-chain.</p>
