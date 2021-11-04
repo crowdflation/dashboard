@@ -38,7 +38,7 @@ const Home: NextPage = () => {
           Check out our inflation calculation for the US: <Link href='/inflation'>Dashboard Page </Link>
         </p>
         <p className={styles.description}>
-          All of our code is open source as is available on github: <a href={'https://github.com/crowdflation'}>https://github.com/crowdflation</a>
+          All of our code is open source as is available on <a href={'https://github.com/crowdflation'}>GitHub</a>
         </p>
         <p className={styles.description}>
           You can look at the uploaded data here: <Link href='/data'>Data Page </Link>
