@@ -34,8 +34,6 @@
   grid-template-columns: 1fr 280px;
 }
 
-@import url('http://fonts.cdnfonts.com/css/iceberg');
-
 
 .header h1 {
   font-size: x-large;

@@ -45,7 +45,7 @@ const Home: NextPage = () => {
           You can look at the uploaded data here: <Link href='/data'>Data Page </Link>
         </p>
       </main>
-      <p>This page was built with <a href="https://nextjs.org/" target={'_blank'}>Next.JS</a></p>
+      <p>This page was built with <a href="https://nextjs.org/" target={'_blank'} rel="noreferrer">Next.JS</a></p>
       <br/>
     </div>
   )

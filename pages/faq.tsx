@@ -81,19 +81,20 @@ const FAQ: NextPage<Untitlable> = (props:Untitlable) => {
             You will get a JSON containing the all the data scraped from the vendor you selected.
           </p>
           <h3>
-            What does this chart/plot/dashboard exactly show?
+            What does this dashboard exactly show?
           </h3>
           <p className={styles.description}>
-            The dashboard shows an estimate of the inflation happening at any given point in time, for the geographic area and the time-period selected. So, when you select a region and a certain period, the dashboard will display a measure of the inflation over that period in that region. Positive values means that inflation is likely occurring, and negative values represent a deflationary trend. If the line stays flat, i.e. the values are zeros, this indicates that neither an increase nor a decrease in prices was detected.
-            Please, always keep in mind that the value displayed/provided by the dashboard is an estimate/measure, and that measure can only be as good as the underlying data is based on. Moreover, that measure is as informative and reflective
+            The dashboard shows an estimate of the inflation happening at any given point in time, for the geographic area and the time-period selected. So, when you select a region and a certain period, the dashboard will display a measure of the inflation over that period in that region. Positive values means that inflation is likely occurring, and negative values represent a deflationary trend. If the line stays flat, i.e. the values are zeros, this indicates that neither an increase nor a decrease in prices was detected.<br/>
+            Please, always keep in mind that the values provided by the dashboard are estimates, and those estimates can only be as good as the underlying data they are based on.
           </p>
           <h3>
-            How is the inflation estimate/measure calculated?
+            How is the measurement of the inflation exactly calculated?
           </h3>
           <p className={styles.description}>
-            The exact method we use to calculate the measure is at the moment quite simplistic and primitive, but still effective in providing a correct idea of what&apos;s happening.
+            The exact method we use to calculate the measure of the inflation is at the moment quite simplistic and primitive, but still effective in providing a correct idea of what&apos;s happening.
             In more detail, we currently just detect fluctuations in prices of the same product. So if we have a price for a particular type of tomatoes at time T, and then we get a new price for that exact type of tomatoes at time T+1, we use these two prices taken at different points in time to detect and calculate what has been the change (positive, negative or no change) over that time-period.
-            As always, if you want to verify it yourself, you can consult the source code for this <a href='https://github.com/crowdflation/dashboard/blob/main/pages/api/inflation.ts' target='_blank' rel="noreferrer">here</a>          </p>
+            As always, if you want to verify it yourself, you can consult the source source for this <a href='https://github.com/crowdflation/dashboard/blob/main/pages/api/inflation.ts' target='_blank' rel="noreferrer">here</a>
+            We are planning to update our method to a much more informative and robust one, such as the one used in CPI, in the very near future, as soon as we expand the scraping of raw data to a few new categories of products and services. </p>
           <h3>
             Can you clarify what does &quot;decentralized&quot; means ?
           </h3>

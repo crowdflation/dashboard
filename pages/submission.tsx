@@ -30,12 +30,9 @@ const Submission: NextPage = (props) => {
 
       <div className={styles.container}>
         <div className={styles.description}>
-
-          <p>Over the past few months, a few of us have worked on the 1729 Decentralized Inflation Dashboard challenge.
-            This
-            is a project born out of the 1729 challenge.</p>
-
-          <p>As described on the page of the 1729 challenge, inflation is a monetary phenomenon that is both a function of
+          <p>This is a project born out of the 1729 challenge. Due to our passion for Blockchain solutions, a team of us
+            has organised to answer it in a best way we can. As described on the page of the 1729 challenge, inflation
+            is a monetary phenomenon that is both a function of
             money printing and the mass psychology of people&rsquo;s beliefs on the direction of how goods and
             services
             will be priced. In certain circumstances and certain places such as Argentina and Venezuela, discussion of
@@ -48,8 +45,10 @@ const Submission: NextPage = (props) => {
           <p>We have decided to help counter censorship efforts by governments and other entities by building a
             decentralised inflation dashboard and data-source. To build a decentralised inflation data source, we have
             taken
-            the approach of creating an incentive mechanism in which to crowdsource the relevant pricing data to calculate
-            inflation. This is currently done through a browser extension we created: Alpha Cheap. You can download it on
+            the approach of creating an incentive mechanism in which to crowdsource the relevant pricing data to
+            calculate
+            inflation. This is currently done through a browser extension we created: Alpha Cheap. You can download it
+            on
             our <Link href='/'>Home Page</Link></p>
 
           <p>We have built a technology in which an individual may contribute pricing data of their &lsquo;local
@@ -64,7 +63,8 @@ const Submission: NextPage = (props) => {
 
           <p>A weakness of the approach we have constructed is in &lsquo;offline&rsquo; prices and in determining
             sentiment.
-            However we are planning to develop a mobile app for capturing offline data. Sentiment can also be constructed
+            However we are planning to develop a mobile app for capturing offline data. Sentiment can also be
+            constructed
             via voting/betting behaviours which would help account for this factor and create a more granular futures
             market.</p>
 
