@@ -93,7 +93,7 @@ const FAQ: NextPage<Untitlable> = (props:Untitlable) => {
           <p className={styles.description}>
             The exact method we use to calculate the measure is at the moment quite simplistic and primitive, but still effective in providing a correct idea of what&apos;s happening.
             In more detail, we currently just detect fluctuations in prices of the same product. So if we have a price for a particular type of tomatoes at time T, and then we get a new price for that exact type of tomatoes at time T+1, we use these two prices taken at different points in time to detect and calculate what has been the change (positive, negative or no change) over that time-period.
-            As always, if you want to verify it yourself, you can consult the source source for this <a href='https://github.com/crowdflation/dashboard/blob/main/pages/api/inflation.ts' target='_blank' rel="noreferrer">here</a>          </p>
+            As always, if you want to verify it yourself, you can consult the source code for this <a href='https://github.com/crowdflation/dashboard/blob/main/pages/api/inflation.ts' target='_blank' rel="noreferrer">here</a>          </p>
           <h3>
             Can you clarify what does &quot;decentralized&quot; means ?
           </h3>
