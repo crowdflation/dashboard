@@ -96,7 +96,7 @@ const FAQ: NextPage<Untitlable> = (props:Untitlable) => {
             As always, if you want to verify it yourself, you can consult the source source for this <a href='https://github.com/crowdflation/dashboard/blob/main/pages/api/inflation.ts' target='_blank' rel="noreferrer">here</a>
             We are planning to update our method to a much more informative and robust one, such as the one used in CPI, in the very near future, as soon as we expand the scraping of raw data to a few new categories of products and services. </p>
           <h3>
-            Can you clarify what does &quot;decentralized&quot; means ?
+            Can you clarify what does &quot;decentralized&quot; mean ?
           </h3>
           <p className={styles.description}>
             We aim to enable building a network of multiple nodes that will be gathering data independently from each other, which means that there will be no central entity that can exert control on anybody else. A node can be added or removed from the network without affecting the entire network as a whole.
