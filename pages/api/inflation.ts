@@ -2,7 +2,8 @@ import { connectToDatabase } from "../../lib/util/mongodb";
 import {NextApiRequest, NextApiResponse} from "next";
 import _ from 'lodash';
 import { runMiddleware, tryParse } from '../../lib/util/middleware';
-import { getDates, formatDate } from '../../lib/util/dates';
+import { getPrevDay, getDates, formatDate } from '../../lib/util/dates';
+import { sha256 } from 'js-sha256';
 import Cors from 'cors';
 import categoriesMap from '../../data/map';
 
@@ -115,10 +116,34 @@ export async function calculateInflation(query) {
   d.setMonth(d.getMonth() - 1);
 
   const from = tryParse(query.from, d);
-  const to = tryParse(query.to, new Date());
+  const algorithmVersion = 1;
+  const cacheCollection = '_cacheInflationResults';
+  const prevDay = getPrevDay(new Date());
+  let to = tryParse(query.to, prevDay);
+
+  if(to>prevDay) {
+    to = prevDay;
+    query.to = formatDate(to);
+  }
+
   const dates = getDates(from, to);
   if (dates.length <= 1) {
-    throw new Error('Dates range should contain at least 2 days');
+    throw new Error(`Dates range should contain at least 2 days, got ${from} ${to}`);
+  }
+
+  const maxDates = process.env.MAX_DATES_CALCULATION || 90;
+
+  if (dates.length > maxDates) {
+    throw new Error(`Dates range should contain no more than ${maxDates} days, but it contains ${dates.length}`);
+  }
+
+  // TODO: caching by each item as well as whole query
+  const queryHash = sha256(JSON.stringify(query));
+  const result = await db.collection(cacheCollection)
+    .findOne({queryHash, algorithmVersion});
+
+  if(result) {
+    return result.dataObj;
   }
 
   const latitude = tryParse(query.lat, null);
@@ -128,7 +153,7 @@ export async function calculateInflation(query) {
     type = 'cpiu';
   }
 
-    let distance = tryParse(query.radius, null);
+  let distance = tryParse(query.radius, null);
   const categoriesLimit = tryParse(query.basket, null);
 
   let distanceMiles: any = null;
@@ -251,6 +276,11 @@ export async function calculateInflation(query) {
     inflationOnLastDay: inflationInDayPercent[dates[dates.length - 1]],
     type
   };
+
+  db.collection(cacheCollection).insertOne({queryHash, algorithmVersion, dataObj}).catch((ex) => {
+    console.error('Failed to cache item for query', query);
+  });
+
   return dataObj;
 }
 

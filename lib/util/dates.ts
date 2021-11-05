@@ -11,6 +11,10 @@ export function getDates(startDate, stopDate) {
   return dateArray;
 }
 
+export function getPrevDay(date) {
+  return date.setDate(date.getDate() + 1);
+}
+
 export function formatDate(date) {
   date.setHours(12);
   return date.toISOString().slice(0, 10);
