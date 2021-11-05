@@ -83,7 +83,9 @@ class Inflation extends Component<any, any> {
 
 
   showFromMonth() {
-    const {from, to} = this.state as any;
+    let {from, to} = this.state as any;
+    from = new Date(from);
+    to = new Date(to);
     if (!from) {
       return;
     }
