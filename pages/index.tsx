@@ -16,7 +16,7 @@ const Home: NextPage = () => {
           Welcome to the Crowdflation Community
         </h1>
 
-        <h2>Transparent & Decentralised Inflation Dashboard Page</h2>
+        <h2>Transparent & decentralized Inflation Dashboard Page</h2>
 
         <iframe width="560" height="315" src="https://www.youtube.com/embed/AidIdovi7ok" title="Crowdflation Community"
                 frameBorder="0"
@@ -33,7 +33,7 @@ const Home: NextPage = () => {
         </p>
 
         <p className={styles.description}>
-          We mine data by using browser extension. You can download it here: <a href="https://www.dropbox.com/s/jpedyk5hoz18ct8/alphaCheap.zip?dl=1">Alpha Cheap</a>. You will need to load it as unpacked in development mode.
+          We mine data by using a browser extension. You can download it here: <a href="https://www.dropbox.com/s/jpedyk5hoz18ct8/alphaCheap.zip?dl=1">Alpha Cheap</a>. You will need to load it as unpacked in development mode.
         </p>
         <p className={styles.description}>
           Check out our inflation calculation for the US: <Link href='/inflation'>Dashboard Page </Link>
