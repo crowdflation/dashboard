@@ -23,6 +23,11 @@ const mockCollection = (items) => {
     },
     toArray: () => {
       return items;
+    },
+    insertOne: () => {
+      return mocked;
+    },
+    catch: () => {
     }
   }
   return mocked;

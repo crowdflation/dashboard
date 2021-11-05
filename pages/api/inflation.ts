@@ -96,7 +96,10 @@ function findPrevPrice(i, pricesByDate, dates, key, productPrices, pricesByCateg
     const prevPricesMean = _.mean(prev[key].map((i) => i.price));
 
     const category = getCategory(productPrices[0].vendor, productPrices[0].name, categoryByProduct) as string;
+
+    // console.log('category', category, productPrices[0].name);
     if (categoriesLimitObject && !findParent(category, categoriesLimitObject)) {
+      // console.log('Ignoring');
       return;
     }
 
@@ -107,6 +110,41 @@ function findPrevPrice(i, pricesByDate, dates, key, productPrices, pricesByCateg
     pricesByCategory[category].push({currPricesMean, prevPricesMean});
     return;
   }
+}
+
+async function storePricesByDate(prices, latitude, longitude, distanceMiles: any, pricesByDate, vendor) {
+  prices.forEach((price) => {
+    if (latitude && longitude && distanceMiles) {
+      //Skip item with no location data
+      if (!price.longitude || !price.latitude) {
+        return;
+      } else {
+        const distanceCalculated = calcCrow(price.latitude, price.longitude, latitude, longitude);
+        if (distanceCalculated > distanceMiles) {
+          //Measurement too far away
+          return;
+        }
+      }
+    }
+
+    const priceDate = formatDate(price.dateTime);
+    if (!pricesByDate[priceDate]) {
+      pricesByDate[priceDate] = {};
+    }
+
+    const productKey = vendor + '-' + price.name;
+    if (!pricesByDate[priceDate][productKey]) {
+      pricesByDate[priceDate][productKey] = [];
+    }
+
+    const priceFloat = getFloat(price.price);
+    if (!priceFloat) {
+      return;
+    }
+
+    pricesByDate[priceDate][productKey].push({vendor, name: price.name, price: priceFloat});
+  });
+  return;
 }
 
 export async function calculateInflation(query) {
@@ -120,6 +158,8 @@ export async function calculateInflation(query) {
   const cacheCollection = '_cacheInflationResults';
   const prevDay = getPrevDay(new Date());
   let to = tryParse(query.to, prevDay);
+
+  // console.log('from, to', from, to);
 
   if(to>prevDay) {
     to = prevDay;
@@ -139,11 +179,17 @@ export async function calculateInflation(query) {
 
   // TODO: caching by each item as well as whole query
   const queryHash = sha256(JSON.stringify(query));
-  const result = await db.collection(cacheCollection)
-    .findOne({queryHash, algorithmVersion});
 
-  if(result) {
-    return result.dataObj;
+  const cacheDisabled = process.env.CACHE_DISABLED || false;
+
+
+  if(!cacheDisabled) {
+    const result = await db.collection(cacheCollection)
+      .findOne({queryHash, algorithmVersion});
+
+    if (result) {
+      return result.dataObj;
+    }
   }
 
   const latitude = tryParse(query.lat, null);
@@ -183,66 +229,44 @@ export async function calculateInflation(query) {
     }
   }
 
+  // console.log('categoriesLimitObject', categoriesLimitObject, categoriesLimit, query.basket);
+
   // Make a map for accessing prices by date and product/vendor
   const pricesByDate = {};
 
   await Promise.all(vendors.map(async (vendor) => {
     let prices = await db
-    //TODO: put shops in db or constants
       .collection(vendor)
       .find({dateTime: {$gte: from, $lt: to}})
       .toArray();
 
-    prices.forEach((price) => {
-      if (latitude && longitude && distanceMiles) {
-        //Skip item with no location data
-        if (!price.longitude || !price.latitude) {
-          return;
-        } else {
-          const distanceCalculated = calcCrow(price.latitude, price.longitude, latitude, longitude);
-          if (distanceCalculated > distanceMiles) {
-            //Measurement too far away
-            return;
-          }
-        }
-      }
+    // console.log('prices', prices.length);
 
-      const priceDate = formatDate(price.dateTime);
-      if (!pricesByDate[priceDate]) {
-        pricesByDate[priceDate] = {};
-      }
-
-      const productKey = vendor + '-' + price.name;
-      if (!pricesByDate[priceDate][productKey]) {
-        pricesByDate[priceDate][productKey] = [];
-      }
-
-      const priceFloat = getFloat(price.price);
-      if (!priceFloat) {
-        return;
-      }
-
-      pricesByDate[priceDate][productKey].push({vendor, name: price.name, price: priceFloat});
-    });
+    await storePricesByDate(prices, latitude, longitude, distanceMiles, pricesByDate, vendor);
   }));
+
+
+  // console.log('pricesByDate', pricesByDate);
 
   const inflationInDayPercent = {};
 
   for (let i = dates.length - 1; i >= 1; i--) {
     const current = pricesByDate[dates[i]];
     const pricesByCategory = {};
+    // console.log('prices', current);
     _.map(current, (productPrices, key) => {
       //Product not found
-      // console.log(key, next);
       findPrevPrice(i, pricesByDate, dates, key, productPrices, pricesByCategory, categoryByProduct, categoriesLimitObject);
     });
+
+    // console.log('pricesByCategory', pricesByCategory);
 
     let totalInflation = 0;
 
     _.map(pricesByCategory, (prices: any[], category) => {
       const currPrices = _.mean(prices.map(p => p.currPricesMean));
       const prevPrices = _.mean(prices.map(p => p.prevPricesMean));
-      //console.log('Curr, prev', currPrices, prevPrices, prices);
+      //// console.log('Curr, prev', currPrices, prevPrices, prices);
 
       if (!prevPrices) {
         return;
@@ -251,15 +275,15 @@ export async function calculateInflation(query) {
       const inflationChange = 1 - (prevPrices / currPrices);
       const inflationCategoryImportance = getCategoryCPIWeight(category, current.vendor, type) as number / 100;
       const inflationChangeByImportance = inflationChange * inflationCategoryImportance;
-      //console.log('inflationChangeByImportance', currPrices, prevPrices, inflationChange, inflationCategoryImportance, inflationChangeByImportance, totalInflation);
+      //// console.log('inflationChangeByImportance', currPrices, prevPrices, inflationChange, inflationCategoryImportance, inflationChangeByImportance, totalInflation);
       totalInflation += inflationChangeByImportance;
-      //console.log(totalInflation);
+      //// console.log(totalInflation);
     });
 
 
     const rounded = Math.round((totalInflation * 10000)) / 100;
 
-    //console.log(totalInflation, rounded);
+    //// console.log(totalInflation, rounded);
 
     inflationInDayPercent[dates[i]] = rounded;
   }

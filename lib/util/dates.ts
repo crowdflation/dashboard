@@ -12,7 +12,7 @@ export function getDates(startDate, stopDate) {
 }
 
 export function getPrevDay(date) {
-  return date.setDate(date.getDate() + 1);
+  return new Date(date.setDate(date.getDate() + 1));
 }
 
 export function formatDate(date) {

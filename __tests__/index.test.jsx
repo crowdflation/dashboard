@@ -13,7 +13,7 @@ describe('Home', () => {
     render(<Home />)
 
     const heading = screen.getByRole('heading', {
-      name: 'Welcome to Inflation Calculation group Dashboard Page.',
+      name: 'Welcome to the Crowdflation Community',
     })
 
     expect(heading).toBeInTheDocument()
