@@ -29,7 +29,7 @@ const Home: NextPage = () => {
         </p>
 
         <p className={styles.description}>
-          Have further questions, or care to contribute - <a href="https://discord.gg/b6HrzTZ2tF">Join our Discord Chanel</a>.
+          Have further questions, or care to contribute - <a href="https://discord.gg/b6HrzTZ2tF">Join our Discord Channel</a>.
         </p>
 
         <p className={styles.description}>
