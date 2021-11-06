@@ -8,6 +8,9 @@ import * as React from "react";
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (<div>
+    <div id="overlay">
+      <div id="text">Warning: This website is not compatible with mobile browsers. Please turn on Desktop Mode.</div>
+    </div>
     <Layout>
       <Component {...pageProps} />
     </Layout>
