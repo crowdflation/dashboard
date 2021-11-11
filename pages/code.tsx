@@ -1,7 +1,8 @@
 import {NextPage} from 'next'
 import Head from 'next/head'
-import styles from '../styles/Home.module.css'
-import Highlight from 'react-highlight.js';
+import styles from '../styles/Home.module.css';
+import SyntaxHighlighter from 'react-syntax-highlighter';
+//import { docco } from 'react-syntax-highlighter/dist/esm/styles/hljs/github';
 
 
 const content = '\/\/ SPDX-License-Identifier:MIT\r\n\r\npragma solidity ^0.8.7;\r\n\r\nimport \"@chainlink\/contracts\/src\/v0.8\/ChainlinkClient.sol\";\r\n\r\ncontract CrowdflationChainlinkClient is ChainlinkClient {\r\n    using Chainlink for Chainlink.Request;\r\n    \r\n    int256 public lastDayValue;\r\n\r\n    address private oracle;\r\n    bytes32 private jobId;\r\n    uint256 private fee;\r\n\r\n    constructor() {\r\n        setPublicChainlinkToken();\r\n        oracle = 0xF405B99ACa8578B9eb989ee2b69D518aaDb90c1F; \/\/ LinkRiver Kovan Node\r\n        jobId = \"85de99690423441d956bcbbfd2a470cc\"; \/\/ https:\/\/market.link\/jobs\/d54a2562-741d-4e2e-b9c1-90eda0394f31\r\n        fee = 0.01 * 10 ** 18;      \/\/ (Depends on the node, network and job.)\r\n    }\r\n\r\n    function retrieveDataFromOracle() public returns(bytes32 requesId) {\r\n        Chainlink.Request memory request = buildChainlinkRequest(jobId, address(this), this.fulfill.selector);\r\n        request.add(\"get\", \"https:\/\/crowdflation.herokuapp.com\/api\/inflation\");\r\n        request.add(\"path\", \"inflationOnLastDay\");  \r\n        int timesAmount = 10**18;\r\n        request.addInt(\"times\", timesAmount);\r\n        return sendChainlinkRequestTo(oracle, request, fee);\r\n    }\r\n\r\n    function fulfill(bytes32 _requestId, int256 _lastDayValue) public recordChainlinkFulfillment(_requestId) {\r\n        lastDayValue = _lastDayValue;\r\n    }\r\n}';
@@ -16,7 +17,6 @@ const Code: NextPage<Untitlable> = (props:Untitlable) => {
     <div className={styles.container}>
       <Head>
         <title>Crowdflation - Crowdsourced Inflation Calculation Group Dashboard</title>
-        <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.2/styles/railscasts.min.css'/>
       </Head>
 
       <main className={styles.main}>
@@ -33,9 +33,9 @@ const Code: NextPage<Untitlable> = (props:Untitlable) => {
             contract.
             Please, refer to the note at the end of this page for a more detailed explanation about why this particular
             contract would not be the ultimate way we envision to bring inflation data reliably on-chain.</p>
-          <Highlight language={'solidity'} className={styles.code}>
+          <SyntaxHighlighter language={'solidity'} className={styles.code} wrapLongLines={true}>
             {content}
-          </Highlight>
+          </SyntaxHighlighter>
 
           <h3 id="the-contract">The Contract</h3>
           <p>In the <code>constructor</code> function, we set the oracle address and the appropriate <em>jobId</em>, so
