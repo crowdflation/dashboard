@@ -161,7 +161,7 @@ export async function calculateInflation(query) {
 
   // console.log('from, to', from, to);
 
-  if(to>prevDay) {
+  if(to>=prevDay) {
     to = prevDay;
     query.to = formatDate(to);
   }
@@ -178,6 +178,7 @@ export async function calculateInflation(query) {
   }
 
   // TODO: caching by each item as well as whole query
+  // TODO: cache by default values, not just query
   const queryHash = sha256(JSON.stringify(query));
 
   const cacheDisabled = process.env.CACHE_DISABLED || false;
