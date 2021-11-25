@@ -88,7 +88,7 @@ function findPrevPrice(i, pricesByDate, dates, key, productPrices, pricesByCateg
   for (let p = i - 1; p >= 0; p--) {
 
     const prev = pricesByDate[dates[p]];
-    if (!prev || !prev[key]) {
+    if (!prev || !prev[key] || !productPrices[0] || !productPrices[0].vendor) {
       continue;
     }
 
