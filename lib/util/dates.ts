@@ -12,6 +12,7 @@ export function getDates(startDate, stopDate) {
 }
 
 export function getPrevDay(date) {
+  //FIXME: PREV DAY not next?
   return new Date(date.setDate(date.getDate() + 1));
 }
 
