@@ -71,8 +71,6 @@ export async function calculateCategoriesCount() {
       .find({dateTime: {$gte: from, $lt: to}})
       .toArray();
 
-    console.log('gor prices',  vendor,{dateTime: {$gte: from.toISOString(), $lt: to.toISOString()}}, prices);
-
     await Promise.all(prices.map(async (price) => {
       let category = getCategory(price.vendor, price.name, categoryByProduct);
 

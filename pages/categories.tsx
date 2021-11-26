@@ -140,6 +140,7 @@ class Categories extends Component {
         </Table>);
     return (
       <div className={styles.container}>
+        <h2>This page shows data categories that had uploads within 24 hours:</h2>
         {table}
       </div>
     )
