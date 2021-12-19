@@ -41,12 +41,13 @@ export default async function handler(
         .sort(tryParse(req.query.sort, {dateTime: -1}))
         .limit(tryParse(req.query.limit, 100))
         .toArray();
-      return res.status(200).json(JSON.stringify(errors, null, 2));
+      return res.status(200).json(JSON.stringify(errors.map(e=>_.omit(e,['ip'])), null, 2));
     } catch(e) {
       console.log(JSON.stringify(e, null, 2), e.toString());
       return res.status(400).json({error: e?.toString()});
     }
   } else if(req.method === 'POST') {
+
     if(!req.body.errors) {
       return res.status(400).json({message:'should contain errors object'});
     }
