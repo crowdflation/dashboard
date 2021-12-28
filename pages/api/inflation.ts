@@ -35,7 +35,6 @@ function getCategory(vendor, name, categoryByProduct) {
 
 function getCategoryCPIWeight(category, vendor, which) {
   category = _.trim(category);
-  //TODO: CPI-U vs CPI-W
   if(categoriesMap[category]) {
     return categoriesMap[category][which];
   }
