@@ -1,4 +1,5 @@
 import { NextPage } from 'next'
+import React from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
 import styles from '../styles/Home.module.css'
@@ -33,7 +34,7 @@ const FAQ: NextPage<Untitlable> = (props:Untitlable) => {
             How do we obtain data?
           </h3>
           <p className={styles.description}>
-            We mine data by using a browser extension. You can download it here: <a href="https://www.dropbox.com/s/jpedyk5hoz18ct8/alphaCheap.zip?dl=1">Alpha Cheap</a>. You will need to load it as unpacked in development mode.
+            We mine data by using a browser extension. You can download it here: <Link href="https://www.dropbox.com/s/jpedyk5hoz18ct8/alphaCheap.zip?dl=1">Alpha Cheap</Link>. You will need to load it as unpacked in development mode.
           </p>
           <h3>
             How will we monetize your data?
