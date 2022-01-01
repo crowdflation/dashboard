@@ -71,7 +71,7 @@ const FAQ: NextPage<Untitlable> = (props:Untitlable) => {
             How can I contribute?
           </h3>
           <p className={styles.description}>
-            You can join the group by visiting the <Link href="https://discord.gg/b6HrzTZ2tF">Discord Server</Link>. Once you are there, tell us a bit about your interest and skills. Regular contributors are likely to be rewarded with our token!
+            You can join the group by visiting the Discord Server <Link href="https://discord.gg/b6HrzTZ2tF">https://discord.gg/b6HrzTZ2tF</Link>. Once you are there, tell us a bit about your interest and skills. Regular contributors are likely to be rewarded with our token!
           </p>
           <h3>
             Do you offer an API for accessing collected data?
