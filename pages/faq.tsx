@@ -59,19 +59,19 @@ const FAQ: NextPage<Untitlable> = (props:Untitlable) => {
             Where can I find raw uploaded data?
           </h3>
           <p className={styles.description}>
-            You can look at the uploaded data here: <Link href='/data'>Data Page </Link>
+            You can look at the uploaded data here: <Link href='/data'>Data Page</Link>
           </p>
           <h3>
             Where can I find your sourcecode?
           </h3>
           <p className={styles.description}>
-            You can check out the sourcecode here: <a href={'https://github.com/crowdflation'}>https://github.com/crowdflation</a>
+            You can check out the sourcecode here: <Link href='https://github.com/crowdflation'>https://github.com/crowdflation</Link>
           </p>
           <h3>
             How can I contribute?
           </h3>
           <p className={styles.description}>
-            You can join the group by visiting the <a href="https://discord.gg/b6HrzTZ2tF">Discord Server</a>. Once you are there, tell us a bit about your interest and skills. Regular contributors are likely to be rewarded with our token!
+            You can join the group by visiting the <Link href="https://discord.gg/b6HrzTZ2tF">Discord Server</Link>. Once you are there, tell us a bit about your interest and skills. Regular contributors are likely to be rewarded with our token!
           </p>
           <h3>
             Do you offer an API for accessing collected data?
@@ -93,7 +93,7 @@ const FAQ: NextPage<Untitlable> = (props:Untitlable) => {
           <p className={styles.description}>
             The exact method we use to calculate the measure of inflation is at the moment quite simplistic and primitive, but still effective in providing a correct idea of what&apos;s happening.
             In more detail, we currently just detect fluctuations in prices of the same product. So if we have a price for a particular type of tomatoes at time T, and then we get a new price for that exact type of tomatoes at time T+1, we use these two prices taken at different points in time to detect and calculate what has been the change (positive, negative or no change) over that time period.
-            As always, if you want to verify it yourself, you can consult the sourcecode for this <a href='https://github.com/crowdflation/dashboard/blob/main/pages/api/inflation.ts' target='_blank' rel="noreferrer">here</a>.
+            As always, if you want to verify it yourself, you can consult the sourcecode for this <Link href='https://github.com/crowdflation/dashboard/blob/main/pages/api/inflation.ts'>here</Link>.
             We are planning to update our method to a much more informative and robust one, such as the one used in CPI, in the very near future, as soon as we expand the scraping of raw data to a few new categories of products and services. </p>
           <h3>
             Can you clarify what does &quot;decentralized&quot; mean?
