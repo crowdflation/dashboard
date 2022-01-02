@@ -34,7 +34,7 @@ const FAQ: NextPage<Untitlable> = (props:Untitlable) => {
             How do we obtain data?
           </h3>
           <p className={styles.description}>
-            We mine data by using a browser extension. You can download it here: <Link href="https://www.dropbox.com/s/jpedyk5hoz18ct8/alphaCheap.zip?dl=1">Alpha Cheap</Link>. You will need to load it as unpacked in development mode.
+            We mine data by using a browser extension. You can download it here: <a target="_blank" rel="noreferrer" href="https://www.dropbox.com/s/jpedyk5hoz18ct8/alphaCheap.zip?dl=1">Alpha Cheap</a>. You will need to load it as unpacked in development mode.
           </p>
           <h3>
             How will we monetize your data?
@@ -45,7 +45,7 @@ const FAQ: NextPage<Untitlable> = (props:Untitlable) => {
           <h3>
             How do I know this is a safe project?
           </h3>
-          <p className={styles.description}>
+          <div className={styles.description}>
             <ul>
               <li>All of our code is open source</li>
               <li>Our founder team and their wallets are disclosed to potential investors</li>
@@ -55,18 +55,24 @@ const FAQ: NextPage<Untitlable> = (props:Untitlable) => {
               <li>We are aiming to be certified as a B Corporation to further increase transparency</li>
               <li>If there is anything else we can do - please let us know: crowdflationinc@gmail.com</li>
             </ul>
+          </div>
+          <h3>
+            Where can I find raw uploaded data?
+          </h3>
+          <p className={styles.description}>
+            You can look at the uploaded data in the <Link href="/data">Data Page</Link>
           </p>
           <h3>
             Where can I find your sourcecode?
           </h3>
           <p className={styles.description}>
-            You can check out the sourcecode here: <Link href="https://github.com/crowdflation">https://github.com/crowdflation</Link>
+            You can check out the sourcecode on <a target="_blank" href="https://github.com/crowdflation">GitHub</a>
           </p>
           <h3>
             How can I contribute?
           </h3>
           <p className={styles.description}>
-            You can join the group by visiting the Discord Server <Link href="https://discord.gg/b6HrzTZ2tF">https://discord.gg/b6HrzTZ2tF</Link>. Once you are there, tell us a bit about your interest and skills. Regular contributors are likely to be rewarded with our token!
+            You can join the group by visiting the <a target="_blank" href="https://discord.com/invite/b6HrzTZ2tF">Discord Server</a>. Once you are there, tell us a bit about your interest and skills. Regular contributors are likely to be rewarded with our token!
           </p>
           <h3>
             Do you offer an API for accessing collected data?
@@ -88,19 +94,13 @@ const FAQ: NextPage<Untitlable> = (props:Untitlable) => {
           <p className={styles.description}>
             The exact method we use to calculate the measure of inflation is at the moment quite simplistic and primitive, but still effective in providing a correct idea of what&apos;s happening.
             In more detail, we currently just detect fluctuations in prices of the same product. So if we have a price for a particular type of tomatoes at time T, and then we get a new price for that exact type of tomatoes at time T+1, we use these two prices taken at different points in time to detect and calculate what has been the change (positive, negative or no change) over that time period.
-            As always, if you want to verify it yourself, you can consult the sourcecode for this <Link href="https://github.com/crowdflation/dashboard/blob/main/pages/api/inflation.ts">here</Link>.
+            As always, if you want to verify it yourself, you can consult the sourcecode for this <a target="_blank" rel="noreferrer" href="https://github.com/crowdflation/dashboard/blob/main/pages/api/inflation.ts">here</a>.
             We are planning to update our method to a much more informative and robust one, such as the one used in CPI, in the very near future, as soon as we expand the scraping of raw data to a few new categories of products and services. </p>
           <h3>
             Can you clarify what does &quot;decentralized&quot; mean?
           </h3>
           <p className={styles.description}>
             We aim to enable building a network of multiple nodes that will be gathering data independently from each other, which mean that there will be no central entity that can exert control on anybody else. A node can be added or removed from the network without affecting the entire network as a whole.
-          </p>
-          <h3>
-            Where can I find raw uploaded data?
-          </h3>
-          <p className={styles.description}>
-            You can look at the uploaded data here: <Link href="/data">Data Page</Link>
           </p>
         </div>
       </main>
