@@ -172,13 +172,13 @@ export async function calculateInflation(query) {
 
   const dates = getIntervalRangeArray(from, to, period);
   if (dates.length <= 1) {
-    throw new Error(`Dates range should contain at least 2 days, got ${from} ${to}`);
+    throw new Error(`Date/Time range should contain at least 2 periods, got ${from} ${to}`);
   }
 
   const maxDates = process.env.MAX_DATES_CALCULATION || 90;
 
   if (dates.length > maxDates) {
-    throw new Error(`Dates range should contain no more than ${maxDates} days, but it contains ${dates.length}`);
+    throw new Error(`Date/Time range should contain no more than ${maxDates} periods, but it contains ${dates.length}. Please choose a shorter period or reduce the frequency`);
   }
 
   // TODO: caching by each item as well as whole query
@@ -318,7 +318,11 @@ export default async function handler(
 ) {
   // Run the middleware
   await runMiddleware(req, res, cors);
-  const dataObj = await calculateInflation(req.query);
+  try {
+    const dataObj = await calculateInflation(req.query);
 
-  return res.status(200).json(JSON.stringify(dataObj, null, 2));
+    return res.status(200).json(JSON.stringify(dataObj, null, 2));
+  } catch (err) {
+    return res.status(400).json({message:err && (err as any).toString()});
+  }
 }
