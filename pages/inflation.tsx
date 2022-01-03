@@ -3,9 +3,8 @@ import styles from '../styles/Home.module.css'
 import React, {Component} from 'react'
 import _ from 'lodash'
 import axios from 'axios'
-import {AutoSizer, List} from 'react-virtualized'
-import {DiscreteColorLegend, FlexibleWidthXYPlot, HorizontalGridLines, LineSeries, XAxis, YAxis} from 'react-vis'
-import {getDates} from '../lib/util/dates';
+import {FlexibleWidthXYPlot, HorizontalGridLines, LineSeries, XAxis, YAxis, MarkSeries} from 'react-vis'
+import {periods} from '../lib/util/dates';
 import DayPickerInput from 'react-day-picker/DayPickerInput';
 import 'react-day-picker/lib/style.css';
 import moment from 'moment';
@@ -16,7 +15,7 @@ import {calculateInflation} from './api/inflation';
 import MapComponent from '../components/map-component';
 import DropdownTreeSelect from 'react-dropdown-tree-select';
 import 'react-dropdown-tree-select/dist/styles.css';
-import data, {default as categories} from '../data/categories';
+import data from '../data/categories';
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
@@ -25,16 +24,15 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Image from "next/dist/client/image";
 import Button from "@mui/material/Button";
 import CachedIcon from '@mui/icons-material/Cached';
-import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@material-ui/core/Select";
+import {FormControlLabel, Radio, RadioGroup } from '@mui/material'
 
 
 
 export async function getServerSideProps() {
   const resultObject = await calculateInflation({});
   const apiKey: string = (process.env as any).GOOGLE_MAPS_API_KEY as string;
-  console.log('apiKey', apiKey);
   return {
     props: {resultObject, apiKey}, // will be passed to the page component as props
   }
@@ -54,6 +52,7 @@ class Inflation extends Component<any, any> {
       lat: 37.09024,
       lng: -95.712891,
       radius: 1900,
+      period: periods.Daily.name,
       basket: ['Food and beverages', 'Housing', 'Apparel', 'Transportation', 'Medical care', 'Recreation', 'Education and communication', 'Other goods and services'],
     };
 
@@ -110,8 +109,15 @@ class Inflation extends Component<any, any> {
     });
   };
 
+  handlePeriodChange = (e) => {
+    this.setState({
+      ...this.state,
+      period: e.target.value
+    });
+  }
+
   buildQueryURL = (state) => {
-    return ['from', 'to', 'aggregate', 'lat', 'lng', 'radius', 'basket'].reduce((str, key) => {
+    return ['from', 'to', 'aggregate', 'lat', 'lng', 'radius', 'basket', 'period'].reduce((str, key) => {
       if (!state[key]) {
         return str;
       }
@@ -145,7 +151,7 @@ class Inflation extends Component<any, any> {
       try {
         JSON.parse(state[key]);
       } catch (e) {
-        errors[key] = e.toString();
+        errors[key] = (e as any).toString();
       }
       return errors;
     }, {});
@@ -192,12 +198,12 @@ class Inflation extends Component<any, any> {
   };
 
   render = () => {
-    const {inflationInDayPercent, inflationOnLastDay, country, errors, lat, lng, radius, basket} = this.state as any;
+    const {inflationInDayPercent, inflationOnLastDay, country, errors, lat, lng, radius, basket, period} = this.state as any;
     const that = this;
     let {from, to} = this.state as any;
     from = new Date(from);
     to = new Date(to);
-    const days = getDates(from, to);
+    const days = Object.keys(inflationInDayPercent).sort();
     this.updateToMatch(data, basket);
 
     const modifiers = {start: from, end: to};
@@ -219,8 +225,24 @@ class Inflation extends Component<any, any> {
       )
     });
 
+
+    const calculateTickLabelAngle = () => {
+      if(days.length<10) {
+        return 0;
+      }
+
+      if(days.length>40) {
+        return -90;
+      }
+
+      return -25;
+
+    }
+
+    const style = {width: '100%', 'margin-bottom': '100px'};
+
     chart = (
-      <div style={{width: '100%'}} className={styles.inflation}>
+      <div style={style} className={styles.inflation}>
         <h3> <div  className={styles["header-image"]}><Image src='/usa-flag.png' width='20px' height='20px' alt={'USA Flag'}/></div>
           <Select
             labelId="demo-simple-select-label"
@@ -270,6 +292,22 @@ class Inflation extends Component<any, any> {
           </AccordionSummary>
           <AccordionDetails>
             <DropdownTreeSelect data={data} onChange={that.onChange.bind(that)} onAction={this.onAction} onNodeToggle={this.onNodeToggle}/>
+          </AccordionDetails>
+        </Accordion>
+        <Accordion>
+          <AccordionSummary
+              expandIcon={<ExpandMoreIcon />}
+              aria-controls="panel2a-content"
+              id="panel2a-header"
+          >
+            <Typography>Frequency</Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <RadioGroup row aria-label="frequency" name="row-radio-buttons-group" value={period} onChange={this.handlePeriodChange}>
+              {Object.keys(periods).map((p) => {
+                return (<FormControlLabel value={p} control={<Radio />} label={p} />);
+              })}
+            </RadioGroup>
           </AccordionDetails>
         </Accordion>
         <Accordion>
@@ -353,11 +391,13 @@ class Inflation extends Component<any, any> {
         </div>
         <FlexibleWidthXYPlot
           xType="ordinal"
+          style={{ 'margin-bottom': '80px', overflow: 'visible'}}
           height={300}>
           <HorizontalGridLines/>
           {series}
-          <XAxis tickLabelAngle={-25}/>
+          <XAxis tickLabelAngle={calculateTickLabelAngle()} />
           <YAxis/>
+          <MarkSeries data={[{ x: days[0], y: 0 }]} style={{ display: 'none' }} />
         </FlexibleWidthXYPlot>
       </div>);
 

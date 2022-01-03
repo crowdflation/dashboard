@@ -11,7 +11,6 @@ import Link from "next/dist/client/link";
 export async function getServerSideProps() {
   const resultObject = await calculateInflation({});
   const apiKey: string = (process.env as any).GOOGLE_MAPS_API_KEY as string;
-  console.log('apiKey', apiKey);
   return {
     props: {resultObject, apiKey}, // will be passed to the page component as props
   }

@@ -1,9 +1,9 @@
-import { connectToDatabase } from "../../lib/util/mongodb";
+import {connectToDatabase} from "../../lib/util/mongodb";
 import {NextApiRequest, NextApiResponse} from "next";
 import _ from 'lodash';
-import { runMiddleware, tryParse } from '../../lib/util/middleware';
-import { getPrevDay, getDates, formatDate } from '../../lib/util/dates';
-import { sha256 } from 'js-sha256';
+import {runMiddleware, tryParse} from '../../lib/util/middleware';
+import {formatDate, getIntervalRangeArray, getNextPeriod, periods} from '../../lib/util/dates';
+import {sha256} from 'js-sha256';
 import Cors from 'cors';
 import categoriesMap from '../../data/map';
 
@@ -47,17 +47,16 @@ function getCategoryCPIWeight(category, vendor, which) {
 //This function takes in latitude and longitude of two location and returns the distance between them as the crow flies (in km)
 function calcCrow(lat11, lon11, lat22, lon22)
 {
-  var R = 6371; // km
-  var dLat = toRad(lat22-lat11);
-  var dLon = toRad(lon22-lon11);
-  var lat1 = toRad(lat11);
-  var lat2 = toRad(lat22);
+  const R = 6371; // km
+  const dLat = toRad(lat22 - lat11);
+  const dLon = toRad(lon22 - lon11);
+  const lat1 = toRad(lat11);
+  const lat2 = toRad(lat22);
 
-  var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(lat1) * Math.cos(lat2);
-  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  var d = R * c;
-  return d;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(lat1) * Math.cos(lat2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
 }
 
 // Converts numeric degrees to radians
@@ -111,7 +110,7 @@ function findPrevPrice(i, pricesByDate, dates, key, productPrices, pricesByCateg
   }
 }
 
-async function storePricesByDate(prices, latitude, longitude, distanceMiles: any, pricesByDate, vendor) {
+async function storePricesByDate(prices, latitude, longitude, distanceMiles: any, pricesByDate, vendor, period) {
   prices.forEach((price) => {
     if (latitude && longitude && distanceMiles) {
       //Skip item with no location data
@@ -126,7 +125,7 @@ async function storePricesByDate(prices, latitude, longitude, distanceMiles: any
       }
     }
 
-    const priceDate = formatDate(price.dateTime);
+    const priceDate = formatDate(price.dateTime, period);
     if (!pricesByDate[priceDate]) {
       pricesByDate[priceDate] = {};
     }
@@ -149,23 +148,29 @@ async function storePricesByDate(prices, latitude, longitude, distanceMiles: any
 export async function calculateInflation(query) {
   const {db} = await connectToDatabase();
 
-  var d = new Date();
+  const d = new Date();
   d.setMonth(d.getMonth() - 1);
+
+  const period = query.period || 'Daily';
+
+  if(!periods[period]) {
+    throw new Error('Unknown period, should be either:' + Object.keys(periods).join(','));
+  }
 
   const from = tryParse(query.from, d);
   const algorithmVersion = 1;
   const cacheCollection = '_cacheInflationResults';
-  const prevDay = getPrevDay(new Date());
+  const prevDay = getNextPeriod(new Date(), period);
   let to = tryParse(query.to, prevDay);
 
   // console.log('from, to', from, to);
 
   if(to>=prevDay) {
     to = prevDay;
-    query.to = formatDate(to);
+    query.to = formatDate(to, period);
   }
 
-  const dates = getDates(from, to);
+  const dates = getIntervalRangeArray(from, to, period);
   if (dates.length <= 1) {
     throw new Error(`Dates range should contain at least 2 days, got ${from} ${to}`);
   }
@@ -242,7 +247,7 @@ export async function calculateInflation(query) {
 
     // console.log('prices', prices.length);
 
-    await storePricesByDate(prices, latitude, longitude, distanceMiles, pricesByDate, vendor);
+    await storePricesByDate(prices, latitude, longitude, distanceMiles, pricesByDate, vendor, period);
   }));
 
 
@@ -281,11 +286,9 @@ export async function calculateInflation(query) {
     });
 
 
-    const rounded = Math.round((totalInflation * 10000)) / 100;
-
     //// console.log(totalInflation, rounded);
 
-    inflationInDayPercent[dates[i]] = rounded;
+    inflationInDayPercent[dates[i]] = Math.round((totalInflation * 10000)) / 100;
   }
 
   const dataObj = {
@@ -298,11 +301,12 @@ export async function calculateInflation(query) {
     radius: distance,
     basket: categoriesLimit,
     inflationOnLastDay: inflationInDayPercent[dates[dates.length - 1]],
+    period,
     type
   };
 
   db.collection(cacheCollection).insertOne({queryHash, algorithmVersion, dataObj}).catch((ex) => {
-    console.error('Failed to cache item for query', query);
+    console.error('Failed to cache item for query', query, ex.toString());
   });
 
   return dataObj;
@@ -310,7 +314,7 @@ export async function calculateInflation(query) {
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<any>
+  res: NextApiResponse
 ) {
   // Run the middleware
   await runMiddleware(req, res, cors);

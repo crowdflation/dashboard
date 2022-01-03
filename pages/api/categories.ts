@@ -2,12 +2,8 @@ import { connectToDatabase } from "../../lib/util/mongodb";
 import {NextApiRequest, NextApiResponse} from "next";
 import _ from 'lodash';
 import { runMiddleware, tryParse } from '../../lib/util/middleware';
-import { getPrevDay, getDates, formatDate } from '../../lib/util/dates';
-import { sha256 } from 'js-sha256';
 import Cors from 'cors';
 import categoriesMap from '../../data/map';
-
-
 
 // Initializing the cors middleware
 const cors = Cors({

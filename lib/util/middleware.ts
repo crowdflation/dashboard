@@ -18,11 +18,11 @@ export function tryParse(parse, substitute) {
     try {
       return JSON.parse(parse);
     } catch (e1) {
-      jsonErr = e1;
       const date = parseDateString(parse);
       if(isValidDate(date)) {
         return date;
       }
+      console.error('Failed for parse JSON and treat it as date', (e1 as any).toString())
       throw 'Date is invalid';
     }
   } catch (e) {

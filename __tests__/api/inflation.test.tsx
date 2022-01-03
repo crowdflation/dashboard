@@ -584,4 +584,8 @@ describe('/api/[inflation]', () => {
       }),
     );
   });
+
+  //TODO: test multiple periods
+
+  //TODO: test more than one data point in period
 });
