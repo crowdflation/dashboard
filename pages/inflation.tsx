@@ -27,18 +27,34 @@ import CachedIcon from '@mui/icons-material/Cached';
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@material-ui/core/Select";
 import {Box, CircularProgress, FormControlLabel, Radio, RadioGroup, Alert} from '@mui/material';
+import {connectToDatabase, getVendors} from "../lib/util/mongodb";
 
 
 export async function getServerSideProps() {
-    const resultObject = await calculateInflation({});
+    const {db} = await connectToDatabase();
+    const resultObject = await calculateInflation(db,{});
+    const vendorsList = await getVendors(db);
+    let vendorsNames = vendorsList.map((v)=>{ return {label:v, value:v, checked:true}});
+
+    let vendors = { label :
+        "All vendors",
+            value :
+        "All vendors",
+            children :
+            vendorsNames
+    };
+
+
+
     const apiKey: string = (process.env as any).GOOGLE_MAPS_API_KEY as string;
     return {
-        props: {resultObject, apiKey}, // will be passed to the page component as props
+        props: {resultObject, apiKey, vendors, vendorsList}, // will be passed to the page component as props
     }
 }
 
 
 class Inflation extends Component<any, any> {
+    private vendors: any;
     constructor(props: any) {
         super(props);
         this.state = {
@@ -54,6 +70,7 @@ class Inflation extends Component<any, any> {
             inProgress: false,
             error: null,
             period: periods.Daily.name,
+            vendors: props.vendorsList,
             basket: ['Food and beverages', 'Housing', 'Apparel', 'Transportation', 'Medical care', 'Recreation', 'Education and communication', 'Other goods and services'],
         };
 
@@ -61,6 +78,7 @@ class Inflation extends Component<any, any> {
         this.handleReload(this.state);
         this.handleFromChange = this.handleFromChange.bind(this);
         this.handleToChange = this.handleToChange.bind(this);
+        this.vendors = props.vendors;
     }
 
 
@@ -75,6 +93,14 @@ class Inflation extends Component<any, any> {
 
     onAction(node, action) {
         console.log('onAction::', action, node)
+    }
+
+    onChangeVendors(currentNode, selectedNodes) {
+        let vendors: string[] = [];
+        _.map(selectedNodes, (item: any) => {
+            vendors.push(item.label);
+        });
+        this.setState({vendors});
     }
 
     onNodeToggle(currentNode) {
@@ -118,7 +144,7 @@ class Inflation extends Component<any, any> {
     }
 
     buildQueryURL = (state) => {
-        return ['from', 'to', 'aggregate', 'lat', 'lng', 'radius', 'basket', 'period'].reduce((str, key) => {
+        return ['from', 'to', 'aggregate', 'lat', 'lng', 'radius', 'basket', 'period', 'vendors'].reduce((str, key) => {
             if (!state[key]) {
                 return str;
             }
@@ -126,7 +152,7 @@ class Inflation extends Component<any, any> {
                 str += '&';
             }
 
-            if (key === 'basket') {
+            if (key === 'basket' || key === 'vendors') {
                 str += key + '=' + encodeURIComponent(JSON.stringify(state[key]));
                 return str;
             }
@@ -221,7 +247,8 @@ class Inflation extends Component<any, any> {
             basket,
             period,
             inProgress,
-            error
+            error,
+            vendors
         } = this.state as any;
         const that = this;
         let {from, to} = this.state as any;
@@ -229,6 +256,7 @@ class Inflation extends Component<any, any> {
         to = new Date(to);
         const days = Object.keys(inflationInDayPercent).sort();
         this.updateToMatch(data, basket);
+        this.updateToMatch(this.vendors, vendors);
 
         const modifiers = {start: from, end: to};
 
@@ -264,7 +292,7 @@ class Inflation extends Component<any, any> {
         }
 
         const style = {width: '100%', 'margin-bottom': '100px'};
-        const boxStyle = {display: 'flex', 'align-items': 'center', 'justify-content': 'center'};
+        const boxStyle = {display: 'flex', 'align-items': 'center', justifyContent: 'center'};
 
         chart = (
             <div style={style} className={styles.inflation}>
@@ -321,6 +349,18 @@ class Inflation extends Component<any, any> {
                     <AccordionDetails>
                         <DropdownTreeSelect data={data} onChange={that.onChange.bind(that)} onAction={this.onAction}
                                             onNodeToggle={this.onNodeToggle}/>
+                    </AccordionDetails>
+                </Accordion>
+                <Accordion>
+                    <AccordionSummary
+                        expandIcon={<ExpandMoreIcon/>}
+                        aria-controls="panel2a-content"
+                        id="panel2a-header"
+                    >
+                        <Typography>Vendors</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                        <DropdownTreeSelect data={this.vendors} onChange={that.onChangeVendors.bind(that)}/>
                     </AccordionDetails>
                 </Accordion>
                 <Accordion>

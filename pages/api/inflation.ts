@@ -1,4 +1,4 @@
-import {connectToDatabase} from "../../lib/util/mongodb";
+import {connectToDatabase, getVendors} from "../../lib/util/mongodb";
 import {NextApiRequest, NextApiResponse} from "next";
 import _ from 'lodash';
 import {runMiddleware, tryParse} from '../../lib/util/middleware';
@@ -145,8 +145,8 @@ async function storePricesByDate(prices, latitude, longitude, distanceMiles: any
   return;
 }
 
-export async function calculateInflation(query) {
-  const {db} = await connectToDatabase();
+export async function calculateInflation(db, query) {
+
 
   const d = new Date();
   d.setMonth(d.getMonth() - 1);
@@ -215,9 +215,22 @@ export async function calculateInflation(query) {
     distance = null;
   }
 
-  let vendors = await db.collection('_vendors').find().toArray();
-  vendors = vendors.map(v => v.name);
-  vendors = _.union(vendors, ['walmart', 'kroger', 'zillow']);
+  let vendors = await getVendors(db);
+
+  if(query.vendors) {
+    const queryVendors = tryParse(query.vendors, null);
+    if(queryVendors) {
+      if(queryVendors.indexOf('All vendors')===-1) {
+        let newVendors = queryVendors.filter(v => vendors.indexOf(v) !== -1);
+        if (newVendors.length <= 0) {
+          throw new Error('None of the Vendors provided do not match what is in the database');
+        }
+
+        vendors = newVendors;
+      }
+    }
+  }
+
 
   let categories = await db.collection('_categories').find().toArray();
   let categoryByProduct = {};
@@ -302,7 +315,8 @@ export async function calculateInflation(query) {
     basket: categoriesLimit,
     inflationOnLastDay: inflationInDayPercent[dates[dates.length - 1]],
     period,
-    type
+    type,
+    vendors
   };
 
   db.collection(cacheCollection).insertOne({queryHash, algorithmVersion, dataObj}).catch((ex) => {
@@ -319,7 +333,8 @@ export default async function handler(
   // Run the middleware
   await runMiddleware(req, res, cors);
   try {
-    const dataObj = await calculateInflation(req.query);
+    const {db} = await connectToDatabase();
+    const dataObj = await calculateInflation(db, req.query);
 
     return res.status(200).json(JSON.stringify(dataObj, null, 2));
   } catch (err) {

@@ -1,4 +1,5 @@
 import {MongoClient, MongoClientOptions} from 'mongodb'
+import _ from "lodash";
 
 const MONGODB_URI:string = String(process.env.MONGODB_URI)
 const MONGODB_DB:string  = String(process.env.MONGODB_DB)
@@ -46,4 +47,10 @@ export async function connectToDatabase() {
   }
   cached.conn = await cached.promise
   return cached.conn
+}
+
+export async function getVendors(db) {
+  let vendors = await db.collection('_vendors').find().toArray();
+  vendors = vendors.map(v => v.name);
+  return _.union(vendors, ['walmart', 'kroger', 'zillow']);
 }

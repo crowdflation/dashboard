@@ -6,10 +6,12 @@ import Code from "./code";
 import Inflation from "./inflation";
 import {calculateInflation} from "./api/inflation";
 import Link from "next/dist/client/link";
+import {connectToDatabase} from "../lib/util/mongodb";
 
 
 export async function getServerSideProps() {
-  const resultObject = await calculateInflation({});
+  const {db} = await connectToDatabase();
+  const resultObject = await calculateInflation(db, {});
   const apiKey: string = (process.env as any).GOOGLE_MAPS_API_KEY as string;
   return {
     props: {resultObject, apiKey}, // will be passed to the page component as props

@@ -22,8 +22,8 @@ export function tryParse(parse, substitute) {
       if(isValidDate(date)) {
         return date;
       }
-      console.error('Failed for parse JSON and treat it as date', (e1 as any).toString())
-      throw 'Date is invalid';
+      console.error('Failed for parse JSON and treat it as date', parse, (e1 as any).toString())
+      throw 'Parameter is invalid';
     }
   } catch (e) {
     // console.warn('Parse error', e, jsonErr);
