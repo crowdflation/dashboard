@@ -49,8 +49,14 @@ export async function connectToDatabase() {
   return cached.conn
 }
 
-export async function getVendors(db) {
-  let vendors = await db.collection('_vendors').find().toArray();
+export async function getVendorNames(db, countryFilter) {
+  let vendors = await db.collection('_vendors').find(countryFilter).toArray();
   vendors = vendors.map(v => v.name);
   return _.union(vendors, ['walmart', 'kroger', 'zillow']);
+}
+
+
+export async function getVendors(db) {
+  let vendors = await db.collection('_vendors').find().toArray();
+  return vendors;
 }

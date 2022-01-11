@@ -1,4 +1,4 @@
-import {connectToDatabase, getVendors} from "../../lib/util/mongodb";
+import {connectToDatabase, getVendorNames} from "../../lib/util/mongodb";
 import {NextApiRequest, NextApiResponse} from "next";
 import _ from 'lodash';
 import {runMiddleware, tryParse} from '../../lib/util/middleware';
@@ -6,6 +6,7 @@ import {formatDate, getIntervalRangeArray, getNextPeriod, periods} from '../../l
 import {sha256} from 'js-sha256';
 import Cors from 'cors';
 import categoriesMap from '../../data/map';
+import {countries, countryCodes, countryCodesMap} from "../../data/countries";
 
 
 // Initializing the cors middleware
@@ -66,7 +67,6 @@ function toRad(Value): number
 }
 
 
-
 function findParent(name, where) {
   if(where[name]) {
     return true;
@@ -94,10 +94,7 @@ function findPrevPrice(i, pricesByDate, dates, key, productPrices, pricesByCateg
     const prevPricesMean = _.mean(prev[key].map((i) => i.price));
 
     const category = getCategory(productPrices[0].vendor, productPrices[0].name, categoryByProduct) as string;
-
-    // console.log('category', category, productPrices[0].name);
     if (categoriesLimitObject && !findParent(category, categoriesLimitObject)) {
-      // console.log('Ignoring');
       return;
     }
 
@@ -146,8 +143,6 @@ async function storePricesByDate(prices, latitude, longitude, distanceMiles: any
 }
 
 export async function calculateInflation(db, query) {
-
-
   const d = new Date();
   d.setMonth(d.getMonth() - 1);
 
@@ -163,8 +158,6 @@ export async function calculateInflation(db, query) {
   const prevDay = getNextPeriod(new Date(), period);
   let to = tryParse(query.to, prevDay);
 
-  // console.log('from, to', from, to);
-
   if(to>=prevDay) {
     to = prevDay;
     query.to = formatDate(to, period);
@@ -173,6 +166,24 @@ export async function calculateInflation(db, query) {
   const dates = getIntervalRangeArray(from, to, period);
   if (dates.length <= 1) {
     throw new Error(`Date/Time range should contain at least 2 periods, got ${from} ${to}`);
+  }
+
+
+  let country = query.country;
+
+  //TODO: deduplicate country validation
+  if (!country) {
+    country = countries["United States"].code;
+  }
+
+  // @ts-ignore
+  if (!countryCodesMap[country]) {
+    throw new Error('Country name not found, must be in the list of countryNames, should be one of the following:' + JSON.stringify(countryCodes));
+  }
+
+  let countryFilter: any = country;
+  if (country === countries["United States"].code) {
+    countryFilter = {$in: [country, null]};
   }
 
   const maxDates = process.env.MAX_DATES_CALCULATION || 90;
@@ -184,7 +195,6 @@ export async function calculateInflation(db, query) {
   // TODO: caching by each item as well as whole query
   // TODO: cache by default values, not just query
   const queryHash = sha256(JSON.stringify(query));
-
   const cacheDisabled = process.env.CACHE_DISABLED || false;
 
 
@@ -215,7 +225,7 @@ export async function calculateInflation(db, query) {
     distance = null;
   }
 
-  let vendors = await getVendors(db);
+  let vendors = await getVendorNames(db, {country: countryFilter});
 
   if(query.vendors) {
     const queryVendors = tryParse(query.vendors, null);
@@ -246,45 +256,32 @@ export async function calculateInflation(db, query) {
       categoriesLimitObject[categoriesLimit[c]] = true;
     }
   }
-
-  // console.log('categoriesLimitObject', categoriesLimitObject, categoriesLimit, query.basket);
-
   // Make a map for accessing prices by date and product/vendor
   const pricesByDate = {};
 
   await Promise.all(vendors.map(async (vendor) => {
     let prices = await db
       .collection(vendor)
-      .find({dateTime: {$gte: from, $lt: to}})
+      .find({country: countryFilter, dateTime: {$gte: from, $lt: to}})
       .toArray();
-
-    // console.log('prices', prices.length);
 
     await storePricesByDate(prices, latitude, longitude, distanceMiles, pricesByDate, vendor, period);
   }));
-
-
-  // console.log('pricesByDate', pricesByDate);
 
   const inflationInDayPercent = {};
 
   for (let i = dates.length - 1; i >= 1; i--) {
     const current = pricesByDate[dates[i]];
     const pricesByCategory = {};
-    // console.log('prices', current);
     _.map(current, (productPrices, key) => {
       //Product not found
       findPrevPrice(i, pricesByDate, dates, key, productPrices, pricesByCategory, categoryByProduct, categoriesLimitObject);
     });
-
-    // console.log('pricesByCategory', pricesByCategory);
-
     let totalInflation = 0;
 
     _.map(pricesByCategory, (prices: any[], category) => {
       const currPrices = _.mean(prices.map(p => p.currPricesMean));
       const prevPrices = _.mean(prices.map(p => p.prevPricesMean));
-      //// console.log('Curr, prev', currPrices, prevPrices, prices);
 
       if (!prevPrices) {
         return;
@@ -293,13 +290,8 @@ export async function calculateInflation(db, query) {
       const inflationChange = 1 - (prevPrices / currPrices);
       const inflationCategoryImportance = getCategoryCPIWeight(category, current.vendor, type) as number / 100;
       const inflationChangeByImportance = inflationChange * inflationCategoryImportance;
-      //// console.log('inflationChangeByImportance', currPrices, prevPrices, inflationChange, inflationCategoryImportance, inflationChangeByImportance, totalInflation);
       totalInflation += inflationChangeByImportance;
-      //// console.log(totalInflation);
     });
-
-
-    //// console.log(totalInflation, rounded);
 
     inflationInDayPercent[dates[i]] = Math.round((totalInflation * 10000)) / 100;
   }
@@ -308,7 +300,7 @@ export async function calculateInflation(db, query) {
     inflationInDayPercent,
     from: dates[0],
     to: dates[dates.length - 1],
-    country: 'US',
+    country,
     lat: latitude,
     lng: longitude,
     radius: distance,

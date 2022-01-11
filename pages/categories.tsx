@@ -2,8 +2,6 @@ import styles from '../styles/Home.module.css'
 import React, { Component } from 'react'
 import { Table } from 'semantic-ui-react'
 import _ from 'lodash'
-import axios from 'axios'
-import {XYPlot, XAxis, YAxis, HorizontalGridLines, LineSeries, DiscreteColorLegend} from 'react-vis'
 import { calculateCategoriesCount } from './api/categories'
 
 
@@ -69,49 +67,8 @@ class Categories extends Component {
   }
 
 
-  handleReload = (state) => {
-    let errors: any = ['find', 'sort', 'aggregate'].reduce((errors, key) => {
-      if(!state[key]) {
-        return errors;
-      }
-      try {
-        JSON.parse(state[key]);
-      } catch (e) {
-        errors[key] = e.toString();
-      }
-      return errors;
-    }, {});
-    if(_.isEmpty(errors)) {
-      errors = null;
-    } else {
-      this.setState({
-        ...state,
-        errors
-      });
-      return;
-    }
-
-    // Make a request for a user with a given ID
-    axios.get('/api/categories')
-      .then((response) => {
-        // handle success
-        this.setState({
-          ...state,
-          errors,
-          error: null,
-          data: transformData(response.data.categoriesCount)
-        });
-      }).catch((error) => {
-        this.setState({
-          ...state,
-          error: this.tryGetErrorMessage(error),
-          data: []
-      });
-    });
-  }
-
   render = () => {
-    const { column, data, direction, errors, error } = this.state as any;
+    const { column, data, direction } = this.state as any;
     const table = (<Table sortable celled fixed>
           <Table.Header>
             <Table.Row>

@@ -27,13 +27,16 @@ import CachedIcon from '@mui/icons-material/Cached';
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@material-ui/core/Select";
 import {Box, CircularProgress, FormControlLabel, Radio, RadioGroup, Alert} from '@mui/material';
-import {connectToDatabase, getVendors} from "../lib/util/mongodb";
+import {connectToDatabase, getVendorNames, getVendors} from "../lib/util/mongodb";
+import { codeToCountryMap } from '../data/countries'
 
 
 export async function getServerSideProps() {
     const {db} = await connectToDatabase();
     const resultObject = await calculateInflation(db,{});
-    const vendorsList = await getVendors(db);
+
+    const vendorObjects = await getVendors(db);
+    const vendorsList = vendorObjects.map(v => v.name);
     let vendorsNames = vendorsList.map((v)=>{ return {label:v, value:v, checked:true}});
 
     let vendors = { label :
@@ -44,17 +47,26 @@ export async function getServerSideProps() {
             vendorsNames
     };
 
+    console.log('vendorObjects',vendorObjects);
+
+    let countryCodes = {};
+    vendorObjects.map((v:any)=>{ return v.country && (countryCodes[v.country]=v.country);});
+    countryCodes['US'] = 'US';
+    countryCodes['TR'] = 'TR';
+
+    const countries = Object.keys(countryCodes).map(c=>codeToCountryMap[c]);
 
 
     const apiKey: string = (process.env as any).GOOGLE_MAPS_API_KEY as string;
     return {
-        props: {resultObject, apiKey, vendors, vendorsList}, // will be passed to the page component as props
+        props: {resultObject, apiKey, vendors, countries, vendorsList}, // will be passed to the page component as props
     }
 }
 
 
 class Inflation extends Component<any, any> {
     private vendors: any;
+    private countries: any;
     constructor(props: any) {
         super(props);
         this.state = {
@@ -71,6 +83,7 @@ class Inflation extends Component<any, any> {
             error: null,
             period: periods.Daily.name,
             vendors: props.vendorsList,
+            country: 'US',
             basket: ['Food and beverages', 'Housing', 'Apparel', 'Transportation', 'Medical care', 'Recreation', 'Education and communication', 'Other goods and services'],
         };
 
@@ -79,8 +92,8 @@ class Inflation extends Component<any, any> {
         this.handleFromChange = this.handleFromChange.bind(this);
         this.handleToChange = this.handleToChange.bind(this);
         this.vendors = props.vendors;
+        this.countries = props.countries;
     }
-
 
     onChange(currentNode, selectedNodes) {
         console.log('onChange::', currentNode, selectedNodes);
@@ -106,7 +119,6 @@ class Inflation extends Component<any, any> {
     onNodeToggle(currentNode) {
         console.log('onNodeToggle::', currentNode)
     }
-
 
     showFromMonth() {
         let {from, to} = this.state as any;
@@ -144,7 +156,7 @@ class Inflation extends Component<any, any> {
     }
 
     buildQueryURL = (state) => {
-        return ['from', 'to', 'aggregate', 'lat', 'lng', 'radius', 'basket', 'period', 'vendors'].reduce((str, key) => {
+        return ['from', 'to', 'aggregate', 'lat', 'lng', 'radius', 'basket', 'period', 'vendors', 'country'].reduce((str, key) => {
             if (!state[key]) {
                 return str;
             }
@@ -212,9 +224,6 @@ class Inflation extends Component<any, any> {
                     inProgress: false,
                     inflationInDayPercent: response.data.inflationInDayPercent,
                     inflationOnLastDay: response.data.inflationOnLastDay,
-                    from: response.data.from,
-                    to: response.data.to,
-                    country: response.data.country
                 });
             }).catch((error) => {
             this.setState({
@@ -235,6 +244,11 @@ class Inflation extends Component<any, any> {
         }
     };
 
+    countrySelectChange = (event) => {
+        console.log('setting country', event.target.value );
+        this.setState({...this.state, country: event.target.value});
+    }
+
     render = () => {
         const {
             inflationInDayPercent,
@@ -248,7 +262,7 @@ class Inflation extends Component<any, any> {
             period,
             inProgress,
             error,
-            vendors
+            vendors,
         } = this.state as any;
         const that = this;
         let {from, to} = this.state as any;
@@ -261,8 +275,6 @@ class Inflation extends Component<any, any> {
         const modifiers = {start: from, end: to};
 
         let chart: any;
-
-
         // If it is an array we can show a table
         let categories = {};
         categories[country] = [];
@@ -297,17 +309,16 @@ class Inflation extends Component<any, any> {
         chart = (
             <div style={style} className={styles.inflation}>
                 <h3>
-                    <div className={styles["header-image"]}><Image src='/usa-flag.png' width='20px' height='20px'
-                                                                   alt={'USA Flag'}/></div>
+                    <div className={styles["header-image"]}></div>
                     <Select
                         labelId="demo-simple-select-label"
                         id="demo-simple-select"
                         label="Country"
-                        defaultValue={10}
+                        defaultValue='US'
                         className={styles["MuiSelect-select"]}
+                        onChange={that.countrySelectChange.bind(that)}
                     >
-                        <MenuItem value={10}>USA</MenuItem>
-                        <MenuItem value={20} disabled={true}>More Countries Coming Soon...</MenuItem>
+                        {that.countries.map((c)=>(<MenuItem value={c.code}>{c.name}</MenuItem>))}
                     </Select> {' '}
                     Inflation - {inflationOnLastDay || 0}% compared to last day
                 </h3>
@@ -322,7 +333,7 @@ class Inflation extends Component<any, any> {
                     <AccordionDetails>
                         <div className={styles.inputs}>
                             <span className={styles.error}>{errors && errors["lng"]}</span>
-                            <p>Area to calculate inflation in (US only for now):</p>
+                            <p>Area to calculate inflation in:</p>
                             <span>Longitude</span>
                             <span className={styles.error}>{errors && errors["lng"]}</span>
                             <input name='lng' onChange={this.handleChange} value={lng}/>

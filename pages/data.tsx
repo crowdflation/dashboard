@@ -1,4 +1,3 @@
-import Head from 'next/head'
 import styles from '../styles/Home.module.css'
 import React, { Component } from 'react'
 import { Table } from 'semantic-ui-react'
@@ -96,7 +95,7 @@ class Data extends Component {
       try {
         JSON.parse(state[key]);
       } catch (e) {
-        errors[key] = e.toString();
+        errors[key] = (e as any).toString();
       }
       return errors;
     }, {});
