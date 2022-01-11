@@ -28,8 +28,8 @@ import MenuItem from "@mui/material/MenuItem";
 import Select from "@material-ui/core/Select";
 import {Box, CircularProgress, FormControlLabel, Radio, RadioGroup, Alert} from '@mui/material';
 import {connectToDatabase, getVendorNames, getVendors} from "../lib/util/mongodb";
-import { codeToCountryMap } from '../data/countries'
-
+import { codeToCountryMap } from '../data/countries';
+import { locations } from '../data/locations';
 
 export async function getServerSideProps() {
     const {db} = await connectToDatabase();
@@ -245,8 +245,12 @@ class Inflation extends Component<any, any> {
     };
 
     countrySelectChange = (event) => {
-        console.log('setting country', event.target.value );
-        this.setState({...this.state, country: event.target.value});
+        const country = event.target.value;
+        const [lat, lng] = locations[country].latLng;
+        // Rough approximation of size
+        const radius = Math.sqrt(locations[country].area);
+        console.log('setting country', country, lat, lng);
+        this.setState({...this.state, country: event.target.value, lat, lng, radius });
     }
 
     render = () => {

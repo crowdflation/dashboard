@@ -19,6 +19,9 @@ class MapComponent extends Component<any, any> {
         // @ts-ignore
         zoom={4}
         initialCenter={{ lat: this.props.lat, lng:  this.props.lng}}
+        center={{
+          lat: this.props.lat, lng:  this.props.lng
+        }}
       >
         <Marker
           // @ts-ignore
