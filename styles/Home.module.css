@@ -2,6 +2,10 @@
   color: red !important;
 }
 
+.success {
+  color: green !important;
+}
+
 .container {
   padding: 0 5rem;
   display: flex;

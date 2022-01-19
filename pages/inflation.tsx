@@ -324,7 +324,7 @@ class Inflation extends Component<any, any> {
                     >
                         {that.countries.map((c)=>(<MenuItem value={c.code}>{c.name}</MenuItem>))}
                     </Select> {' '}
-                    Inflation - {inflationOnLastDay || 0}% compared to last day
+                    Inflation: {inflationOnLastDay || 0}% compared to last day
                 </h3>
                 <Accordion>
                     <AccordionSummary

@@ -31,3 +31,13 @@ export function tryParse(parse, substitute) {
   }
 }
 
+
+
+export function tryGetErrorMessage(error) {
+  try {
+    return JSON.stringify(error?.response?.data, null, 2);
+  } catch (e) {
+    return error.toString();
+  }
+}
+

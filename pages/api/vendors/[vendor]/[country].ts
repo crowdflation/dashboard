@@ -26,12 +26,10 @@ function validateAndDenormalise(location:{latitude:number,longitude:number }) {
   }
 }
 
-
-
 //TODO: Validation and assigning to a user
 import { connectToDatabase } from "../../../../lib/util/mongodb";
 
-export async function handleDataRequest(vendor: string | string[], country: any,req: NextApiRequest, res: NextApiResponse<any>) {
+export async function handleDataRequest(vendor: string | string[], country: any, req: NextApiRequest, res: NextApiResponse<any>) {
   if (!vendor || _.includes(vendor, '_')) {
     return res.status(400).json({error: 'Non-allowed vendor name'});
   }

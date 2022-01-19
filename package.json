@@ -47,7 +47,8 @@
     "react-vis": "^1.11.7",
     "semantic-ui-css": "^2.4.1",
     "semantic-ui-react": "^2.0.3",
-    "tls": "0.0.1"
+    "tls": "0.0.1",
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
     "@next/eslint-plugin-next": "^12.0.7",
