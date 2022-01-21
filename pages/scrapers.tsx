@@ -17,14 +17,12 @@ import {
     TextareaAutosize
 } from '@mui/material';
 import {countryCodes, codeToCountryMap} from '../data/countries'
+import {getScrapers} from './api/scrapers'
 
 
 export async function getServerSideProps() {
     const {db} = await connectToDatabase();
-    const scrapers = (await db
-        .collection('_scrapers')
-        .find()
-        .toArray()).map((s) => {
+    const scrapers = (await getScrapers(db)).map((s) => {
             let res = {...s, ...s.scraper, added: s.added.toISOString() };
             delete res.scraper;
             delete res._id;
@@ -135,6 +133,7 @@ class Data extends Component {
     }
 
     save = () => {
+        const that = this;
         const {
             name,
             country,
@@ -154,14 +153,18 @@ class Data extends Component {
             scraper: {name, country, urlRegex, itemSelector, parsers, requiredFields, copyFields}
         })
             .then(() => {
-                // handle success
-                this.setState({
+                const newScrapers = scrapers.slice();
+                newScrapers.push((this.state as any).inputData);
+                const newState = {
                     ...this.state,
-                    scrapers: scrapers.slice().push((this.state as any).inputData),
-                    inputData: {},
-                    success: true,
+                    scrapers: newScrapers,
+                    inputData: { walletAddress, country },
+                    success: 'Item added',
                     error: null,
-                });
+                };
+                console.log('newState',newState, scrapers);
+                // handle success
+                this.setState(newState);
             }).catch((error) => {
             this.setState({
                 ...this.state,
@@ -193,7 +196,7 @@ class Data extends Component {
                             >
                                 Country
                             </Table.HeaderCell>
-                            <Table.HeaderCell
+                            <Table.HeaderCell width={2}
                                 sorted={column === 'urlRegex' ? direction : null}
                                 onClick={() => this.handleSort('urlRegex', this.state)}
                             >
@@ -205,7 +208,7 @@ class Data extends Component {
                             >
                                 Item Selector
                             </Table.HeaderCell>
-                            <Table.HeaderCell
+                            <Table.HeaderCell width={3}
                                 sorted={column === 'parsers' ? direction : null}
                                 onClick={() => this.handleSort('parsers', this.state)}
                             >
@@ -262,7 +265,7 @@ class Data extends Component {
                                                    }) => (
                             <Table.Row key={_id}>
                                 <Table.Cell>{name}</Table.Cell>
-                                <Table.Cell>{country}</Table.Cell>
+                                <Table.Cell>{codeToCountryMap[country].name}</Table.Cell>
                                 <Table.Cell>{urlRegex}</Table.Cell>
                                 <Table.Cell>{itemSelector}</Table.Cell>
                                 <Table.Cell>{JSON.stringify(parsers, null, 2)}</Table.Cell>
@@ -313,11 +316,10 @@ class Data extends Component {
                 </FormControl>
                 {how === "Separate Fields" ? (<Stack>
                     <FormControl>
-                        <h4>Name</h4>
+                        <h4>Vendor Name</h4>
                         <Input aria-describedby="name-helper-text" name='name' value={inputData.name}
                                onChange={this.handleChange.bind(this)}/>
-                        <FormHelperText id="name-helper-text">How you want to name your scraper. Probably vendor name +
-                            some short detail - like Walmart Simple Scraper.</FormHelperText>
+                        <FormHelperText id="name-helper-text">This is vendor name, for example: Albertsons.</FormHelperText>
                     </FormControl>
                     <FormControl>
                         <h4>Country</h4>
