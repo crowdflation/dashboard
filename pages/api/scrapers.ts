@@ -1,13 +1,16 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
-import { NextApiRequest, NextApiResponse } from 'next'
+import {NextApiRequest, NextApiResponse} from 'next'
 import Cors from 'cors'
 import _ from 'lodash';
-import { runMiddleware, tryParse } from '../../lib/util/middleware'
-import { countryCodesMap } from '../../data/countries'
-import { v4 as uuidv4 } from 'uuid';
-import psl  from 'psl';
+import {runMiddleware} from '../../lib/util/middleware'
+import {countryCodesMap} from '../../data/countries'
+import {v4 as uuidv4} from 'uuid';
+import psl from 'psl';
 import * as toi from "@toi/toi";
+import {ValidationError} from "@toi/toi";
 import * as toix from "@toi/toix";
+//TODO: Validation and assigning to a user
+import {connectToDatabase} from "../../lib/util/mongodb";
 
 
 const isScraper = toi
@@ -35,7 +38,7 @@ const isScraper = toi
 
 
 function extractHostname(url) {
-  var hostname;
+  let hostname;
   //find & remove protocol (http, ftp, etc.) and get hostname
 
   if (url.indexOf("//") > -1) {
@@ -71,16 +74,11 @@ type SimpleCSSScraper = {
   copyFields:Record<string,string>
 };
 
-//TODO: Validation and assigning to a user
-import { connectToDatabase } from "../../lib/util/mongodb";
-import {ValidationError} from "@toi/toi";
-
 export async function getScrapers(db) {
-  const scrapers = await db
+  return await db
       .collection('_scrapers')
       .find({type: 'simple-css'})
       .toArray();
-  return scrapers;
 }
 
 export async function handleDataRequest(req: NextApiRequest, res: NextApiResponse<any>) {
@@ -111,14 +109,17 @@ export async function handleDataRequest(req: NextApiRequest, res: NextApiRespons
     const domain = psl.get(hostname).toLowerCase();
     const filterDifferentName = { domain, name: { $ne: item.name } };
 
+
+    let foundDifferentName;
+
     //Check if we already have similar scraper with different domain
     try {
-      const foundDifferentName = await db
+      foundDifferentName = await db
           .collection(collection).findOne(filterDifferentName);
-      if (foundDifferentName) {
-        throw new Error(`Item with the same domain name ${domain} but different scraper name has been found ${foundDifferentName.name}. Please use the same name for the same vendor, to help with price comparison`);
-      }
     } catch (e) {}
+    if (foundDifferentName) {
+      throw new Error(`Item with the same domain name ${domain} but different scraper name has been found ${foundDifferentName.name}. Please use the same name for the same vendor, to help with price comparison`);
+    }
 
     const filter = {..._.pick(item, ['name', 'website', 'walletAddress']), type:'simple-css'};
 
@@ -146,8 +147,8 @@ const explainReasons = (reasons) => {
   _.mapValues(reasons, (key, val) => {
     console.log('keyval', key, val, reasons[key]);
     response+= `${key} = ${val}`;
-    if(val.reasons) {
-      response += explainReasons(val.reasons);
+    if((val as any).reasons) {
+      response += explainReasons((val as any).reasons);
     }
   });
   return response;
