@@ -84,6 +84,8 @@ class Inflation extends Component<any, any> {
             period: periods.Daily.name,
             vendors: props.vendorsList,
             country: 'US',
+            explain: false,
+            explanationByDay: null,
             basket: ['Food and beverages', 'Housing', 'Apparel', 'Transportation', 'Medical care', 'Recreation', 'Education and communication', 'Other goods and services'],
         };
 
@@ -142,6 +144,7 @@ class Inflation extends Component<any, any> {
     }
 
     handleChange = (e: any) => {
+        console.log('handleChange', e.target.name, e.target.value);
         this.setState({
             ...this.state,
             [e.target.name]: e.target.value
@@ -156,7 +159,7 @@ class Inflation extends Component<any, any> {
     }
 
     buildQueryURL = (state) => {
-        return ['from', 'to', 'aggregate', 'lat', 'lng', 'radius', 'basket', 'period', 'vendors', 'country'].reduce((str, key) => {
+        return ['from', 'to', 'aggregate', 'lat', 'lng', 'radius', 'basket', 'period', 'vendors', 'country', 'explain'].reduce((str, key) => {
             if (!state[key]) {
                 return str;
             }
@@ -224,13 +227,16 @@ class Inflation extends Component<any, any> {
                     inProgress: false,
                     inflationInDayPercent: response.data.inflationInDayPercent,
                     inflationOnLastDay: response.data.inflationOnLastDay,
+                    explanationByDay: response.data.explanationByDay,
                 });
             }).catch((error) => {
             this.setState({
                 ...state,
                 error: this.tryGetErrorMessage(error),
                 inProgress: false,
-                data: []
+                inflationInDayPercent: null,
+                explanationByDay: null,
+                inflationOnLastDay: NaN
             });
         });
     };
@@ -267,6 +273,8 @@ class Inflation extends Component<any, any> {
             inProgress,
             error,
             vendors,
+            explain,
+            explanationByDay,
         } = this.state as any;
         const that = this;
         let {from, to} = this.state as any;
@@ -309,6 +317,19 @@ class Inflation extends Component<any, any> {
 
         const style = {width: '100%', 'margin-bottom': '100px'};
         const boxStyle = {display: 'flex', 'align-items': 'center', justifyContent: 'center'};
+
+        let explanationComponent:JSX.Element|null = null;
+        if (explanationByDay && !inProgress) {
+            explanationComponent = (<div><br/><h4>Calculation Explanation</h4>
+                {Object.keys(explanationByDay).map((key)=> {
+                    return (
+                    <div>
+                        <p style={{fontWeight:'bold'}}>{key}</p>
+                        {explanationByDay[key].map((exp)=>(<p>{exp}</p>))}
+                    </div>);
+                })}
+            </div>)
+        }
 
         chart = (
             <div style={style} className={styles.inflation}>
@@ -469,6 +490,22 @@ class Inflation extends Component<any, any> {
                         </div>
                     </AccordionDetails>
                 </Accordion>
+                <Accordion>
+                    <AccordionSummary
+                        expandIcon={<ExpandMoreIcon/>}
+                        aria-controls="panel2a-content"
+                        id="panel2a-header"
+                    >
+                        <Typography>Calculation Explanation</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                        <RadioGroup row aria-label="explain" name="explain" value={explain}
+                                    onChange={this.handleChange}>
+                            <FormControlLabel value={false} control={<Radio/>} label='No Explanation'/>
+                            <FormControlLabel value={true} control={<Radio/>} label='Provide Calculation Explanation'/>
+                        </RadioGroup>
+                    </AccordionDetails>
+                </Accordion>
                 <div className={styles.recalculateButton}>
                     {error?(<div style={{margin:'10px'}}><Alert severity="error">{error}</Alert></div>):null}
                     <Button onClick={() => this.handleReload(this.state)} variant="contained" endIcon={<CachedIcon/>}>
@@ -485,6 +522,7 @@ class Inflation extends Component<any, any> {
                     <YAxis/>
                     <MarkSeries data={[{x: days[0], y: 0},{x: days[0], y: 0.1},{x: days[0], y: -0.1}]} style={{display: 'none'}}/>
                 </FlexibleWidthXYPlot>)}
+                {explanationComponent}
             </div>);
 
         return (

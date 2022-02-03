@@ -82,7 +82,7 @@ function findParent(name, where) {
   return false;
 }
 
-function findPrevPrice(i, pricesByDate, dates, key, productPrices, pricesByCategory, categoryByProduct, categoriesLimitObject) {
+function findPrevPrice(i, pricesByDate, dates, key, productPrices, pricesByCategory, categoryByProduct, categoriesLimitObject, explanationByDay) {
   for (let p = i - 1; p >= 0; p--) {
 
     const prev = pricesByDate[dates[p]];
@@ -97,6 +97,10 @@ function findPrevPrice(i, pricesByDate, dates, key, productPrices, pricesByCateg
     if (categoriesLimitObject && !findParent(category, categoriesLimitObject)) {
       return;
     }
+
+    noteExplanation(explanationByDay,dates[i], `Found previous prices for category ${category} on date ${dates[p]} with vendor ${productPrices[0].vendor} on product ${productPrices[0].name}`);
+    noteExplanation(explanationByDay,dates[i], `Previous prices for category = ${prev[key].map(p=>p.price).join(',')}, taking mean as: ${prevPricesMean}`);
+    noteExplanation(explanationByDay,dates[i], `Current prices for category = ${productPrices.map(p=>p.price).join(',')}, taking mean as: ${currPricesMean}`);
 
     if (!pricesByCategory[category]) {
       pricesByCategory[category] = [];
@@ -142,6 +146,13 @@ async function storePricesByDate(prices, latitude, longitude, distanceMiles: any
   return;
 }
 
+function noteExplanation(explanationByDate, date, explanation) {
+  if(!explanationByDate[date]) {
+    explanationByDate[date] = [];
+  }
+  explanationByDate[date].push(explanation);
+}
+
 export async function calculateInflation(db, query) {
   const d = new Date();
   d.setMonth(d.getMonth() - 1);
@@ -153,6 +164,7 @@ export async function calculateInflation(db, query) {
   }
 
   const from = tryParse(query.from, d);
+  const explain = tryParse(query.explain, false);
   const algorithmVersion = 1;
   const cacheCollection = '_cacheInflationResults';
   const prevDay = getNextPeriod(new Date(), period);
@@ -269,13 +281,14 @@ export async function calculateInflation(db, query) {
   }));
 
   const inflationInDayPercent = {};
+  const explanationByDay = {};
 
   for (let i = dates.length - 1; i >= 1; i--) {
     const current = pricesByDate[dates[i]];
     const pricesByCategory = {};
     _.map(current, (productPrices, key) => {
       //Product not found
-      findPrevPrice(i, pricesByDate, dates, key, productPrices, pricesByCategory, categoryByProduct, categoriesLimitObject);
+      findPrevPrice(i, pricesByDate, dates, key, productPrices, pricesByCategory, categoryByProduct, categoriesLimitObject, explanationByDay);
     });
     let totalInflation = 0;
 
@@ -288,11 +301,18 @@ export async function calculateInflation(db, query) {
       }
 
       const inflationChange = 1 - (prevPrices / currPrices);
+      noteExplanation(explanationByDay,dates[i], `Checking category ${category}`);
+      noteExplanation(explanationByDay,dates[i], `Previous prices ${prices.map(p => p.prevPricesMean).join(',')}, mean all products = ${prevPrices}`);
+      noteExplanation(explanationByDay,dates[i], `Current prices ${prices.map(p => p.currPricesMean).join(',')} , mean all products = ${currPrices}`);
+      noteExplanation(explanationByDay,dates[i], `We divide previous prices, by current prices to get the change of inflation for category ${category} and subtract it from 1 (100%) = ${inflationChange}`);
       const inflationCategoryImportance = getCategoryCPIWeight(category, current.vendor, type) as number / 100;
       const inflationChangeByImportance = inflationChange * inflationCategoryImportance;
+      noteExplanation(explanationByDay,dates[i], `We multiply the result by inflation category importance for type of calculation ${type} ${category} = * ${inflationCategoryImportance}`);
+      noteExplanation(explanationByDay,dates[i], `We get inflation for ${category} to be ${inflationChangeByImportance} which is added to total inflation so far ${totalInflation}`);
       totalInflation += inflationChangeByImportance;
     });
 
+    noteExplanation(explanationByDay,dates[i], `Total inflation found = ${totalInflation}`);
     inflationInDayPercent[dates[i]] = Math.round((totalInflation * 10000)) / 100;
   }
 
@@ -308,7 +328,9 @@ export async function calculateInflation(db, query) {
     inflationOnLastDay: inflationInDayPercent[dates[dates.length - 1]],
     period,
     type,
-    vendors
+    vendors,
+    explain,
+    explanationByDay: explain?explanationByDay: null
   };
 
   db.collection(cacheCollection).insertOne({queryHash, algorithmVersion, dataObj}).catch((ex) => {
@@ -327,7 +349,6 @@ export default async function handler(
   try {
     const {db} = await connectToDatabase();
     const dataObj = await calculateInflation(db, req.query);
-
     return res.status(200).json(JSON.stringify(dataObj, null, 2));
   } catch (err) {
     return res.status(400).json({message:err && (err as any).toString()});
