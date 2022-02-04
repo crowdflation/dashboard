@@ -35,16 +35,15 @@ export async function getServerSideProps() {
     const {db} = await connectToDatabase();
     const resultObject = await calculateInflation(db,{});
 
-    const vendorObjects = await getVendors(db);
-    const vendorsList = vendorObjects.map(v => v.name);
-    let vendorsNames = vendorsList.map((v)=>{ return {label:v, value:v, checked:true}});
+    const vendorObjects = (await getVendors(db)).map(v=> { return {...v, _id:v._id.toString()} });
+    const vendorsNames = vendorObjects.filter(v=>!v.country || v.country=='US').map(v => v.name);
 
-    let vendors = { label :
+    let vendorsFilterSelect = { label :
         "All vendors",
             value :
         "All vendors",
             children :
-            vendorsNames
+                vendorsNames.map((v)=>{ return {label:v, value:v, checked:true}})
     };
 
     console.log('vendorObjects',vendorObjects);
@@ -59,7 +58,7 @@ export async function getServerSideProps() {
 
     const apiKey: string = (process.env as any).GOOGLE_MAPS_API_KEY as string;
     return {
-        props: {resultObject, apiKey, vendors, countries, vendorsList}, // will be passed to the page component as props
+        props: {resultObject, apiKey, vendorsFilterSelect, countries, vendorsNames, vendorObjects}, // will be passed to the page component as props
     }
 }
 
@@ -67,6 +66,7 @@ export async function getServerSideProps() {
 class Inflation extends Component<any, any> {
     private vendors: any;
     private countries: any;
+    private vendorObjects: any;
     constructor(props: any) {
         super(props);
         this.state = {
@@ -82,7 +82,8 @@ class Inflation extends Component<any, any> {
             inProgress: false,
             error: null,
             period: periods.Daily.name,
-            vendors: props.vendorsList,
+            vendorsFilterSelect: props.vendorsFilterSelect,
+            vendors: props.vendorsNames,
             country: 'US',
             explain: false,
             explanationByDay: null,
@@ -93,8 +94,8 @@ class Inflation extends Component<any, any> {
         this.handleReload(this.state);
         this.handleFromChange = this.handleFromChange.bind(this);
         this.handleToChange = this.handleToChange.bind(this);
-        this.vendors = props.vendors;
         this.countries = props.countries;
+        this.vendorObjects = props.vendorObjects;
     }
 
     onChange(currentNode, selectedNodes) {
@@ -256,7 +257,17 @@ class Inflation extends Component<any, any> {
         // Rough approximation of size
         const radius = Math.sqrt(locations[country].area);
         console.log('setting country', country, lat, lng);
-        this.setState({...this.state, country: event.target.value, lat, lng, radius });
+
+        const vendorNames = this.vendorObjects.filter(v=>(!v.country && country=='US') || v.country==country).map(v => v.name);
+        let vendorsFilterSelect = { label :
+                "All vendors",
+            value :
+                "All vendors",
+            children :
+                vendorNames.map((v)=>{ return {label:v, value:v, checked:true}})
+        };
+
+        this.setState({...this.state, country: event.target.value, lat, lng, radius, vendorsFilterSelect, vendors: vendorNames });
     }
 
     render = () => {
@@ -275,6 +286,7 @@ class Inflation extends Component<any, any> {
             vendors,
             explain,
             explanationByDay,
+            vendorsFilterSelect,
         } = this.state as any;
         const that = this;
         let {from, to} = this.state as any;
@@ -282,7 +294,7 @@ class Inflation extends Component<any, any> {
         to = new Date(to);
         const days = Object.keys(inflationInDayPercent).sort();
         this.updateToMatch(data, basket);
-        this.updateToMatch(this.vendors, vendors);
+        this.updateToMatch(vendorsFilterSelect, vendors);
 
         const modifiers = {start: from, end: to};
 
@@ -396,7 +408,7 @@ class Inflation extends Component<any, any> {
                         <Typography>Vendors</Typography>
                     </AccordionSummary>
                     <AccordionDetails>
-                        <DropdownTreeSelect data={this.vendors} onChange={that.onChangeVendors.bind(that)}/>
+                        <DropdownTreeSelect data={vendorsFilterSelect} onChange={that.onChangeVendors.bind(that)}/>
                     </AccordionDetails>
                 </Accordion>
                 <Accordion>
