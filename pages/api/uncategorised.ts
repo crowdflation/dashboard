@@ -91,12 +91,12 @@ export default async function handler(
       const {db} = await connectToDatabase();
       const items = req.body.items;
       await items.map(async (item) => {
-        const {name, category, country} = item;
-        const filter = {name, country};
+        const {name, category, country, language} = item;
+        const filter = {name, country, language};
         const found = await db
             .collection('_categories').findOne(filter);
         if (!found) {
-          return db.collection('_categories').insertOne({name, category, country});
+          return db.collection('_categories').insertOne({name, category, country, language});
         } else {
           return db.collection('_categories').updateOne(filter, {$set: {category}});
         }
