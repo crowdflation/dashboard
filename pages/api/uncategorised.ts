@@ -81,10 +81,28 @@ export default async function handler(
 ) {
   // Run the middleware
   await runMiddleware(req, res, cors);
-  let { country } = req.query;
+
   try {
-    const dataObj = await calculateCategoriesCount(country);
-    return res.status(200).json(JSON.stringify(dataObj, null, 2));
+    if (req.method === 'GET') {
+      let {country} = req.query;
+      const dataObj = await calculateCategoriesCount(country);
+      return res.status(200).json(JSON.stringify(dataObj, null, 2));
+    } else if (req.method === 'POST') {
+      const {db} = await connectToDatabase();
+      const items = req.body.items;
+      await items.map(async (item) => {
+        const {name, category, country} = item;
+        const filter = {name, country};
+        const found = await db
+            .collection('_categories').findOne(filter);
+        if (!found) {
+          return db.collection('_categories').insertOne({name, category, country});
+        } else {
+          return db.collection('_categories').updateOne(filter, {$set: {category}});
+        }
+      });
+      return res.status(200).json({});
+    }
   } catch(err) {
     console.error('err', err);
     return res.status(400).json({message:err && (err as any).toString()});
