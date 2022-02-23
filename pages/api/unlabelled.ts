@@ -21,7 +21,7 @@ function getCategory(vendor, name, categoryByProduct) {
   return null;
 }
 
-export async function getUnlabelled(country, language, vendor) {
+export async function getUnlabelled(country, language, vendor, search) {
   const {db} = await connectToDatabase();
 
   if (!country) {
@@ -53,10 +53,15 @@ export async function getUnlabelled(country, language, vendor) {
   // Make a map for accessing prices by date and product/vendor
   const uncategorised = {};
 
+  let searchFilter = {};
+  if(search) {
+    searchFilter = {name:{$regex : search}};
+  }
+
   let count = 0;
   let prices = await db
       .collection(vendor)
-      .find({country: countryFilter})
+      .find({...searchFilter, country: countryFilter})
       .limit(200)
       .toArray();
 
@@ -94,8 +99,8 @@ export default async function handler(
 
   try {
     if (req.method === 'GET') {
-      let {country, language, vendor} = req.query;
-      const dataObj = await getUnlabelled(country, language, vendor);
+      let {country, language, vendor, search} = req.query;
+      const dataObj = await getUnlabelled(country, language, vendor, search);
       return res.status(200).json(JSON.stringify(dataObj, null, 2));
     } else if (req.method === 'POST') {
       const {db} = await connectToDatabase();

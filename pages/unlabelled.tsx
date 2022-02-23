@@ -9,6 +9,7 @@ import {getUnlabelled} from "./api/unlabelled";
 import categories from "../data/categories";
 import Select from "@material-ui/core/Select";
 import MenuItem from "@mui/material/MenuItem";
+import {Box, CircularProgress} from "@mui/material";
 
 function flatten(out, prepend, branch) {
   if(!branch?.children?.length) {
@@ -36,7 +37,7 @@ export async function getServerSideProps({query}) {
   const country = 'US';
   const languages = ['EN', 'TR'];
 
-  const unlabelled = await getUnlabelled(country, language, vendor);
+  const unlabelled = await getUnlabelled(country, language, vendor, null);
   return {
     props: {vendors, query, unlabelled, flatCategories, countries:Object.keys(countries), country, language, vendor, languages}, // will be passed to the page component as props
   }
@@ -54,8 +55,8 @@ class Unlabelled extends Component {
       column: null,
       data: props.unlabelled.map((u)=>({name: u, selected: false})),
       direction: null,
-      category: null,
-      errors: null,
+      category: undefined,
+      errors: {category: 'Please choose a category', wallet: 'Please enter a wallet address'},
       country: props.country,
       language: props.language,
       vendor: props.vendor,
@@ -64,7 +65,6 @@ class Unlabelled extends Component {
     };
 
     this.handleChange = this.handleChange.bind(this);
-    this.handleReload(this.state);
     this.flatCategories = props.flatCategories;
     this.vendors = props.vendors;
     this.languages = props.languages;
@@ -72,9 +72,16 @@ class Unlabelled extends Component {
   }
 
   handleChange = (e: any) => {
-    this.setState({
+    const that = this;
+    const newState = {
       ...this.state,
       [e.target.name]: e.target.value
+    };
+    const { wallet, language, category, country } = newState as any;
+    const errors = this.checkErrors(wallet, that, language, category, country);
+    this.setState({
+      ...newState,
+      errors
     });
   }
 
@@ -97,7 +104,7 @@ class Unlabelled extends Component {
   }
 
   buildQueryURL = (state) => {
-    return ['country', 'limit'].reduce((str, key) => {
+    return ['vendor', 'country', 'limit', 'language', 'search'].reduce((str, key) => {
       if(!state[key]) {
         return str;
       }
@@ -125,35 +132,9 @@ class Unlabelled extends Component {
     return vendor;
   }
 
-
-  handleReload = (state) => {
-    let errors: any = ['find', 'sort', 'aggregate'].reduce((errors, key) => {
-      if(!state[key]) {
-        return errors;
-      }
-      try {
-        JSON.parse(state[key]);
-      } catch (e) {
-        errors[key] = (e as any).toString();
-      }
-      return errors;
-    }, {});
-    if(_.isEmpty(errors)) {
-      errors = null;
-    } else {
-      this.setState({
-        ...state,
-        errors
-      });
-      return;
-    }
-    this.loadData(state, errors);
-  }
-
-
   private loadData(state, errors: any) {
     // Make a request for a user with a given ID
-    axios.get('/api/uncategorised?' + this.buildQueryURL(state))
+    axios.get('/api/unlabelled?' + this.buildQueryURL(state))
         .then((response) => {
           // handle success
           this.setState({
@@ -161,12 +142,14 @@ class Unlabelled extends Component {
             aggregateResult: state.aggregate,
             errors,
             error: null,
-            data: response.data
+            inProgress: false,
+            data: response.data.map((u)=>({name: u, selected: false}))
           });
         }).catch((error) => {
       this.setState({
         ...state,
         error: this.tryGetErrorMessage(error),
+        inProgress: false,
         data: []
       });
     });
@@ -174,7 +157,17 @@ class Unlabelled extends Component {
 
   selectChange = (event) => {
     const value = event.target.value;
-    this.setState({...this.state, [event.target.name]:value});
+    const that = this;
+    const newState = {
+      ...this.state,
+      [event.target.name]:value
+    };
+    const { wallet, language, category, country } = newState as any;
+    const errors = this.checkErrors(wallet, that, language, category, country);
+    this.setState({
+      ...newState,
+      errors
+    });
   }
 
   showError = (error) => {
@@ -184,21 +177,16 @@ class Unlabelled extends Component {
   handleSave = (state) => {
     const { data, search, wallet, language, category, country } = this.state as any;
     const that = this;
+    let errors = this.checkErrors(wallet, that, language, category, country);
 
-    if(!wallet) {
-      return that.showError('Please add wallet value');
-    }
+    this.setState({
+      ...this.state,
+      error: errors[Object.keys(errors)[0]],
+      errors
+    });
 
-    if(!language) {
-      return that.showError('Please select a language');
-    }
-
-    if(!category) {
-      return that.showError('Please select a category');
-    }
-
-    if(!country) {
-      return that.showError('Please select a country');
+    if(!_.isEmpty(errors)) {
+      return;
     }
 
     const items = this.filter().filter((i) => i.selected).map((({ name, selected }) => ({
@@ -232,6 +220,28 @@ class Unlabelled extends Component {
     });
   }
 
+  private checkErrors(wallet, that: this, language, category, country) {
+    let errors: any = {};
+
+    if (!wallet) {
+      errors.wallet = 'Please enter a wallet address';
+    }
+
+    if (!language) {
+      errors.wallet = 'Please select a language';
+    }
+
+    if (!category) {
+      errors.category = 'Please select a category';
+    }
+
+    if (!country) {
+      errors.country = 'Please select a category';
+    }
+
+    return errors;
+  }
+
   private filter() {
     const { data, search } = this.state as any;
     return data?.filter((i) => !search || _.includes(i?.name?.toLowerCase(), search?.toLowerCase()))
@@ -263,57 +273,87 @@ class Unlabelled extends Component {
     });
   }
 
+  timeout
+  handleSearch = (e) => {
+    const that = this;
+    clearTimeout(that.timeout);
+    const newState = {
+      ...this.state,
+      [e.target.name]: e.target.value,
+      inProgress: true
+    };
+    const { wallet, language, category, country } = newState as any;
+    const errors = this.checkErrors(wallet, that, language, category, country);
+    this.setState({
+      ...newState,
+      errors
+    });
+
+    const timeout = setTimeout(()=> {
+      if(timeout!==that.timeout) {
+        return;
+      }
+      that.loadData(that.state,  (that.state as any).errors);
+    }, 500);
+    that.timeout = timeout;
+  }
+
   render = () => {
-    const { column, data, direction, allChecked, search, error, country, language, vendor, category } = this.state as any;
+    const { column, direction, allChecked, error, errors, country, language, vendor, category, inProgress } = this.state as any;
     const that = this;
     const items = this.filter();
+    const boxStyle = {display: 'flex', 'align-items': 'center', justifyContent: 'center'};
 
     return (
-      <div className={styles.container}>
+      <div className={[styles.container, styles.labelling].join(' ')}>
         <h1>Data Labeling</h1>
         <span>This page allows labelling data. People who label data would be rewarded to their wallet when their labels are used.</span>
-        <p>Vendor:</p>
+        <h5>Vendor:</h5>
         <Select
             label="Vendor"
-            className={styles["MuiSelect-select"]}
+            className={styles.smallDropdowns}
             name='vendor'
-            onChange={that.selectChange.bind(that)}
+            onChange={(e)=> {(that.state as any).data = []; (that.state as any).inProgress = true; that.selectChange(e); that.loadData(that.state, [])}}
             defaultValue={vendor}
         >
           {that.vendors.map((c)=>(<MenuItem value={c}>{c}</MenuItem>))}
         </Select>
-        <p>Language:</p>
+        <span className={styles.error}>{errors['language']}</span>
+        <h5>Language:</h5>
         <Select
             label="Language"
             name='language'
-            className={styles["MuiSelect-select"]}
-            onChange={that.selectChange.bind(that)}
+            className={styles.smallDropdowns}
+            onChange={(e)=> {that.selectChange(e); that.loadData(that.state, [])}}
             defaultValue={language}
         >
           {that.languages.map((c)=>(<MenuItem value={c}>{c}</MenuItem>))}
         </Select>
-        <p>Country:</p>
+        <span className={styles.error}>{errors['country']}</span>
+        <h5>Country:</h5>
         <Select
             label="Country"
             name='country'
-            className={styles["MuiSelect-select"]}
+            className={styles.smallDropdowns}
             onChange={that.selectChange.bind(that)}
             defaultValue={country}
         >
           {that.countries.map((c)=>(<MenuItem value={c}>{c}</MenuItem>))}
         </Select>
-        <p>Category:</p>
+        <h5>Category:</h5>
+        <span className={styles.error}>{errors['category']}</span>
         <Select
             label="Category"
             name='category'
-            className={styles["MuiSelect-select"]}
+            className={styles.smallDropdowns}
             onChange={that.selectChange.bind(that)}
             defaultValue={category}
         >
           {that.flatCategories.map((c)=>(<MenuItem value={c}>{c}</MenuItem>))}
+          <MenuItem value={undefined}></MenuItem>
         </Select>
-
-        <p>Wallet:</p>
+        <span className={styles.error}>{errors['wallet']}</span>
+        <h5>Wallet:</h5>
         <input name='wallet' onChange={this.handleChange}/>
         <span className={styles.error}>{error && error}</span>
         <button onClick={() =>this.handleSave(this.state)}>Save</button>
@@ -324,7 +364,7 @@ class Unlabelled extends Component {
                 sorted={column === 'name' ? direction : null}
             >
               <span onClick={() => this.handleSort('name', this.state)}>Name <span>(Search)</span></span> {' '}
-              <input name='search' onChange={this.handleChange}/>
+              <input name='search'  placeholder={' fish [supports regex]'} onChange={(e)=> {that.handleSearch(e)}}/>
             </Table.HeaderCell>
             <Table.HeaderCell
                 sorted={column === 'selected' ? direction : null}
@@ -335,13 +375,16 @@ class Unlabelled extends Component {
           </Table.Row>
         </Table.Header>
         <Table.Body>
+          {inProgress ? (<Box style={boxStyle}><CircularProgress/></Box>) : null}
+          {(!items?.length && !inProgress)?'No Items Found':null}
+          {inProgress?'Loading': null}
           {items.map(({ name, selected  }) => (
               <Table.Row key={name}>
                 <Table.Cell>{name}</Table.Cell>
                 <Table.Cell><input type='checkbox' checked={selected} onChange={()=>{that.changeSelected(name, !selected)}} /></Table.Cell>
               </Table.Row>
           ))}
-          {(!items?.length)?'No Items Found':null}
+
         </Table.Body>
       </Table>
       </div>
