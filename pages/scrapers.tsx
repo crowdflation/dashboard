@@ -35,7 +35,7 @@ export async function getServerSideProps() {
     }
 }
 
-class Data extends Component {
+class Scrapers extends Component {
 
     constructor(props: any) {
         super(props);
@@ -437,4 +437,4 @@ class Data extends Component {
     }
 }
 
-export default Data
+export default Scrapers;
