@@ -326,6 +326,7 @@ export async function calculateInflation(db, query) {
     radius: distance,
     basket: categoriesLimit,
     inflationOnLastDay: inflationInDayPercent[dates[dates.length - 1]],
+    totalInflation: _.sum(Object.values(inflationInDayPercent)),
     period,
     type,
     vendors,

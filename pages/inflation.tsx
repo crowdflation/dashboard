@@ -72,6 +72,7 @@ class Inflation extends Component<any, any> {
         this.state = {
             column: null,
             inflationInDayPercent: props.resultObject.inflationInDayPercent,
+            totalInflation: props.resultObject.totalInflation,
             direction: null,
             errors: null,
             from: props.resultObject.from,
@@ -80,6 +81,7 @@ class Inflation extends Component<any, any> {
             lng: -95.712891,
             radius: 1900,
             inProgress: false,
+            cumulative: true,
             error: null,
             period: periods.Daily.name,
             vendorsFilterSelect: props.vendorsFilterSelect,
@@ -229,6 +231,7 @@ class Inflation extends Component<any, any> {
                     inflationInDayPercent: response.data.inflationInDayPercent,
                     inflationOnLastDay: response.data.inflationOnLastDay,
                     explanationByDay: response.data.explanationByDay,
+                    totalInflation: response.data.totalInflation,
                 });
             }).catch((error) => {
             this.setState({
@@ -274,6 +277,7 @@ class Inflation extends Component<any, any> {
         const {
             inflationInDayPercent,
             inflationOnLastDay,
+            cumulative,
             country,
             errors,
             lat,
@@ -287,6 +291,7 @@ class Inflation extends Component<any, any> {
             explain,
             explanationByDay,
             vendorsFilterSelect,
+            totalInflation,
         } = this.state as any;
         const that = this;
         let {from, to} = this.state as any;
@@ -306,25 +311,33 @@ class Inflation extends Component<any, any> {
             categories[country].push({x: day, y: !inflationInDayPercent[day] ? 0 : inflationInDayPercent[day]})
         });
 
-        const series = _.map(categories, (value, key) => {
+
+        console.log('cumulative', cumulative);
+        const series = _.map(categories, (value:any, key) => {
+            let newValue = value;
+            if(cumulative==='true' || cumulative===true) {
+                let running:number = 0;
+                newValue = value.map(({x,y})=> {
+                    running += y || 0;
+                    return {x, y: running};
+                });
+            }
+
+
             return (
                 <LineSeries
-                    data={value} key={key}/>
+                    data={newValue} key={key}/>
             )
         });
-
 
         const calculateTickLabelAngle = () => {
             if (days.length < 10) {
                 return 0;
             }
-
             if (days.length > 40) {
                 return -90;
             }
-
             return -25;
-
         }
 
         const style = {width: '100%', 'margin-bottom': '100px'};
@@ -357,7 +370,7 @@ class Inflation extends Component<any, any> {
                     >
                         {that.countries.map((c)=>(<MenuItem key={c.code} value={c.code}>{c.name}</MenuItem>))}
                     </Select> {' '}
-                    Inflation: {inflationOnLastDay || 0}% compared to last day
+                    Inflation: {totalInflation || 0}% total for period
                 </h3>
                 <Accordion>
                     <AccordionSummary
@@ -500,6 +513,22 @@ class Inflation extends Component<any, any> {
 `}</style>
                             </Helmet>
                         </div>
+                    </AccordionDetails>
+                </Accordion>
+                <Accordion>
+                    <AccordionSummary
+                        expandIcon={<ExpandMoreIcon/>}
+                        aria-controls="panel2a-content"
+                        id="panel2a-header"
+                    >
+                        <Typography>Calculation Cumulative over period</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                        <RadioGroup row aria-label="cumulative" name="cumulative" value={cumulative}
+                                    onChange={this.handleChange}>
+                            <FormControlLabel value={true} control={<Radio/>} label='Cumulative'/>
+                            <FormControlLabel value={false} control={<Radio/>} label='Individual'/>
+                        </RadioGroup>
                     </AccordionDetails>
                 </Accordion>
                 <Accordion>
