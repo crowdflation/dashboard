@@ -355,7 +355,7 @@ class Inflation extends Component<any, any> {
                         className={styles["MuiSelect-select"]}
                         onChange={that.countrySelectChange.bind(that)}
                     >
-                        {that.countries.map((c)=>(<MenuItem value={c.code}>{c.name}</MenuItem>))}
+                        {that.countries.map((c)=>(<MenuItem key={c.code} value={c.code}>{c.name}</MenuItem>))}
                     </Select> {' '}
                     Inflation: {inflationOnLastDay || 0}% compared to last day
                 </h3>

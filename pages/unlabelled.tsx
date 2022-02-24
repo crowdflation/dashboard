@@ -120,7 +120,7 @@ class Unlabelled extends Component {
     try {
       return JSON.stringify(error?.response?.data, null, 2);
     } catch (e) {
-      return error.toString();
+      return error.toString() || 'Unknown error';
     }
   }
 
@@ -316,7 +316,7 @@ class Unlabelled extends Component {
             onChange={(e)=> {(that.state as any).data = []; (that.state as any).inProgress = true; that.selectChange(e); that.loadData(that.state, [])}}
             defaultValue={vendor}
         >
-          {that.vendors.map((c)=>(<MenuItem value={c}>{c}</MenuItem>))}
+          {that.vendors.map((c)=>(<MenuItem key={c} value={c}>{c}</MenuItem>))}
         </Select>
         <span className={styles.error}>{errors['language']}</span>
         <h5>Language:</h5>
@@ -327,7 +327,7 @@ class Unlabelled extends Component {
             onChange={(e)=> {that.selectChange(e); that.loadData(that.state, [])}}
             defaultValue={language}
         >
-          {that.languages.map((c)=>(<MenuItem value={c}>{c}</MenuItem>))}
+          {that.languages.map((c)=>(<MenuItem key={c} value={c}>{c}</MenuItem>))}
         </Select>
         <span className={styles.error}>{errors['country']}</span>
         <h5>Country:</h5>
@@ -338,7 +338,7 @@ class Unlabelled extends Component {
             onChange={that.selectChange.bind(that)}
             defaultValue={country}
         >
-          {that.countries.map((c)=>(<MenuItem value={c}>{c}</MenuItem>))}
+          {that.countries.map((c)=>(<MenuItem key={c} value={c}>{c}</MenuItem>))}
         </Select>
         <h5>Category:</h5>
         <span className={styles.error}>{errors['category']}</span>
@@ -349,8 +349,8 @@ class Unlabelled extends Component {
             onChange={that.selectChange.bind(that)}
             defaultValue={category}
         >
-          {that.flatCategories.map((c)=>(<MenuItem value={c}>{c}</MenuItem>))}
-          <MenuItem value={undefined}></MenuItem>
+          {that.flatCategories.map((c)=>(<MenuItem key={c} value={c}>{c}</MenuItem>))}
+          <MenuItem key={'undefined'} value={undefined}></MenuItem>
         </Select>
         <span className={styles.error}>{errors['wallet']}</span>
         <h5>Wallet:</h5>
@@ -363,8 +363,8 @@ class Unlabelled extends Component {
             <Table.HeaderCell
                 sorted={column === 'name' ? direction : null}
             >
-              <span onClick={() => this.handleSort('name', this.state)}>Name <span>(Search)</span></span> {' '}
-              <input name='search'  placeholder={' fish [supports regex]'} onChange={(e)=> {that.handleSearch(e)}}/>
+              <span onClick={() => this.handleSort('name', this.state)}>Name <span>(Search-Case Sensitive)</span></span> {' '}
+              <input name='search'  placeholder={' Fish [supports regex]'} onChange={(e)=> {that.handleSearch(e)}}/>
             </Table.HeaderCell>
             <Table.HeaderCell
                 sorted={column === 'selected' ? direction : null}
