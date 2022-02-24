@@ -307,12 +307,15 @@ class Inflation extends Component<any, any> {
         // If it is an array we can show a table
         let categories = {};
         categories[country] = [];
+        let maxY = 0;
+        let minY = 0;
         days.forEach((day) => {
-            categories[country].push({x: day, y: !inflationInDayPercent[day] ? 0 : inflationInDayPercent[day]})
+            const y = !inflationInDayPercent[day] ? 0 : inflationInDayPercent[day];
+            minY = Math.min(minY, y);
+            maxY = Math.max(maxY, y);
+            categories[country].push({x: day, y})
         });
 
-
-        console.log('cumulative', cumulative);
         const series = _.map(categories, (value:any, key) => {
             let newValue = value;
             if(cumulative==='true' || cumulative===true) {
@@ -561,7 +564,7 @@ class Inflation extends Component<any, any> {
                     {series}
                     <XAxis tickLabelAngle={calculateTickLabelAngle()}/>
                     <YAxis/>
-                    <MarkSeries data={[{x: days[0], y: 0},{x: days[0], y: 0.1},{x: days[0], y: -0.1}]} style={{display: 'none'}}/>
+                    <MarkSeries data={[{x: days[0], y: 0},{x: days[0], y: maxY + 0.1},{x: days[0], y: minY-0.1}]} style={{display: 'none'}}/>
                 </FlexibleWidthXYPlot>)}
                 {explanationComponent}
             </div>);
