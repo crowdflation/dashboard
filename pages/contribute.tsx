@@ -14,7 +14,7 @@ const Contribute: NextPage<Untitlable> = (props:Untitlable) => {
     return (
         <div className={styles.container}>
             <Head>
-                <title>Contribution - how to make more CRWD tokens</title>
+                <title>Contribution - how to earn more CRWD tokens</title>
             </Head>
 
             <main className={styles.main}>
