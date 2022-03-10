@@ -307,7 +307,7 @@ class Unlabelled extends Component {
     return (
       <div className={[styles.container, styles.labelling].join(' ')}>
         <h1>Data Labeling</h1>
-        <span>This page allows labelling data. People who label data would be rewarded to their wallet when their labels are used.</span>
+        <p>This page allows labelling of data. Labeling data means assigning categories to the data. This allows us to train our categorisation models. People who label data would be rewarded to their wallet when their labels are used.</p>
         <h5>Vendor:</h5>
         <Select
             label="Vendor"
