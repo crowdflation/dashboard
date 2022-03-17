@@ -6,7 +6,7 @@ import { calculateCategoriesCount } from './api/categories'
 
 
 export async function getServerSideProps({query}) {
-  let categoriesCount = await calculateCategoriesCount();
+  let categoriesCount = await calculateCategoriesCount(false);
   return {
     props: {categoriesCount, query}, // will be passed to the page component as props
   }
