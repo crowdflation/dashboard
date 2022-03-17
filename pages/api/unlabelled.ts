@@ -55,7 +55,7 @@ export async function getUnlabelled(country, language, vendor, search) {
 
   let searchFilter = {};
   if(search) {
-    searchFilter = {name:{$regex : search}};
+    searchFilter = {name:{$regex : search, '$options' : 'i'}};
   }
 
   let count = 0;
@@ -106,7 +106,7 @@ export default async function handler(
       const {db} = await connectToDatabase();
       const items = req.body;
       await items.map(async (item) => {
-        const {name, category, country, language, wallet} = item;
+        const {name, category, country, language, wallet, vendor} = item;
         const filter = {name, country, language };
         const now = new Date();
         const foundBelowWU = await db
@@ -124,7 +124,7 @@ export default async function handler(
         const found = await db
             .collection('_labels').findOne(filter);
         if (!found) {
-          return db.collection('_labels').insertOne({name, category, country, language, wallet, waitUntil});
+          return db.collection('_labels').insertOne({name, category, country, language, wallet, waitUntil, vendor});
         } else {
           return db.collection('_labels').updateOne(filter, {$inc: {minimumLabelCount}, $set: {waitUntil}, $push: {wallet}});
         }

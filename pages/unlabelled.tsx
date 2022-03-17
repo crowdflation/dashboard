@@ -2,7 +2,7 @@ import styles from '../styles/Home.module.css'
 import React, { Component } from 'react'
 import { Table } from 'semantic-ui-react'
 import _ from 'lodash'
-import axios from 'axios'
+import axios from 'axios';
 import { connectToDatabase } from "../lib/util/mongodb"
 import {getUnlabelled} from "./api/unlabelled";
 
@@ -175,7 +175,7 @@ class Unlabelled extends Component {
   }
 
   handleSave = (state) => {
-    const { data, search, wallet, language, category, country } = this.state as any;
+    const { data, search, wallet, language, category, country, vendor } = this.state as any;
     const that = this;
     let errors = this.checkErrors(wallet, that, language, category, country);
 
@@ -195,7 +195,8 @@ class Unlabelled extends Component {
       wallet,
       language,
       category,
-      country
+      country,
+      vendor
     })));
 
     if(!items.length) {
@@ -363,7 +364,7 @@ class Unlabelled extends Component {
             <Table.HeaderCell
                 sorted={column === 'name' ? direction : null}
             >
-              <span onClick={() => this.handleSort('name', this.state)}>Name <span>(Search-Case Sensitive)</span></span> {' '}
+              <span onClick={() => this.handleSort('name', this.state)}>Name <span>(Search)</span></span> {' '}
               <input name='search'  placeholder={' Fish [supports regex]'} onChange={(e)=> {that.handleSearch(e)}}/>
             </Table.HeaderCell>
             <Table.HeaderCell

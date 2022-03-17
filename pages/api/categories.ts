@@ -39,13 +39,18 @@ function findParent(name, where) {
   return false;
 }
 
-export async function calculateCategoriesCount() {
+export async function calculateCategoriesCount(all) {
   const {db} = await connectToDatabase();
 
 
   const now = new Date();
   const from = new Date(now.setDate(now.getDate() - 1));
   const to = new Date();
+
+  let filter:any = {dateTime: {$gte: from, $lt: to}};
+  if(all) {
+    filter = {};
+  }
 
 
   let vendors = await db.collection('_vendors').find().toArray();
@@ -64,7 +69,7 @@ export async function calculateCategoriesCount() {
   await Promise.all(vendors.map(async (vendor) => {
     let prices = await db
       .collection(vendor)
-      .find({dateTime: {$gte: from, $lt: to}})
+      .find(filter)
       .toArray();
 
     await Promise.all(prices.map(async (price) => {
@@ -90,9 +95,11 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<any>
 ) {
+
+  const {all} = req.query;
   // Run the middleware
   await runMiddleware(req, res, cors);
-  const dataObj = await calculateCategoriesCount();
+  const dataObj = await calculateCategoriesCount(all);
 
   return res.status(200).json(JSON.stringify(dataObj, null, 2));
 }
