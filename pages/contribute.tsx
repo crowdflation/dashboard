@@ -46,7 +46,7 @@ const Contribute: NextPage<Untitlable> = (props:Untitlable) => {
                         Being active in the Discord
                     </h3>
                     <div className={styles.description}>
-                        If you are active in the <a href={"https://discord.gg/b6HrzTZ2tF"} target={"_blank"}>Discord</a>, this will be recognised with a number of rewards. We will note relevant posts with a custom icon and those will be rewarded once a tip bot is set up. Share if you done something rewarding and that will be noticed.
+                        If you are active in the <a href={"https://discord.gg/b6HrzTZ2tF"} target={"_blank"}>Discord</a>, this will be recognised a number of rewards. Anyone can note relevant posts with a custom icon (:crwd:) and those posting will be rewarded. Post a meme, a screenshot or link to your accomplishments or just participate in Discord with your wits to brighten someones day. Discord bot is still in testing, so let us know in case of any hiccups.
                     </div>
                 </div>
             </main>
