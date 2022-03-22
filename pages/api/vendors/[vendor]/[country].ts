@@ -3,7 +3,7 @@ import { NextApiRequest, NextApiResponse } from 'next'
 import Cors from 'cors'
 import _ from 'lodash';
 import { runMiddleware, tryParse } from '../../../../lib/util/middleware'
-import { countries, countryCodes, countryCodesMap} from '../../../../data/countries'
+import { countries, countryCodes, countryCodesMap } from '../../../../data/countries'
 
 // Initializing the cors middleware
 const cors = Cors({
@@ -28,6 +28,158 @@ function validateAndDenormalise(location:{latitude:number,longitude:number }) {
 
 //TODO: Validation and assigning to a user
 import { connectToDatabase } from "../../../../lib/util/mongodb";
+import axios from "axios";
+import {cleanupPriceName} from "../../../../lib/util/utils";
+
+const countryToLanguage = {
+  "029":"EN",
+  "AE":"AR",
+  "AF":"PRS",
+  "AL":"SQ",
+  "AM":"HY",
+  "AR":"ES",
+  "AT":"DE",
+  "AU":"EN",
+  "AZ":"AZ",
+  "BA":"BS",
+  "BD":"BN",
+  "BE":"FR",
+  "BG":"BG",
+  "BH":"AR",
+  "BN":"MS",
+  "BO":"ES",
+  "BR":"PT",
+  "BY":"BE",
+  "BZ":"EN",
+  "CA":"EN",
+  "CB":"EN",
+  "CH":"DE",
+  "CL":"ARN",
+  "CN":"BO",
+  "CO":"ES",
+  "CR":"ES",
+  "CS":"SR",
+  "CY":"EL",
+  "CZ":"CS",
+  "DE":"DE",
+  "DK":"DA",
+  "DO":"ES",
+  "DZ":"AR",
+  "EC":"ES",
+  "EE":"ET",
+  "EG":"AR",
+  "ES":"CA",
+  "ET":"AM",
+  "FI":"FI",
+  "FO":"FO",
+  "FR":"BR",
+  "GB":"CY",
+  "GE":"KA",
+  "GL":"KL",
+  "GR":"EL",
+  "GT":"ES",
+  "HK":"ZH",
+  "HN":"ES",
+  "HR":"HR",
+  "HU":"HU",
+  "ID":"ID",
+  "IE":"EN",
+  "IL":"HE",
+  "IN":"AS",
+  "IQ":"AR",
+  "IR":"FA",
+  "IS":"IS",
+  "IT":"IT",
+  "JM":"EN",
+  "JO":"AR",
+  "JP":"JA",
+  "KE":"SW",
+  "KG":"KY",
+  "KH":"KM",
+  "KR":"KO",
+  "KW":"AR",
+  "KZ":"KK",
+  "LA":"LO",
+  "LB":"AR",
+  "LI":"DE",
+  "LK":"SI",
+  "LT":"LT",
+  "LU":"DE",
+  "LV":"LV",
+  "LY":"AR",
+  "MA":"AR",
+  "MC":"FR",
+  "ME":"SR",
+  "MK":"MK",
+  "MN":"MN",
+  "MO":"RO",
+  "MT":"EN",
+  "MV":"DV",
+  "MX":"ES",
+  "MY":"EN",
+  "NG":"HA",
+  "NI":"ES",
+  "NL":"FY",
+  "NO":"NB",
+  "NP":"NE",
+  "NZ":"EN",
+  "OM":"AR",
+  "PA":"ES",
+  "PE":"ES",
+  "PH":"EN",
+  "PK":"UR",
+  "PL":"PL",
+  "PR":"ES",
+  "PT":"PT",
+  "PY":"ES",
+  "QA":"AR",
+  "QS":"TLH",
+  "RO":"RO",
+  "RS":"SR",
+  "RU":"BA",
+  "RW":"RW",
+  "SA":"AR",
+  "SD":"AR",
+  "SE":"SE",
+  "SG":"EN",
+  "SI":"SL",
+  "SK":"SK",
+  "SN":"WO",
+  "SP":"SR",
+  "SV":"ES",
+  "SY":"AR",
+  "TH":"TH",
+  "TJ":"TG",
+  "TM":"TK",
+  "TN":"AR",
+  "TR":"TR",
+  "TT":"EN",
+  "TW":"ZH",
+  "UA":"UK",
+  "US":"EN",
+  "UY":"ES",
+  "UZ":"UZ",
+  "VE":"ES",
+  "VN":"VI",
+  "YE":"AR",
+  "ZW":"EN",
+  "ZA":"AF"
+};
+
+async function getCategoriesFromModel(namesNotCategorised: string[], language) {
+  const modelUrl = process.env.CATEGORISATOION_MODEL_URL as string;
+  for (let i =0;i<=5;i++) {
+    try {
+      return await axios.post(modelUrl, {
+        "product_list": namesNotCategorised,
+        "lang": language.toLowerCase()
+      });
+    } catch (ex) {
+
+    }
+  }
+  throw new Error("Timeout trying to access the model")
+}
 
 export async function handleDataRequest(vendor: string | string[], country: any, req: NextApiRequest, res: NextApiResponse<any>) {
   if (!vendor || _.includes(vendor, '_')) {
@@ -49,6 +201,16 @@ export async function handleDataRequest(vendor: string | string[], country: any,
   let countryFilter: any = country;
   if (country === countries["United States"].code) {
     countryFilter = {$in: [country, null]};
+  }
+
+  let language = countryToLanguage[country];
+  if(!language) {
+    language = 'EN';
+  }
+
+  let languageFilter: any = language;
+  if(language ==='EN') {
+    languageFilter = {$in: [language, null]};
   }
 
   const {db} = await connectToDatabase();
@@ -87,6 +249,7 @@ export async function handleDataRequest(vendor: string | string[], country: any,
   } else if (req.method === 'POST') {
     const enriched = req.body.payload.data.map(validateAndDenormalise(req.body.location));
     //Add each item from the list
+    const namesFound = {};
     enriched.forEach(async function (item: any) {
       const itemFilter = {...item, country: countryFilter};
       console.log('itemFilter', itemFilter );
@@ -95,6 +258,7 @@ export async function handleDataRequest(vendor: string | string[], country: any,
       console.log('found', found);
       if (!found) {
         await db.collection(vendor).insertOne({...item, country});
+        namesFound[cleanupPriceName(item.name)] = true;
       } else {
         //If item is found just increment the counter
         await db.collection(vendor).updateOne({...item, country: countryFilter}, {$inc: {count: 1}});
@@ -102,13 +266,46 @@ export async function handleDataRequest(vendor: string | string[], country: any,
     });
 
     await db.collection('_vendors').updateOne(
-        {name: vendor, country: countryFilter},
-        {$set: {name: vendor, country}},
-        {
-          upsert: true
-        });
+      {name: vendor, country: countryFilter},
+      {$set: {name: vendor, country}},
+      {
+        upsert: true
+      });
 
-    return res.status(200).json({});
+    res.status(200).json({});
+
+    const namesNotCategorised:string[] = [];
+    await Promise.all(Object.keys(namesFound).map(async (name)=> {
+      const found = await db.collection('_categories').findOne({name, country: countryFilter, language: languageFilter});
+      if(!found) {
+        namesNotCategorised.push(name);
+      }
+    }));
+
+
+
+
+    let categorised = await getCategoriesFromModel(namesNotCategorised, language);
+    const confidenceThreshold = (parseFloat(process.env.CATEGORISATOION_CONFIDENCE_TRESHOLD as string)) || 0.8;
+
+    await Promise.all(Object.keys(categorised).map(async (key)=> {
+      const val = categorised[key];
+
+      if(val?.confidence>confidenceThreshold) {
+        const category = val?.prediction;
+        if(category) {
+          console.log('')
+          await db.collection('_categories').updateOne(
+              {name: key, country: countryFilter},
+              {$set: {name: key, category, country, language}},
+              {
+                upsert: true
+              });
+        }
+      }
+
+    }));
+    return;
   }
   return res.status(404).json({message: 'Invalid request type'});
 }
