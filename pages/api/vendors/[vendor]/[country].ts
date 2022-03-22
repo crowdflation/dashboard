@@ -166,16 +166,26 @@ const countryToLanguage = {
   "ZA":"AF"
 };
 
+function wait(delay) {
+  return new Promise(function(succ) {
+    setTimeout(succ, delay);
+  });
+}
+
 async function getCategoriesFromModel(namesNotCategorised: string[], language) {
+  if(!namesNotCategorised?.length) {
+    return [];
+  }
   const modelUrl = process.env.CATEGORISATOION_MODEL_URL as string;
   for (let i =0;i<=5;i++) {
     try {
-      return await axios.post(modelUrl, {
+      return (await axios.post(`${modelUrl}/ai-prediction`, {
         "product_list": namesNotCategorised,
         "lang": language.toLowerCase()
-      });
+      })).data;
     } catch (ex) {
-
+      console.warn('got error, waiting');
+      await wait(5000);
     }
   }
   throw new Error("Timeout trying to access the model")
@@ -216,7 +226,6 @@ export async function handleDataRequest(vendor: string | string[], country: any,
   const {db} = await connectToDatabase();
   //TODO: put methods in constants
   if (req.method === 'GET') {
-    console.log('query', req.query);
 
     try {
       let prices = null;
@@ -231,7 +240,6 @@ export async function handleDataRequest(vendor: string | string[], country: any,
         }
       } else {
         const filter = {...tryParse(req.query.find, {}), country: countryFilter};
-        console.log('filter', filter);
         prices = await db
             //TODO: put shops in db or constants
             .collection(vendor)
@@ -243,7 +251,7 @@ export async function handleDataRequest(vendor: string | string[], country: any,
       //TODO: put status code in constants
       return res.status(200).json(JSON.stringify(prices, null, 2));
     } catch (e) {
-      console.log(JSON.stringify(e, null, 2), (e as any).toString());
+      console.log('Error during get request handling',JSON.stringify(e, null, 2), (e as any).toString());
       return res.status(400).json({error: (e as any)?.toString()});
     }
   } else if (req.method === 'POST') {
@@ -252,13 +260,12 @@ export async function handleDataRequest(vendor: string | string[], country: any,
     const namesFound = {};
     enriched.forEach(async function (item: any) {
       const itemFilter = {...item, country: countryFilter};
-      console.log('itemFilter', itemFilter );
       const found = await db
           .collection(vendor).findOne(itemFilter);
-      console.log('found', found);
+      const cleanedUpName = cleanupPriceName(item.name);
+      namesFound[cleanedUpName] = true;
       if (!found) {
         await db.collection(vendor).insertOne({...item, country});
-        namesFound[cleanupPriceName(item.name)] = true;
       } else {
         //If item is found just increment the counter
         await db.collection(vendor).updateOne({...item, country: countryFilter}, {$inc: {count: 1}});
@@ -284,27 +291,30 @@ export async function handleDataRequest(vendor: string | string[], country: any,
 
 
 
-
     let categorised = await getCategoriesFromModel(namesNotCategorised, language);
     const confidenceThreshold = (parseFloat(process.env.CATEGORISATOION_CONFIDENCE_TRESHOLD as string)) || 0.8;
 
+
+    let itemCategoriesUpdated = 0;
     await Promise.all(Object.keys(categorised).map(async (key)=> {
       const val = categorised[key];
 
       if(val?.confidence>confidenceThreshold) {
         const category = val?.prediction;
         if(category) {
-          console.log('')
           await db.collection('_categories').updateOne(
               {name: key, country: countryFilter},
               {$set: {name: key, category, country, language}},
               {
                 upsert: true
               });
+          itemCategoriesUpdated++;
         }
       }
 
     }));
+
+    console.debug('itemCategoriesUpdated', itemCategoriesUpdated);
     return;
   }
   return res.status(404).json({message: 'Invalid request type'});
