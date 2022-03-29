@@ -126,7 +126,7 @@ export default async function handler(
         if (!found) {
           return db.collection('_labels').insertOne({name, category, country, language, wallet, waitUntil, vendor});
         } else {
-          return db.collection('_labels').updateOne(filter, {$inc: {minimumLabelCount}, $set: {waitUntil}, $push: {wallet}});
+          return db.collection('_labels').updateOne(filter, {$inc: {count: 1}, $set: {waitUntil}, $push: {wallet}});
         }
       });
       return res.status(200).json({});
