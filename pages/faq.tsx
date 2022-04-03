@@ -28,12 +28,19 @@ const FAQ: NextPage<Untitlable> = (props:Untitlable) => {
             What do we do?
           </h3>
           <p className={styles.description}>
-            We develop technology for gathering user data and applying it in an inflation calculation model (and potentially other applications) in a fully decentralized manner. The resulting model output can be used in blockchain smart contracts through Chainlink oracles.
+            We are building a DAO for the release and management of better-than-stable coins. These coins will be better than traditional stable-coins as they will be inflation adjusted, which means that the holders will be protected from the inflation in the relevant asset.
+          </p>
+          <h3>
+            How can I buy your token?
+          </h3>
+          <p className={styles.description}>
+            You can buy it on <a href="https://exchange.sundaeswap.finance/#/swap?swap_from=cardano.ada&swap_to=bc7058e1eb1157655d43a91ff083790331d4a0f1893d2b37037840c1.43525744" target="_blank">SundaeSwap</a> for ADA.
           </p>
           <h3>
             How do we obtain data?
           </h3>
           <p className={styles.description}>
+            We develop technology for gathering user data and applying it in an inflation calculation model (and potentially other applications) in a fully decentralized manner. The resulting model output can be used in blockchain smart contracts through Chainlink oracles.
             We mine data by using a browser extension. You can download it here: <a target="_blank" rel="noreferrer" href="https://www.dropbox.com/s/jpedyk5hoz18ct8/alphaCheap.zip?dl=1">Alpha Cheap</a>. You will need to load it as unpacked in development mode.
           </p>
           <h3>
@@ -101,6 +108,12 @@ const FAQ: NextPage<Untitlable> = (props:Untitlable) => {
           </h3>
           <p className={styles.description}>
             We aim to enable building a network of multiple nodes that will be gathering data independently from each other, which mean that there will be no central entity that can exert control on anybody else. A node can be added or removed from the network without affecting the entire network as a whole.
+          </p>
+          <h3>
+            How can I get your tokens for free?
+          </h3>
+          <p className={styles.description}>
+            You can obtain more tokens by <Link href="/contribute">Contributing</Link>
           </p>
         </div>
       </main>
