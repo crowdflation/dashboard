@@ -57,7 +57,7 @@ async function getCategoriesFromModel(namesNotCategorised: string[], language) {
   throw new Error("Timeout trying to access the model")
 }
 
-export async function handleDataRequest(vendor: string | string[], country: any, req: NextApiRequest, res: NextApiResponse<any>) {
+export async function handleDataRequest(vendor: string | string[], country: any, page: number=0, limit: number=200, req: NextApiRequest, res: NextApiResponse<any>) {
   if (!vendor || _.includes(vendor, '_')) {
     return res.status(400).json({error: 'Non-allowed vendor name'});
   }
@@ -93,33 +93,47 @@ export async function handleDataRequest(vendor: string | string[], country: any,
   //TODO: put methods in constants
   if (req.method === 'GET') {
 
-    try {
+    let totalItems, totalPages, currentPage;
+
+    //try {
+
       let prices = null;
       if (req.query.aggregate) {
+        console.log('aggregate');
         let what = tryParse(req.query.aggregate, null);
         if (what) {
           prices = await db
-              //TODO: put shops in db or constants
               .collection(vendor)
               .aggregate(what)
               .toArray();
         }
       } else {
         const filter = {...tryParse(req.query.find, {}), country: countryFilter};
+        const offset = page * limit;
+        console.log('vendor',vendor, offset, limit);
+
+        const count = await db
+            .collection(vendor).find(filter).count();
+        totalItems = count;
+        totalPages = Math.ceil(count / limit);
+        currentPage = page;
+
+        //TODO: put shops in db or constants
         prices = await db
-            //TODO: put shops in db or constants
             .collection(vendor)
             .find(filter)
             .sort(tryParse(req.query.sort, {dateTime: -1}))
+            .skip(offset)
+            .limit(limit)
             .toArray();
       }
 
       //TODO: put status code in constants
-      return res.status(200).json(JSON.stringify(prices, null, 2));
-    } catch (e) {
-      console.log('Error during get request handling',JSON.stringify(e, null, 2), (e as any).toString());
+      return res.status(200).json(JSON.stringify({totalItems, totalPages, currentPage, prices}, null, 2));
+    /*} catch (e) {
+      console.log('Error during get request handling',e, JSON.stringify(e, null, 2), (e as any).toString());
       return res.status(400).json({error: (e as any)?.toString()});
-    }
+    }*/
   } else if (req.method === 'POST') {
     const enriched = req.body.payload.data.map(validateAndDenormalise(req.body.location));
     //Add each item from the list
@@ -193,6 +207,6 @@ export default async function handler(
 
   // Run the middleware
   await runMiddleware(req, res, cors);
-  let { vendor, country } = req.query;
-  return await handleDataRequest(vendor, country, req, res);
+  let { vendor, country, page, limit } = req.query;
+  return await handleDataRequest(vendor, country,  (page as string | undefined) as (number | undefined), parseInt(limit as string), req, res);
 };

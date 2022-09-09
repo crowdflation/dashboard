@@ -27,6 +27,7 @@ class Data extends Component {
       data: [],
       direction: null,
       errors: null,
+      limit: 200
     };
 
     this.handleChange = this.handleChange.bind(this);
@@ -37,6 +38,13 @@ class Data extends Component {
     this.setState({
       ...this.state,
       [e.target.name]: e.target.value
+    });
+  }
+
+  handleLimitChange = (e: any) => {
+    this.setState({
+      ...this.state,
+      limit: e.target.value
     });
   }
 
@@ -59,7 +67,7 @@ class Data extends Component {
   }
 
   buildQueryURL = (state) => {
-    return ['find', 'sort', 'aggregate'].reduce((str, key) => {
+    return ['find', 'sort', 'aggregate', 'limit'].reduce((str, key) => {
       if(!state[key]) {
         return str;
       }
@@ -118,7 +126,7 @@ class Data extends Component {
           aggregateResult: state.aggregate,
           errors,
           error: null,
-          data: response.data
+          data: response?.data?.prices
         });
       }).catch((error) => {
         this.setState({
@@ -137,7 +145,7 @@ class Data extends Component {
   }
 
   render = () => {
-    const { column, data, direction, aggregateResult, errors, error } = this.state as any;
+    const { column, data, direction, aggregateResult, limit, errors, error } = this.state as any;
 
     let representation = (<p>{JSON.stringify(data, null, 2)}</p>);
     let chart:any = null;
@@ -257,6 +265,8 @@ class Data extends Component {
         <p><a href="https://docs.mongodb.com/manual/reference/method/db.collection.aggregate/" target="_blank" rel="noreferrer">Aggregate</a> example: <pre>[&#123;&quot;$group&quot;:&#123;&quot;_id&quot;:&quot;name&quot;,&quot;count&quot;:&#123;&quot;$sum&quot;:1&#125;&#125;&#125;]</pre></p>
         <span className={styles.error}>{errors && errors["aggregate"]}</span>
         <textarea name='aggregate' onChange={this.handleChange}></textarea>
+        <p>Number of items:</p>
+        <input name='limit' onChange={this.handleLimitChange} value={limit}></input>
         <span className={styles.error}>{error}</span>
         <button onClick={() =>this.handleReload(this.state)}>Reload</button>
         {representation}
