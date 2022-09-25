@@ -12,7 +12,7 @@ import moment from 'moment';
 import {formatDate, parseDate} from 'react-day-picker/moment';
 import Helmet from 'react-helmet';
 import {calculateInflation} from './api/inflation';
-import MapComponent from '../components/map-component';
+import { MapComponent } from '../components/map-component';
 import DropdownTreeSelect from 'react-dropdown-tree-select';
 import 'react-dropdown-tree-select/dist/styles.css';
 import data from '../data/categories';
