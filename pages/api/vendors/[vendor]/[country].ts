@@ -23,7 +23,7 @@ function validateAndDenormalise(location:{latitude:number,longitude:number }) {
     if(!item.name || !item.price) {
       throw new Error('Submission data must have name and price fields');
     }
-    return {...item, location: roughLocation, dateTime}
+    return {...item, locationArray: [roughLocation?.longitude, roughLocation?.latitude], location: roughLocation, dateTime}
   }
 }
 
