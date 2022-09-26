@@ -19,9 +19,9 @@ import { faLocationCrosshairs, faCircleChevronDown } from '@fortawesome/free-sol
 import { DialogComponent } from '../components/dialog-component';
 import Select from "@material-ui/core/Select";
 import {codeToCountryMap} from "../data/countries";
-import DropdownTreeSelect from "react-dropdown-tree-select";
+import DropdownTreeSelect from "react-dropdown-tree-select17";
 import categories from "../data/categories";
-import 'react-dropdown-tree-select/dist/styles.css';
+import 'react-dropdown-tree-select17/dist/styles.css';
 import {connectToDatabase, getVendors} from "../lib/util/mongodb";
 import {cleanupPriceName} from "../lib/util/utils";
 
@@ -184,7 +184,7 @@ class Data extends Component {
         }
       };
 
-      const countries = ['US', 'TR'];
+      const countries = ['US', 'TR', 'GB'];
 
       const distances = [1000, 3000, 5000, 10000, 20000, 30000, 50000];
 

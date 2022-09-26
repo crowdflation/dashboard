@@ -1,6 +1,6 @@
 import Head from 'next/head'
 import styles from '../styles/Home.module.css'
-import React, {Component} from 'react'
+import React, { Component } from 'react'
 import _ from 'lodash'
 import axios from 'axios'
 import {FlexibleWidthXYPlot, HorizontalGridLines, LineSeries, MarkSeries, XAxis, YAxis} from 'react-vis'
@@ -13,8 +13,8 @@ import {formatDate, parseDate} from 'react-day-picker/moment';
 import Helmet from 'react-helmet';
 import {calculateInflation} from './api/inflation';
 import { MapComponent } from '../components/map-component';
-import DropdownTreeSelect from 'react-dropdown-tree-select';
-import 'react-dropdown-tree-select/dist/styles.css';
+import DropdownTreeSelect from 'react-dropdown-tree-select17';
+import 'react-dropdown-tree-select17/dist/styles.css';
 import data from '../data/categories';
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
@@ -52,6 +52,7 @@ export async function getServerSideProps() {
     vendorObjects.map((v:any)=>{ return v.country && (countryCodes[v.country]=v.country);});
     countryCodes['US'] = 'US';
     countryCodes['TR'] = 'TR';
+    countryCodes['GB'] = 'GB';
 
     const countries = Object.keys(countryCodes).map(c=>codeToCountryMap[c]);
 
