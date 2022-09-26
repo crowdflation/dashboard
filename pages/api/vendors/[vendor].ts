@@ -15,5 +15,5 @@ export default async function handler(
   // Run the middleware
   await runMiddleware(req, res, cors);
   let { vendor, limit } = req.query;
-  return await handleDataRequest(vendor, 'US', 0, parseInt(limit as string),req, res);
+  return await handleDataRequest(vendor as string, 'US', 0, parseInt(limit as string),req, res);
 };

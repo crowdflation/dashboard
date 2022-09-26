@@ -208,5 +208,5 @@ export default async function handler(
   // Run the middleware
   await runMiddleware(req, res, cors);
   let { vendor, country, page, limit } = req.query;
-  return await handleDataRequest(vendor, country,  (page as string | undefined) as (number | undefined), parseInt(limit as string), req, res);
+  return await handleDataRequest(vendor as string, country,  (page as string | undefined) as (number | undefined), parseInt(limit as string), req, res);
 };
