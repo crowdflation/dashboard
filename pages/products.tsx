@@ -19,9 +19,9 @@ import { faLocationCrosshairs, faCircleChevronDown } from '@fortawesome/free-sol
 import { DialogComponent } from '../components/dialog-component';
 import Select from "@material-ui/core/Select";
 import {codeToCountryMap} from "../data/countries";
-import DropdownTreeSelect from "react-dropdown-tree-select17";
+import DropdownTreeSelect from "react-dropdown-tree-select";
 import categories from "../data/categories";
-import 'react-dropdown-tree-select17/dist/styles.css';
+import 'react-dropdown-tree-select/dist/styles.css';
 import {connectToDatabase, getVendors} from "../lib/util/mongodb";
 import {cleanupPriceName} from "../lib/util/utils";
 
