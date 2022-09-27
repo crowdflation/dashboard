@@ -1,6 +1,6 @@
 import Head from 'next/head'
 import styles from '../styles/Home.module.css'
-import React, {Component} from 'react'
+import React, { Component } from 'react'
 import _ from 'lodash'
 import axios from 'axios'
 import {FlexibleWidthXYPlot, HorizontalGridLines, LineSeries, MarkSeries, XAxis, YAxis} from 'react-vis'
@@ -12,7 +12,7 @@ import moment from 'moment';
 import {formatDate, parseDate} from 'react-day-picker/moment';
 import Helmet from 'react-helmet';
 import {calculateInflation} from './api/inflation';
-import MapComponent from '../components/map-component';
+import MapComponent  from '../components/map-component';
 import DropdownTreeSelect from 'react-dropdown-tree-select';
 import 'react-dropdown-tree-select/dist/styles.css';
 import data from '../data/categories';
@@ -52,6 +52,7 @@ export async function getServerSideProps() {
     vendorObjects.map((v:any)=>{ return v.country && (countryCodes[v.country]=v.country);});
     countryCodes['US'] = 'US';
     countryCodes['TR'] = 'TR';
+    countryCodes['GB'] = 'GB';
 
     const countries = Object.keys(countryCodes).map(c=>codeToCountryMap[c]);
 
@@ -72,6 +73,7 @@ class Inflation extends Component<any, any> {
         this.state = {
             column: null,
             inflationInDayPercent: props.resultObject.inflationInDayPercent,
+            totalInflation: props.resultObject.totalInflation,
             direction: null,
             errors: null,
             from: props.resultObject.from,
@@ -80,6 +82,7 @@ class Inflation extends Component<any, any> {
             lng: -95.712891,
             radius: 1900,
             inProgress: false,
+            cumulative: true,
             error: null,
             period: periods.Daily.name,
             vendorsFilterSelect: props.vendorsFilterSelect,
@@ -229,6 +232,7 @@ class Inflation extends Component<any, any> {
                     inflationInDayPercent: response.data.inflationInDayPercent,
                     inflationOnLastDay: response.data.inflationOnLastDay,
                     explanationByDay: response.data.explanationByDay,
+                    totalInflation: response.data.totalInflation,
                 });
             }).catch((error) => {
             this.setState({
@@ -274,6 +278,7 @@ class Inflation extends Component<any, any> {
         const {
             inflationInDayPercent,
             inflationOnLastDay,
+            cumulative,
             country,
             errors,
             lat,
@@ -287,6 +292,7 @@ class Inflation extends Component<any, any> {
             explain,
             explanationByDay,
             vendorsFilterSelect,
+            totalInflation,
         } = this.state as any;
         const that = this;
         let {from, to} = this.state as any;
@@ -302,29 +308,40 @@ class Inflation extends Component<any, any> {
         // If it is an array we can show a table
         let categories = {};
         categories[country] = [];
+        let maxY = 0;
+        let minY = 0;
         days.forEach((day) => {
-            categories[country].push({x: day, y: !inflationInDayPercent[day] ? 0 : inflationInDayPercent[day]})
+            const y = !inflationInDayPercent[day] ? 0 : inflationInDayPercent[day];
+            minY = Math.min(minY, y);
+            maxY = Math.max(maxY, y);
+            categories[country].push({x: day, y})
         });
 
-        const series = _.map(categories, (value, key) => {
+        const series = _.map(categories, (value:any, key) => {
+            let newValue = value;
+            if(cumulative==='true' || cumulative===true) {
+                let running:number = 0;
+                newValue = value.map(({x,y})=> {
+                    running += y || 0;
+                    return {x, y: running};
+                });
+            }
+
+
             return (
                 <LineSeries
-                    data={value} key={key}/>
+                    data={newValue} key={key}/>
             )
         });
-
 
         const calculateTickLabelAngle = () => {
             if (days.length < 10) {
                 return 0;
             }
-
             if (days.length > 40) {
                 return -90;
             }
-
             return -25;
-
         }
 
         const style = {width: '100%', 'margin-bottom': '100px'};
@@ -355,9 +372,9 @@ class Inflation extends Component<any, any> {
                         className={styles["MuiSelect-select"]}
                         onChange={that.countrySelectChange.bind(that)}
                     >
-                        {that.countries.map((c)=>(<MenuItem value={c.code}>{c.name}</MenuItem>))}
+                        {that.countries.map((c)=>(<MenuItem key={c.code} value={c.code}>{c.name}</MenuItem>))}
                     </Select> {' '}
-                    Inflation: {inflationOnLastDay || 0}% compared to last day
+                    Inflation: {totalInflation || 0}% total for period
                 </h3>
                 <Accordion>
                     <AccordionSummary
@@ -508,6 +525,22 @@ class Inflation extends Component<any, any> {
                         aria-controls="panel2a-content"
                         id="panel2a-header"
                     >
+                        <Typography>Calculation Cumulative over period</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                        <RadioGroup row aria-label="cumulative" name="cumulative" value={cumulative}
+                                    onChange={this.handleChange}>
+                            <FormControlLabel value={true} control={<Radio/>} label='Cumulative'/>
+                            <FormControlLabel value={false} control={<Radio/>} label='Individual'/>
+                        </RadioGroup>
+                    </AccordionDetails>
+                </Accordion>
+                <Accordion>
+                    <AccordionSummary
+                        expandIcon={<ExpandMoreIcon/>}
+                        aria-controls="panel2a-content"
+                        id="panel2a-header"
+                    >
                         <Typography>Calculation Explanation</Typography>
                     </AccordionSummary>
                     <AccordionDetails>
@@ -532,7 +565,7 @@ class Inflation extends Component<any, any> {
                     {series}
                     <XAxis tickLabelAngle={calculateTickLabelAngle()}/>
                     <YAxis/>
-                    <MarkSeries data={[{x: days[0], y: 0},{x: days[0], y: 0.1},{x: days[0], y: -0.1}]} style={{display: 'none'}}/>
+                    <MarkSeries data={[{x: days[0], y: 0},{x: days[0], y: maxY + 0.1},{x: days[0], y: minY-0.1}]} style={{display: 'none'}}/>
                 </FlexibleWidthXYPlot>)}
                 {explanationComponent}
             </div>);

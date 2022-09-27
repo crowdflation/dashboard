@@ -43,7 +43,7 @@ export default async function handler(
         .toArray();
       return res.status(200).json(JSON.stringify(errors.map(e=>_.omit(e,['ip'])), null, 2));
     } catch(e) {
-      console.log(JSON.stringify(e, null, 2), e.toString());
+      console.log(JSON.stringify(e, null, 2), (e as any).toString());
       return res.status(400).json({error: e?.toString()});
     }
   } else if(req.method === 'POST') {

@@ -4,7 +4,7 @@ import _ from 'lodash';
 import { runMiddleware } from '../../lib/util/middleware';
 import Cors from 'cors';
 import {cleanupPriceName} from "../../lib/util/utils";
-import {countries, countryCodes, countryCodesMap} from "../../data/countries";
+import {countries, countryCodesMap} from "../../data/countries";
 
 // Initializing the cors middleware
 const cors = Cors({
@@ -20,7 +20,7 @@ function getCategory(vendor, name, categoryByProduct) {
 }
 
 
-export async function calculateCategoriesCount(country) {
+export async function getUncategorised(country) {
   const {db} = await connectToDatabase();
 
   if (!country) {
@@ -85,7 +85,7 @@ export default async function handler(
   try {
     if (req.method === 'GET') {
       let {country} = req.query;
-      const dataObj = await calculateCategoriesCount(country);
+      const dataObj = await getUncategorised(country);
       return res.status(200).json(JSON.stringify(dataObj, null, 2));
     } else if (req.method === 'POST') {
       const {db} = await connectToDatabase();

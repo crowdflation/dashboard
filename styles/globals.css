@@ -15,6 +15,11 @@ a {
   box-sizing: border-box;
 }
 
+
+#mui-component-select-category {
+  white-space: pre-wrap !important;
+}
+
 #overlay {
   position: fixed; /* Sit on top of the page content */
   display: none;

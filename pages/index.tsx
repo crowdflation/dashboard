@@ -33,7 +33,11 @@ const Home: NextPage = () => {
         </p>
 
         <p className={styles.description}>
-          Have further questions, or care to contribute - <a href="https://discord.gg/b6HrzTZ2tF">Join our Discord Channel</a>.
+          You can earn more CRWD tokens if you  <Link href="/contribute">contribute</Link>
+        </p>
+
+        <p className={styles.description}>
+          Have further questions, or care to contribute in conversation - <a href="https://discord.gg/b6HrzTZ2tF">Join our Discord Channel</a>.
         </p>
 
         <p className={styles.description}>

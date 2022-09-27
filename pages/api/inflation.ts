@@ -83,31 +83,56 @@ function findParent(name, where) {
 }
 
 function findPrevPrice(i, pricesByDate, dates, key, productPrices, pricesByCategory, categoryByProduct, categoriesLimitObject, explanationByDay) {
-  for (let p = i - 1; p >= 0; p--) {
+  const productNames = Object.keys(_.reduce(productPrices, (prev, current) => {
+    prev[current.name] = true;
+    return prev;
+  }, {}));
 
-    const prev = pricesByDate[dates[p]];
-    if (!prev || !prev[key] || !productPrices[0] || !productPrices[0].vendor) {
-      continue;
-    }
-
-    const currPricesMean = _.mean(productPrices.map((i) => i.price));
-    const prevPricesMean = _.mean(prev[key].map((i) => i.price));
+  for (const productName of productNames) {
 
     const category = getCategory(productPrices[0].vendor, productPrices[0].name, categoryByProduct) as string;
     if (categoriesLimitObject && !findParent(category, categoriesLimitObject)) {
       return;
     }
 
-    noteExplanation(explanationByDay,dates[i], `Found previous prices for category ${category} on date ${dates[p]} with vendor ${productPrices[0].vendor} on product ${productPrices[0].name}`);
-    noteExplanation(explanationByDay,dates[i], `Previous prices for category = ${prev[key].map(p=>p.price).join(',')}, taking mean as: ${prevPricesMean}`);
-    noteExplanation(explanationByDay,dates[i], `Current prices for category = ${productPrices.map(p=>p.price).join(',')}, taking mean as: ${currPricesMean}`);
 
-    if (!pricesByCategory[category]) {
-      pricesByCategory[category] = [];
+    const currentPrices = productPrices.filter((p)=>p.name ===productName).map((p)=>p.price);
+
+    const currPricesMean = _.mean(currentPrices);
+    let previousPrices:null|number[]= null;
+    let prevPricesMean:number|null = null;
+    for (let p = i - 1; p >= 0; p--) {
+
+      const prev = pricesByDate[dates[p]];
+      if (!prev || !prev[key] || !productPrices[0] || !productPrices[0].vendor) {
+        continue;
+      }
+
+      //console.log('prev[key]',prev[key],'productPrices', productPrices);
+      const previousFiltered = prev[key].filter((p)=>p.name ===productName);
+      if(!previousFiltered.length) {
+        continue;
+      }
+
+      previousPrices = previousFiltered.map((i) => i.price);
+      prevPricesMean = _.mean(previousPrices);
+      noteExplanation(explanationByDay,dates[i], `Found previous prices for category ${category} on date ${dates[p]} with vendor ${productPrices[0].vendor} on product ${productName}`);
+      break;
     }
 
-    pricesByCategory[category].push({currPricesMean, prevPricesMean});
-    return;
+    if(prevPricesMean) {
+      noteExplanation(explanationByDay,dates[i], `Previous prices for category = ${previousPrices?previousPrices.join(','):'Not found'}, taking mean as: ${prevPricesMean}`);
+      noteExplanation(explanationByDay,dates[i], `Current prices for category = ${currentPrices.join(',')}, taking mean as: ${currPricesMean}`);
+
+
+      if (!pricesByCategory[category]) {
+        pricesByCategory[category] = [];
+      }
+
+      pricesByCategory[category].push({currPricesMean, prevPricesMean});
+    } else {
+      noteExplanation(explanationByDay,dates[i], `No previous prices found for category ${category} on product ${productName}`);
+    }
   }
 }
 
@@ -165,7 +190,7 @@ export async function calculateInflation(db, query) {
 
   const from = tryParse(query.from, d);
   const explain = tryParse(query.explain, false);
-  const algorithmVersion = 1;
+  const algorithmVersion = 1.02;
   const cacheCollection = '_cacheInflationResults';
   const prevDay = getNextPeriod(new Date(), period);
   let to = tryParse(query.to, prevDay);
@@ -326,6 +351,7 @@ export async function calculateInflation(db, query) {
     radius: distance,
     basket: categoriesLimit,
     inflationOnLastDay: inflationInDayPercent[dates[dates.length - 1]],
+    totalInflation: _.sum(Object.values(inflationInDayPercent)),
     period,
     type,
     vendors,
