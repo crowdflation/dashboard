@@ -16,7 +16,11 @@ const Home: NextPage = () => {
           Welcome to the Crowdflation Community
         </h1>
 
-        <h2>Transparent & Decentralized Inflation Dashboard Page</h2>
+        <h2>A transparent and decentralized source of data for Inflation</h2>
+        <p> We are building a global dashboard about inflation.
+            Our data is crowdsourced and then stored in a decentralized manner, available at any time for further consultation/verificatio/usage/analysis. 
+            Trust, but verify.
+        </p>
 
         <iframe width="560" height="315" src="https://www.youtube.com/embed/AidIdovi7ok" title="Crowdflation Community"
                 frameBorder="0"
