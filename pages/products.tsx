@@ -50,7 +50,13 @@ export async function getServerSideProps({query}) {
   }
 }
 
+const countries = ['US', 'TR', 'GB'];
+
+const distances = [1000, 3000, 5000, 10000, 20000, 30000, 50000];
+
 class Data extends Component {
+
+
 
   constructor(props: any) {
     super(props);
@@ -69,7 +75,7 @@ class Data extends Component {
       errors: null,
       search: '',
       searchValues:[...tags],
-      tagOptions: ['category:'+ (props.category as string),'country:'+(props.country as string), 'location:', 'distance:','vendor:', 'currency:'].map((o)=>{ return {label:o};}),
+      tagOptions: [...this.makeAllCategories(),...countries.map((c)=>'country:'+c.toLowerCase()), ...distances.map((d)=>'distance:'+d), ...props.vendors.map((v)=> 'vendor:' + v)].map((o)=>{ return {label:o};}),
       tags,
       dialogContents: null,
       dialogLabel:'',
@@ -82,6 +88,17 @@ class Data extends Component {
 
     // set response language. Defaults to english.
     Geocode.setLanguage("en");
+  }
+
+  addAllCategories = (here, categories) => {
+    here.push('category:' + categories.label);
+    categories?.children.map((c)=>this.addAllCategories(here, c));
+  }
+
+  makeAllCategories =() => {
+    const catList = [];
+    this.addAllCategories(catList, categories);
+    return catList;
   }
 
   handleSort = (column:string, state: any) => {
@@ -131,6 +148,8 @@ class Data extends Component {
         newState[tag] = null;
       }
     });
+
+    console.log('newState', newState);
     this.updateState(newState);
     return newState;
   }
@@ -184,9 +203,6 @@ class Data extends Component {
         }
       };
 
-      const countries = ['US', 'TR', 'GB'];
-
-      const distances = [1000, 3000, 5000, 10000, 20000, 30000, 50000];
 
       const distanceNames = {};
 
@@ -292,7 +308,7 @@ class Data extends Component {
         // handle success
         this.updateState({
           error: null,
-          data: response?.data
+          data: JSON.parse(response?.data)
         });
       }).catch((error) => {
         this.updateState({
@@ -332,6 +348,7 @@ class Data extends Component {
                     longitude,
                     address
                   },
+                  distance: 1000,
                   inProgress: false
                 });
                 this.setLocation( address);
@@ -345,6 +362,7 @@ class Data extends Component {
                     longitude,
                     address: latitude + ' ' + longitude
                   },
+                  distance: 1000,
                   inProgress: false
                 });
                 this.setLocation(address);
@@ -387,10 +405,25 @@ class Data extends Component {
     });
 
     tagOptions.push({label:'location:' + address});
+    searchValues.push({label:'distance:'+1000});
     this.setTags(searchValues, tagOptions);
   }
 
   onChangeTagsInputValue = (event, value, reason) => {
+    console.log('onChangeTagsInputValue', value);
+
+    const state = {};
+    value.map((v)=> {
+      const split = v?.label?.split(':');
+      if (split && split.length >= 2) {
+        const key = split.shift();
+        const rez = split.join(':');
+        state[key] = rez;
+      }
+    });
+
+    this.updateState(state);
+
     this.setTags([...value]);
     setTimeout(()=> {
       this.reloadData();
