@@ -5,6 +5,9 @@ import _ from 'lodash';
 import { runMiddleware, tryParse } from '../../../../lib/util/middleware'
 import { countries, countryCodes, countryCodesMap } from '../../../../data/countries'
 import { countryToLanguage } from '../../../../data/languages'
+import { connectToDatabase } from "../../../../lib/util/mongodb";
+import axios from "axios";
+import {cleanupPriceName} from "../../../../lib/util/utils";
 
 // Initializing the cors middleware
 const cors = Cors({
@@ -16,9 +19,11 @@ function validateAndDenormalise(location:{latitude:number,longitude:number }) {
   //Round to hours so we can combine data
   dateTime.setMinutes(0, 0, 0);
 
+
   //Make location rought so that we can combine results
   //TODO: use kilomoters for roughtness and check with Ekon team how rought it should be
   const roughLocation = location?{latitude:parseFloat(location.latitude?.toString()).toFixed(3), longitude: parseFloat(location.longitude?.toString()).toFixed(3)}:null;
+
   return function(item:any) {
     if(!item.name || !item.price) {
       throw new Error('Submission data must have name and price fields');
@@ -27,10 +32,7 @@ function validateAndDenormalise(location:{latitude:number,longitude:number }) {
   }
 }
 
-//TODO: Validation and assigning to a user
-import { connectToDatabase } from "../../../../lib/util/mongodb";
-import axios from "axios";
-import {cleanupPriceName} from "../../../../lib/util/utils";
+
 
 function wait(delay) {
   return new Promise(function(succ) {
@@ -135,7 +137,7 @@ export async function handleDataRequest(vendor: string | string[], country: any,
       return res.status(400).json({error: (e as any)?.toString()});
     }*/
   } else if (req.method === 'POST') {
-    const enriched = req.body.payload.data.map(validateAndDenormalise(req.body.location));
+    const enriched = req.body.payload.data.map(validateAndDenormalise(req.body.payload.location));
     //Add each item from the list
     const namesFound = {};
     enriched.forEach(async function (item: any) {
