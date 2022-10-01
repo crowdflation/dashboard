@@ -1,5 +1,12 @@
 import {Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, TextField} from "@mui/material";
 import React, {Component} from "react";
+//import { withStyles } from 'material-ui/styles';
+
+const styles = {
+    dialogPaper: {
+        minHeight: '80vh',
+    },
+};
 
 export class DialogComponent extends Component<any, any> {
     constructor(props: any) {
@@ -8,7 +15,7 @@ export class DialogComponent extends Component<any, any> {
     }
 
     handleClose(result) {
-        if(this.props.onResult) {
+        if(this?.props?.onResult) {
             this.props.onResult(result);
         }
     }
@@ -16,7 +23,7 @@ export class DialogComponent extends Component<any, any> {
     render () {
 
     return (
-        <Dialog open={this.props.show} onClose={this.handleClose}>
+        <Dialog open={this.props.show}   PaperProps={{ sx: { height: "80vh" } }} fullWidth={true} maxWidth={'lg'} onClose={this.handleClose}>
             <DialogTitle>Select</DialogTitle>
             <DialogContent>
                 <DialogContentText>

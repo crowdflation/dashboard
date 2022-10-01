@@ -23,7 +23,7 @@ import DropdownTreeSelect from "react-dropdown-tree-select";
 import categories from "../data/categories";
 import 'react-dropdown-tree-select/dist/styles.css';
 import {connectToDatabase, getVendors} from "../lib/util/mongodb";
-import {cleanupPriceName} from "../lib/util/utils";
+import {cleanupPriceName, getPriceValue, isValidPrice} from "../lib/util/utils";
 
 enum Parameters {
   Category = "category",
@@ -36,8 +36,8 @@ enum Parameters {
 
 
 export async function getServerSideProps({query}) {
-  const {category, country, vendor} = query;
-  const data = await getProducts(category, country, undefined, undefined, vendor, undefined);
+  const {category, country, vendor, search} = query;
+  const data = await getProducts(category, country, undefined, undefined, vendor, search, undefined);
   const apiKey: string = (process.env as any).GOOGLE_MAPS_API_KEY as string;
 
   const {db} = await connectToDatabase();
@@ -112,7 +112,7 @@ class Data extends Component {
 
     this.updateState({
       column: column,
-      data: _.sortBy(state.data, [column]),
+      data: _.sortBy(state.data, [function(o) { return o[column]}]),
       direction: 'ascending',
     });
   }
@@ -270,9 +270,9 @@ class Data extends Component {
   }
 
   buildQueryURL = () => {
-    const state = this.state;
+    const state = this.newState;
 
-    return ['category','country', 'longitude', 'latitude','distance','vendor', 'currency'].reduce((str, key) => {
+    return ['category','country', 'longitude', 'latitude','distance','vendor', 'currency','search'].reduce((str, key) => {
       const val = this.findValue(state, key);
       if(!val) {
         return str;
@@ -303,17 +303,26 @@ class Data extends Component {
 
   reloadData = () => {
     // Make a request for a user with a given ID
+    const { column, direction } = this.newState as any;
     axios.get('/api/products?' + this.buildQueryURL())
       .then((response) => {
         // handle success
+
+        let sorted = _.sortBy(JSON.parse(response?.data), [function(o) { return o[column]}]);
+        if(direction!== 'ascending') {
+          sorted = sorted.reverse();
+        }
+
         this.updateState({
           error: null,
-          data: JSON.parse(response?.data)
+          data: sorted,
+          inProgress: false
         });
       }).catch((error) => {
         this.updateState({
           error: this.tryGetErrorMessage(error),
-          data: []
+          data: [],
+          inProgress: false
       });
     });
   }
@@ -344,10 +353,10 @@ class Data extends Component {
                 console.log('address',address, response.results[0]);
                 this.updateState({
                   location: {
-                    latitude,
-                    longitude,
                     address
                   },
+                  latitude,
+                  longitude,
                   distance: 1000,
                   inProgress: false
                 });
@@ -358,10 +367,10 @@ class Data extends Component {
                 const address = latitude + ' ' + longitude;
                 this.updateState({
                   location: {
-                    latitude,
-                    longitude,
                     address: latitude + ' ' + longitude
                   },
+                  latitude,
+                  longitude,
                   distance: 1000,
                   inProgress: false
                 });
@@ -407,6 +416,7 @@ class Data extends Component {
     tagOptions.push({label:'location:' + address});
     searchValues.push({label:'distance:'+1000});
     this.setTags(searchValues, tagOptions);
+    this.reloadData();
   }
 
   onChangeTagsInputValue = (event, value, reason) => {
@@ -430,7 +440,10 @@ class Data extends Component {
     }, 1);
   }
 
+  timeout;
   onChangeSearchInputValue = (event: React.SyntheticEvent, value: string, reason: string) => {
+    const that = this;
+    clearTimeout(that.timeout);
 
     const parameters = ['location:', 'category:','country:'];
     if(parameters.find((p)=> _.startsWith(value, p) || _.startsWith(p, value))) {
@@ -441,8 +454,17 @@ class Data extends Component {
     }
 
     this.updateState({
-      search: value
+      search: value,
+      inProgress: true
     });
+
+    const timeout = setTimeout(()=> {
+      if(timeout!==that.timeout) {
+        return;
+      }
+      that.reloadData();
+    }, 500);
+    that.timeout = timeout;
   }
 
   parsePrice = (price) => {
@@ -508,6 +530,10 @@ class Data extends Component {
 
 
     const filteredData = data.filter((d)=> {
+      if(!isValidPrice(d?.price)) {
+        return false;
+      }
+
       if(!_.trim(search)) {
         return true;
       }
@@ -530,8 +556,8 @@ class Data extends Component {
                 Name
               </Table.HeaderCell>
               <Table.HeaderCell
-                sorted={column === 'price' ? direction : null}
-                onClick={() => this.handleSort('price', this.state)}
+                sorted={column === 'priceValue' ? direction : null}
+                onClick={() => this.handleSort('priceValue', this.state)}
               >
                 Price
               </Table.HeaderCell>

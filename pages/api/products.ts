@@ -4,6 +4,8 @@ import { runMiddleware } from '../../lib/util/middleware';
 import Cors from 'cors';
 import {countryToLanguage} from "../../data/languages";
 import categoriesMap from '../../data/map';
+import {getPriceValue} from "../../lib/util/utils";
+import _ from 'lodash'
 
 // Initializing the cors middleware
 const cors = Cors({
@@ -22,7 +24,9 @@ function categoryMatches(category, current) {
 }
 
 
-export async function getProducts(category: string | string[]='All items', country: string | string[]='US', location, distance, vendorName, ageInHours) {
+export async function getProducts(category: string | string[]='All items', country: string | string[]='US', location, distance, vendorName, search, ageInHours) {
+  console.log('search', search);
+
   const categories = Object.keys(categoriesMap).filter((item) => {
     return categoryMatches(category, categoriesMap[item]);
   });
@@ -47,11 +51,22 @@ export async function getProducts(category: string | string[]='All items', count
   const {db} = await connectToDatabase();
 
   const vendorNames = {};
-  (await db.collection('_categories').find({...filter}).limit(200).toArray()).forEach((cat) => {
+  (await db.collection('_categories').find({...filter}).toArray()).forEach((cat) => {
     const vendor = cat.vendor;
+
     if (!vendor) {
       return;
     }
+
+    if(search && !_.includes(cat?.name?.toLowerCase(), search?.toLowerCase())) {
+      //console.log('does not', search, cat.name);
+      return;
+    } else {
+      //console.log('yes', search, cat.name);
+    }
+
+
+
     if (!vendorNames[vendor]) {
       vendorNames[vendor] = [];
     }
@@ -62,7 +77,7 @@ export async function getProducts(category: string | string[]='All items', count
 
 
   const allProductData:any[] = [];
-  console.log('vendorNames', vendorNames);
+  //console.log('vendorNames', vendorNames);
 
   await Promise.all(Object.keys(vendorNames).map(async (vendor) => {
     const foundProductNames = vendorNames[vendor];
@@ -70,14 +85,12 @@ export async function getProducts(category: string | string[]='All items', count
     const productFilter = {name: {$in: foundProductNames}};
 
     if(location && distance) {
-      productFilter['locationArray'] = { $geoWithin: { $centerSphere: [ [ location.longitude, location.latitude ], distance ] }};
+      productFilter['locationArray'] = { $geoWithin: { $centerSphere: [ [ parseFloat(location.longitude), parseFloat(location.latitude) ], parseFloat(distance) ] }};
     }
 
     if(ageInHours) {
       productFilter['dateTime'] = { $gt: timeOfRecordAge };
     }
-
-
 
     const catFilter = [{
       $match: productFilter
@@ -105,14 +118,15 @@ export async function getProducts(category: string | string[]='All items', count
         }
       }];
 
-    const products = await db.collection(vendor).aggregate(catFilter).toArray();
+    const products = await db.collection(vendor).aggregate(catFilter).limit(200).toArray();
     return Promise.all(products.map( async(d)=> {
       return allProductData.push({
         ...d,
         dateTime: d?.dateTime?.toString(),
         vendor,
         name: d._id,
-        _id: allProductData.length + d._id
+        _id: allProductData.length + d._id,
+        priceValue: getPriceValue(d.price)
       });
     }));
   }));
@@ -128,9 +142,9 @@ export default async function handler(
 
   try {
     if (req.method === 'GET') {
-      let {country, category, longitude, latitude, distance, ageInHours, vendor} = req.query;
+      let {country, category, longitude, latitude, distance, ageInHours, vendor, search} = req.query;
 
-      const dataByVendor = await getProducts(category, country, {longitude, latitude}, distance, vendor, ageInHours );
+      const dataByVendor = await getProducts(category, country, {longitude, latitude}, distance, vendor, search, ageInHours );
 
       return res.status(200).json(JSON.stringify(dataByVendor, null, 2));
     }
