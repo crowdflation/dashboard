@@ -40,7 +40,7 @@ export const countryToLanguage = {
     "FI":"FI",
     "FO":"FO",
     "FR":"BR",
-    "GB":"CY",
+    "GB":"EN",
     "GE":"KA",
     "GL":"KL",
     "GR":"EL",
