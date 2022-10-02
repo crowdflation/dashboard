@@ -24,7 +24,7 @@ function categoryMatches(category, current) {
 }
 
 
-export async function getProducts(category: string | string[]='All items', country: string | string[]='US', location, distance, vendorName, search, ageInHours) {
+export async function getProducts(category: string | string[]='All items', country: string, location, distance, vendorName, search, ageInHours) {
   console.log('search', search);
 
   const categories = Object.keys(categoriesMap).filter((item) => {
@@ -32,11 +32,12 @@ export async function getProducts(category: string | string[]='All items', count
   });
 
   let filter = {category: {$in: categories}};
-  if (!country || country==='US') {
-    country = 'US';
-    filter['$or'] = [{country: {$exists: false}}, {country}];
-  } else {
-    filter['country'] = country;
+  if (country) {
+    if(country==='US') {
+      filter['$or'] = [{country: {$exists: false}}, {country}];
+    } else {
+      filter['country'] = country;
+    }
   }
 
   if(vendorName) {
@@ -47,6 +48,9 @@ export async function getProducts(category: string | string[]='All items', count
   if(ageInHours) {
     timeOfRecordAge.setHours(timeOfRecordAge.getHours() - ageInHours);
   }
+
+
+  //console.log('filter', filter);
 
   const {db} = await connectToDatabase();
 

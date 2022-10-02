@@ -181,17 +181,20 @@ export async function handleDataRequest(vendor: string | string[], country: any,
     await Promise.all(Object.keys(categorised).map(async (key)=> {
       const val = categorised[key];
 
+      console.log(key, val, confidenceThreshold);
+
       if(val?.confidence>confidenceThreshold) {
         const category = val?.prediction;
         if(category) {
           await db.collection('_categories').updateOne(
               {name: key, country: countryFilter},
-              {$set: {name: key, category, country, language}},
+              {$set: {name: key, category, country, language, vendor}},
               {
                 upsert: true
               });
           itemCategoriesUpdated++;
         }
+
       }
 
     }));
