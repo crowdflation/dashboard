@@ -59,7 +59,7 @@ async function getCategoriesFromModel(namesNotCategorised: string[], language) {
   throw new Error("Timeout trying to access the model")
 }
 
-export async function handleDataRequest(vendor: string | string[], country: any, page: number=0, limit: number=200, req: NextApiRequest, res: NextApiResponse<any>) {
+export async function handleDataRequest(vendor: string | string[], country: any, page=0, limit=200, req: NextApiRequest, res: NextApiResponse<any>) {
   if (!vendor || _.includes(vendor, '_')) {
     return res.status(400).json({error: 'Non-allowed vendor name'});
   }
@@ -102,7 +102,7 @@ export async function handleDataRequest(vendor: string | string[], country: any,
       let prices = null;
       if (req.query.aggregate) {
         console.log('aggregate');
-        let what = tryParse(req.query.aggregate, null);
+        const what = tryParse(req.query.aggregate, null);
         if (what) {
           prices = await db
               .collection(vendor)
@@ -173,7 +173,7 @@ export async function handleDataRequest(vendor: string | string[], country: any,
 
 
 
-    let categorised = await getCategoriesFromModel(namesNotCategorised, language);
+    const categorised = await getCategoriesFromModel(namesNotCategorised, language);
     const confidenceThreshold = (parseFloat(process.env.CATEGORISATOION_CONFIDENCE_TRESHOLD as string)) || 0.8;
 
 
@@ -212,6 +212,6 @@ export default async function handler(
 
   // Run the middleware
   await runMiddleware(req, res, cors);
-  let { vendor, country, page, limit } = req.query;
+  const { vendor, country, page, limit } = req.query;
   return await handleDataRequest(vendor as string, country,  (page as string | undefined) as (number | undefined), parseInt(limit as string), req, res);
-};
+}

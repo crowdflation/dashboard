@@ -44,8 +44,8 @@ export async function getUncategorised(country) {
   let vendorNames = vendorsObj.map(v => v.name);
   vendorNames = _.union(vendorNames, ['walmart', 'kroger', 'zillow']);
 
-  let categories = await db.collection('_categories').find().toArray();
-  let categoryByProduct = {};
+  const categories = await db.collection('_categories').find().toArray();
+  const categoryByProduct = {};
   categories.reduce((r, item) => {
     categoryByProduct[item.name] = item.category;
   }, {});
@@ -55,13 +55,13 @@ export async function getUncategorised(country) {
 
   await Promise.all(vendorNames.map(async (vendor) => {
       let count = 0;
-      let prices = await db
+      const prices = await db
           .collection(vendor)
           .find({country: countryFilter})
           .toArray();
 
       await Promise.all(prices.map(async (price) => {
-        let category = getCategory(price.vendor, price.name, categoryByProduct);
+        const category = getCategory(price.vendor, price.name, categoryByProduct);
         if (!category) {
           const cleanedUpName = cleanupPriceName(price.name);
           if (!uncategorised[cleanedUpName]) {
@@ -84,7 +84,7 @@ export default async function handler(
 
   try {
     if (req.method === 'GET') {
-      let {country} = req.query;
+      const {country} = req.query;
       const dataObj = await getUncategorised(country);
       return res.status(200).json(JSON.stringify(dataObj, null, 2));
     } else if (req.method === 'POST') {

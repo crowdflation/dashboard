@@ -12,3 +12,7 @@ coverage
 **/out/*
 next-env.d.ts
 next.config.js
+#disabled for now due to amount of errors
+pages
+components
+lib

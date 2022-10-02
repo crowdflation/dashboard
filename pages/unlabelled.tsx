@@ -28,7 +28,7 @@ export async function getServerSideProps({query}) {
   flatCategories = flatten(flatCategories, '', categories);
 
   let vendors = await db.collection('_vendors').find().toArray();
-  let countries = {};
+  const countries = {};
   vendors.map(v => countries[v.country]=true);
   vendors = vendors.map(v => v.name);
   vendors = _.union(vendors, ['walmart', 'kroger', 'zillow']);
@@ -134,20 +134,20 @@ class Unlabelled extends Component {
 
   private loadData(state, errors: any) {
     // Make a request for a user with a given ID
-    axios.get('/api/unlabelled?' + this.buildQueryURL(state))
+    axios.get('/api/unlabelled?' + this.buildQueryURL(this.newState))
         .then((response) => {
           // handle success
           this.setState({
-            ...state,
+            ...this.newState,
             aggregateResult: state.aggregate,
             errors,
             error: null,
             inProgress: false,
-            data: response.data.map((u)=>({name: u, selected: false}))
+            data: JSON.parse(response.data).map((u)=>({name: u, selected: false}))
           });
         }).catch((error) => {
       this.setState({
-        ...state,
+        ...this.newState,
         error: this.tryGetErrorMessage(error),
         inProgress: false,
         data: []
@@ -155,6 +155,7 @@ class Unlabelled extends Component {
     });
   }
 
+  newState;
   selectChange = (event) => {
     const value = event.target.value;
     const that = this;
@@ -162,6 +163,8 @@ class Unlabelled extends Component {
       ...this.state,
       [event.target.name]:value
     };
+
+    this.newState = newState;
     const { wallet, language, category, country } = newState as any;
     const errors = this.checkErrors(wallet, that, language, category, country);
     this.setState({
@@ -177,7 +180,7 @@ class Unlabelled extends Component {
   handleSave = (state) => {
     const { data, search, wallet, language, category, country, vendor } = this.state as any;
     const that = this;
-    let errors = this.checkErrors(wallet, that, language, category, country);
+    const errors = this.checkErrors(wallet, that, language, category, country);
 
     this.setState({
       ...this.state,
@@ -222,7 +225,7 @@ class Unlabelled extends Component {
   }
 
   private checkErrors(wallet, that: this, language, category, country) {
-    let errors: any = {};
+    const errors: any = {};
 
     if (!wallet) {
       errors.wallet = 'Please enter a wallet address';
@@ -325,7 +328,7 @@ class Unlabelled extends Component {
             label="Language"
             name='language'
             className={styles.smallDropdowns}
-            onChange={(e)=> {that.selectChange(e); that.loadData(that.state, [])}}
+            onChange={(e)=> {(that.state as any).data = []; (that.state as any).inProgress = true; that.selectChange(e); that.loadData(that.state, [])}}
             defaultValue={language}
         >
           {that.languages.map((c)=>(<MenuItem key={c} value={c}>{c}</MenuItem>))}
@@ -336,7 +339,7 @@ class Unlabelled extends Component {
             label="Country"
             name='country'
             className={styles.smallDropdowns}
-            onChange={that.selectChange.bind(that)}
+            onChange={(e)=>{(that.state as any).data = []; (that.state as any).inProgress = true; that.selectChange(e); that.loadData(that.state, [])}}
             defaultValue={country}
         >
           {that.countries.map((c)=>(<MenuItem key={c} value={c}>{c}</MenuItem>))}

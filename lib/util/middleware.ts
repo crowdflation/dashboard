@@ -13,7 +13,7 @@ export function runMiddleware(req: any, res: any, fn: any) {
 }
 
 export function tryParse(parse, substitute) {
-  let jsonErr = null;
+  const jsonErr = null;
   try {
     try {
       return JSON.parse(parse);

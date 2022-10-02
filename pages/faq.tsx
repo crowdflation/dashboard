@@ -34,7 +34,7 @@ const FAQ: NextPage<Untitlable> = (props:Untitlable) => {
             How can I buy your token?
           </h3>
           <p className={styles.description}>
-            You can buy it on <a href="https://exchange.sundaeswap.finance/#/swap?swap_from=cardano.ada&swap_to=bc7058e1eb1157655d43a91ff083790331d4a0f1893d2b37037840c1.43525744" target="_blank">SundaeSwap</a> for ADA.
+            You can buy it on <a href="https://exchange.sundaeswap.finance/#/swap?swap_from=cardano.ada&swap_to=bc7058e1eb1157655d43a91ff083790331d4a0f1893d2b37037840c1.43525744" target="_blank" rel="noreferrer">SundaeSwap</a> for ADA.
           </p>
           <h3>
             How do we obtain data?
@@ -73,13 +73,13 @@ const FAQ: NextPage<Untitlable> = (props:Untitlable) => {
             Where can I find your sourcecode?
           </h3>
           <p className={styles.description}>
-            You can check out the sourcecode on <a target="_blank" href="https://github.com/crowdflation">GitHub</a>
+            You can check out the sourcecode on <a target="_blank" href="https://github.com/crowdflation" rel="noreferrer">GitHub</a>
           </p>
           <h3>
             How can I contribute?
           </h3>
           <p className={styles.description}>
-            You can join the group by visiting the <a target="_blank" href="https://discord.com/invite/b6HrzTZ2tF">Discord Server</a>. Once you are there, tell us a bit about your interest and skills. Regular contributors are likely to be rewarded with our token!
+            You can join the group by visiting the <a target="_blank" href="https://discord.com/invite/b6HrzTZ2tF" rel="noreferrer">Discord Server</a>. Once you are there, tell us a bit about your interest and skills. Regular contributors are likely to be rewarded with our token!
           </p>
           <h3>
             Do you offer an API for accessing collected data?

@@ -208,7 +208,7 @@ class Data extends Component {
             ))}
           </Table.Body>
         </Table>);
-      let categories = {};
+      const categories = {};
       data.forEach((item) => {
         if(!item.dateTime) {
           return;

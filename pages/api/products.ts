@@ -31,7 +31,7 @@ export async function getProducts(category: string | string[]='All items', count
     return categoryMatches(category, categoriesMap[item]);
   });
 
-  let filter = {category: {$in: categories}};
+  const filter = {category: {$in: categories}};
   if (country) {
     if(country==='US') {
       filter['$or'] = [{country: {$exists: false}}, {country}];
@@ -146,7 +146,7 @@ export default async function handler(
 
   try {
     if (req.method === 'GET') {
-      let {country, category, longitude, latitude, distance, ageInHours, vendor, search} = req.query;
+      const {country, category, longitude, latitude, distance, ageInHours, vendor, search} = req.query;
 
       const dataByVendor = await getProducts(category, country as string, {longitude, latitude}, distance, vendor, search, ageInHours );
 

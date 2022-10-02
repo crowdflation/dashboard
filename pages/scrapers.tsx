@@ -23,7 +23,7 @@ import {getScrapers} from './api/scrapers'
 export async function getServerSideProps() {
     const {db} = await connectToDatabase();
     const scrapers = (await getScrapers(db)).map((s) => {
-            let res = {...s, ...s.scraper, added: s.added.toISOString() };
+            const res = {...s, ...s.scraper, added: s.added.toISOString() };
             delete res.scraper;
             delete res._id;
             return res;
@@ -145,7 +145,7 @@ class Scrapers extends Component {
             website,
             walletAddress
         } = (this.state as any).inputData;
-        let {scrapers} = this.state as any;
+        const {scrapers} = this.state as any;
         // Make a request for a user with a given ID
         axios.post('/api/scrapers', {
             website,

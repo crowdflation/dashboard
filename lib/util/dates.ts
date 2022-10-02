@@ -2,8 +2,8 @@ export const periods = {'Monthly':{ slice:7, name:'Monthly'}, 'Daily':{ slice:10
 
 
 export function getIntervalRangeArray(startDate, stopDate, period) {
-  var dateArray = new Array();
-  var currentDate = new Date(startDate);
+  const dateArray = [];
+  let currentDate = new Date(startDate);
   while (currentDate <= stopDate) {
     dateArray.push(formatDate(currentDate, period));
     currentDate = getNextPeriod(currentDate, period);

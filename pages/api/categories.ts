@@ -57,8 +57,8 @@ export async function calculateCategoriesCount(all) {
   vendors = vendors.map(v => v.name);
   vendors = _.union(vendors, ['walmart', 'kroger', 'zillow']);
 
-  let categories = await db.collection('_categories').find().toArray();
-  let categoryByProduct = {};
+  const categories = await db.collection('_categories').find().toArray();
+  const categoryByProduct = {};
   categories.reduce((r, item) => {
     categoryByProduct[item.name] = item.category;
   }, {});
@@ -67,7 +67,7 @@ export async function calculateCategoriesCount(all) {
   const categoriesCount = {};
 
   await Promise.all(vendors.map(async (vendor) => {
-    let prices = await db
+    const prices = await db
       .collection(vendor)
       .find(filter)
       .toArray();

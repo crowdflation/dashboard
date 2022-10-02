@@ -71,6 +71,7 @@ class Data extends Component {
     this.state = {
       column: null,
       data: props.data,
+      country: props.country,
       direction: null,
       errors: null,
       search: '',

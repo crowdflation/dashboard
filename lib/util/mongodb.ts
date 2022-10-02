@@ -1,8 +1,8 @@
 import {MongoClient, MongoClientOptions} from 'mongodb'
 import _ from "lodash";
 
-const MONGODB_URI:string = String(process.env.MONGODB_URI)
-const MONGODB_DB:string  = String(process.env.MONGODB_DB)
+const MONGODB_URI = String(process.env.MONGODB_URI)
+const MONGODB_DB  = String(process.env.MONGODB_DB)
 
 if (!MONGODB_URI) {
   throw new Error(
@@ -57,6 +57,6 @@ export async function getVendorNames(db, countryFilter) {
 
 
 export async function getVendors(db) {
-  let vendors = await db.collection('_vendors').find().toArray();
+  const vendors = await db.collection('_vendors').find().toArray();
   return vendors;
 }
