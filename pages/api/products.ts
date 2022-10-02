@@ -24,7 +24,7 @@ function categoryMatches(category, current) {
 }
 
 
-export async function getProducts(category: string | string[]='All items', country: string, location, distance, vendorName, search, ageInHours) {
+export async function getProducts(category: string | string[]='All items', country: string|undefined, location, distance, vendorName, search, ageInHours) {
   console.log('search', search);
 
   const categories = Object.keys(categoriesMap).filter((item) => {
@@ -148,7 +148,7 @@ export default async function handler(
     if (req.method === 'GET') {
       let {country, category, longitude, latitude, distance, ageInHours, vendor, search} = req.query;
 
-      const dataByVendor = await getProducts(category, country, {longitude, latitude}, distance, vendor, search, ageInHours );
+      const dataByVendor = await getProducts(category, country as string, {longitude, latitude}, distance, vendor, search, ageInHours );
 
       return res.status(200).json(JSON.stringify(dataByVendor, null, 2));
     }
