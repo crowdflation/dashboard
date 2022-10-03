@@ -305,11 +305,11 @@ export async function calculateInflation(db, query) {
     await storePricesByDate(prices, latitude, longitude, distanceMiles, pricesByDate, vendor, period);
   }));
 
-  const inflationInDayPercent = {};
+  const inflationInDayPercent:any = {};
   const explanationByDay = {};
 
   for (let i = dates.length - 1; i >= 1; i--) {
-    const current = pricesByDate[dates[i]];
+    const current: any = pricesByDate[dates[i]];
     const pricesByCategory = {};
     _.map(current, (productPrices, key) => {
       //Product not found
