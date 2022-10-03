@@ -117,7 +117,7 @@ class Scrapers extends Component {
                 this.setState({
                     ...state,
                     error: null,
-                    scrapers: response.data
+                    scrapers: JSON.parse(response.data)
                 });
             }).catch((error) => {
             this.setState({

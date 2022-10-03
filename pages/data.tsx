@@ -11,15 +11,20 @@ import Link from 'next/link'
 export async function getServerSideProps({query}) {
   const {db} = await connectToDatabase();
   let vendors = await db.collection('_vendors').find().toArray();
+  const vendorCountries = {};
+  vendors.forEach(v=> {
+    vendorCountries[v.name] = v.country;
+  });
   vendors = vendors.map(v => v.name);
   vendors = _.union(vendors, ['walmart', 'kroger', 'zillow']);
   return {
-    props: {vendors, query}, // will be passed to the page component as props
+    props: {vendors, query,vendorCountries}, // will be passed to the page component as props
   }
 }
 
 class Data extends Component {
 
+  vendorCountries;
   constructor(props: any) {
     super(props);
     this.state = {
@@ -29,6 +34,8 @@ class Data extends Component {
       errors: null,
       limit: 200
     };
+
+    this.vendorCountries = props.vendorCountries;
 
     this.handleChange = this.handleChange.bind(this);
     this.handleReload(this.state);
@@ -118,15 +125,16 @@ class Data extends Component {
     }
 
     // Make a request for a user with a given ID
-    axios.get('/api/vendors/'+this.getVendor()+'?' + this.buildQueryURL(state))
+    axios.get('/api/vendors/'+this.getVendor()+'/'+this.vendorCountries[this.getVendor()]+'?' + this.buildQueryURL(state))
       .then((response) => {
         // handle success
+        const parsed = JSON.parse(response?.data);
         this.setState({
           ...state,
           aggregateResult: state.aggregate,
           errors,
           error: null,
-          data: response?.data?.prices
+          data: parsed?.prices
         });
       }).catch((error) => {
         this.setState({

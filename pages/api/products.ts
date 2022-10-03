@@ -13,6 +13,9 @@ const cors = Cors({
 });
 
 function categoryMatches(category, current) {
+  if(!category) {
+    return true;
+  }
   if(current.value===category) {
     return true;
   }
@@ -76,9 +79,6 @@ export async function getProducts(category: string | string[]='All items', count
     }
     vendorNames[vendor].push(cat.name);
   });
-
-  const dataByVendor = {};
-
 
   const allProductData:any[] = [];
   //console.log('vendorNames', vendorNames);

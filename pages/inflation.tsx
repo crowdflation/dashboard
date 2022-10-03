@@ -224,15 +224,16 @@ class Inflation extends Component<any, any> {
         axios.get('/api/inflation' + '?' + this.buildQueryURL(state))
             .then((response) => {
                 // handle success
+                const parsed = JSON.parse(response.data);
                 this.setState({
                     ...state,
                     errors,
                     error: null,
                     inProgress: false,
-                    inflationInDayPercent: response.data.inflationInDayPercent,
-                    inflationOnLastDay: response.data.inflationOnLastDay,
-                    explanationByDay: response.data.explanationByDay,
-                    totalInflation: response.data.totalInflation,
+                    inflationInDayPercent: parsed.inflationInDayPercent,
+                    inflationOnLastDay: parsed.inflationOnLastDay,
+                    explanationByDay: parsed.explanationByDay,
+                    totalInflation: parsed.totalInflation,
                 });
             }).catch((error) => {
             this.setState({
