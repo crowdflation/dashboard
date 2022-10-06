@@ -23,7 +23,6 @@ export function cleanupPriceName(name) {
 
     const rez = name?.match(/[0-9][0-9]?p/);
     if(rez && rez[0]) {
-        console.log('trying to remove p', name, rez, rez[0]);
         return '£0.' + _.trim(rez[0], 'p');
     }
 
@@ -36,12 +35,10 @@ export function getPriceValue(name) {
     const cleanedUp= cleanupPriceName(name);
     const parsed = cleanedUp?.match(regex);
     if(!parsed || !parsed[0]) {
-        console.log('failed parsing', name, cleanedUp, parsed);
         return null;
     }
     const rez= parseFloat(parsed[0]);
     if(rez===0) {
-        console.log('Failed parsing 2', name, cleanedUp, parsed);
         return parseFloat(parsed[1]);
     }
     return rez;
