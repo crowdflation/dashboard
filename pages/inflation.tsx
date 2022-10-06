@@ -375,7 +375,7 @@ class Inflation extends Component<any, any> {
                     >
                         {that.countries.map((c)=>(<MenuItem key={c.code} value={c.code}>{c.name}</MenuItem>))}
                     </Select> {' '}
-                    Inflation: {totalInflation || 0}% total for period
+                    Inflation: {totalInflation?.toFixed(2) || 0}% total for period
                 </h3>
                 <Accordion>
                     <AccordionSummary

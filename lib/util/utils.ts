@@ -6,6 +6,7 @@ export function cleanupPriceName(name) {
     name = _.replace(name, /about+/g, '');
     name = _.replace(name, /each+/g, '');
     name = _.replace(name, /Now+/g, '');
+    name = _.replace(name, /now+/g, '');
     name = _.replace(name, /\. /g, '.');
     if(_.includes(name, 'discounted')) {
         name = name.split('discounted');

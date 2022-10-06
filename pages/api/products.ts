@@ -2,7 +2,6 @@ import { connectToDatabase } from "../../lib/util/mongodb";
 import {NextApiRequest, NextApiResponse} from "next";
 import { runMiddleware } from '../../lib/util/middleware';
 import Cors from 'cors';
-import {countryToLanguage} from "../../data/languages";
 import categoriesMap from '../../data/map';
 import {getPriceValue} from "../../lib/util/utils";
 import _ from 'lodash'
@@ -27,35 +26,29 @@ function categoryMatches(category, current) {
 }
 
 
-export async function getProducts(category: string | string[]='All items', country: string|undefined, location, distance, vendorName, search, ageInHours) {
-  console.log('search', search);
-
+async function filterByCategories(category: string | string[], country: string | undefined, vendorName, ageInHours, db, search, location, distance) {
   const categories = Object.keys(categoriesMap).filter((item) => {
     return categoryMatches(category, categoriesMap[item]);
   });
 
   const filter = {category: {$in: categories}};
   if (country) {
-    if(country==='US') {
+    if (country === 'US') {
       filter['$or'] = [{country: {$exists: false}}, {country}];
     } else {
       filter['country'] = country;
     }
   }
 
-  if(vendorName) {
+  if (vendorName) {
     filter['vendor'] = vendorName;
   }
 
   const timeOfRecordAge = new Date();
-  if(ageInHours) {
+  if (ageInHours) {
     timeOfRecordAge.setHours(timeOfRecordAge.getHours() - ageInHours);
   }
 
-
-  //console.log('filter', filter);
-
-  const {db} = await connectToDatabase();
 
   const vendorNames = {};
   (await db.collection('_categories').find({...filter}).toArray()).forEach((cat) => {
@@ -65,13 +58,12 @@ export async function getProducts(category: string | string[]='All items', count
       return;
     }
 
-    if(search && !_.includes(cat?.name?.toLowerCase(), search?.toLowerCase())) {
+    if (search && !_.includes(cat?.name?.toLowerCase(), search?.toLowerCase())) {
       //console.log('does not', search, cat.name);
       return;
     } else {
       //console.log('yes', search, cat.name);
     }
-
 
 
     if (!vendorNames[vendor]) {
@@ -80,20 +72,19 @@ export async function getProducts(category: string | string[]='All items', count
     vendorNames[vendor].push(cat.name);
   });
 
-  const allProductData:any[] = [];
-  //console.log('vendorNames', vendorNames);
+  const allProductData: any[] = [];
 
   await Promise.all(Object.keys(vendorNames).map(async (vendor) => {
     const foundProductNames = vendorNames[vendor];
 
     const productFilter = {name: {$in: foundProductNames}};
 
-    if(location && distance) {
-      productFilter['locationArray'] = { $geoWithin: { $centerSphere: [ [ parseFloat(location.longitude), parseFloat(location.latitude) ], parseFloat(distance) ] }};
+    if (location && distance) {
+      productFilter['locationArray'] = {$geoWithin: {$centerSphere: [[parseFloat(location.longitude), parseFloat(location.latitude)], parseFloat(distance)]}};
     }
 
-    if(ageInHours) {
-      productFilter['dateTime'] = { $gt: timeOfRecordAge };
+    if (ageInHours) {
+      productFilter['dateTime'] = {$gt: timeOfRecordAge};
     }
 
     const catFilter = [{
@@ -123,7 +114,7 @@ export async function getProducts(category: string | string[]='All items', count
       }];
 
     const products = await db.collection(vendor).aggregate(catFilter).limit(200).toArray();
-    return Promise.all(products.map( async(d)=> {
+    return Promise.all(products.map(async (d) => {
       return allProductData.push({
         ...d,
         dateTime: d?.dateTime?.toString(),
@@ -137,6 +128,102 @@ export async function getProducts(category: string | string[]='All items', count
   return allProductData;
 }
 
+async function filterProducts(country: string | undefined, vendorName, ageInHours, db, search, location, distance) {
+
+  const vendorsFilter = {};
+  if (country) {
+    if (country === 'US') {
+      vendorsFilter['$or'] = [{country: {$exists: false}}, {country}];
+    } else {
+      vendorsFilter['country'] = country;
+    }
+  }
+
+  let vendors = [vendorName];
+
+  if(!vendorName) {
+    vendors = (await db.collection('_vendors').find(vendorsFilter).toArray()).map((v)=>v.name);
+  }
+
+  const filter = {};
+
+  if (location && distance) {
+    filter['locationArray'] = {$geoWithin: {$centerSphere: [[parseFloat(location.longitude), parseFloat(location.latitude)], parseFloat(distance)]}};
+  }
+
+  const timeOfRecordAge = new Date();
+  if (ageInHours) {
+    timeOfRecordAge.setHours(timeOfRecordAge.getHours() - ageInHours);
+  }
+
+  if (ageInHours) {
+    filter['dateTime'] = {$gt: timeOfRecordAge};
+  }
+
+  if(search) {
+    filter['name'] = {$regex : search, '$options' : 'i'};
+  }
+
+  const allProductData:any[] = [];
+
+  await Promise.all(vendors.map(async (vendor) => {
+
+    const catFilter = [{
+      $match: filter
+    },
+      {
+        $group: {
+          _id: '$name',
+          price: {
+            $last: '$price'
+          },
+          date: {
+            $last: '$dateTime'
+          }
+        }
+      },
+      {
+        $project: {
+          price: '$price',
+          dateTime: '$date'
+        }
+      },
+      {
+        $sort: {
+          "dateTime": -1
+        }
+      }];
+
+    console.log('catFilter',catFilter);
+
+    const products = await db.collection(vendor).aggregate(catFilter).limit(200).toArray();
+    products.forEach((d) => {
+      allProductData.push({
+        ...d,
+        dateTime: d?.dateTime?.toString(),
+        vendor,
+        name: d._id,
+        _id: allProductData.length + d._id,
+        priceValue: getPriceValue(d.price)
+      });
+    });
+    return;
+  }));
+
+  return allProductData;
+
+}
+
+export async function getProducts(category:string, country: string|undefined, location, distance, vendorName, search, ageInHours) {
+  const {db} = await connectToDatabase();
+  if(category) {
+    return await filterByCategories(category, country?.toUpperCase(), vendorName, ageInHours, db, search, location, distance);
+  }
+
+  return await filterProducts(country?.toUpperCase(), vendorName, ageInHours, db, search, location, distance);
+
+}
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<any>
@@ -148,7 +235,7 @@ export default async function handler(
     if (req.method === 'GET') {
       const {country, category, longitude, latitude, distance, ageInHours, vendor, search} = req.query;
 
-      const dataByVendor = await getProducts(category, country as string, {longitude, latitude}, distance, vendor, search, ageInHours );
+      const dataByVendor = await getProducts(category as string, country as string, {longitude, latitude}, distance, vendor, search, ageInHours );
 
       return res.status(200).json(JSON.stringify(dataByVendor, null, 2));
     }
