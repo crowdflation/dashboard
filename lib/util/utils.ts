@@ -12,7 +12,22 @@ export function cleanupPriceName(name) {
         name = name.split('discounted');
         name = name[0];
     }
-    return _.trim(name,'\n \t\r');
+
+    name = _.trim(name,'\n \t\r\.');
+
+
+    const moreThanOne = name?.split('£')
+    if(moreThanOne?.length>=3) {
+        return '£' + (moreThanOne[0]?moreThanOne[0]:moreThanOne[1]);
+    }
+
+    const rez = name?.match(/[0-9][0-9]?p/);
+    if(rez && rez[0]) {
+        console.log('trying to remove p', name, rez, rez[0]);
+        return '£0.' + _.trim(rez[0], 'p');
+    }
+
+    return name;
 }
 
 const regex = /[+-]?\d+(\.\d+)?/g;
@@ -21,9 +36,15 @@ export function getPriceValue(name) {
     const cleanedUp= cleanupPriceName(name);
     const parsed = cleanedUp?.match(regex);
     if(!parsed || !parsed[0]) {
+        console.log('failed parsing', name, cleanedUp, parsed);
         return null;
     }
-    return parseFloat(parsed[0]);
+    const rez= parseFloat(parsed[0]);
+    if(rez===0) {
+        console.log('Failed parsing 2', name, cleanedUp, parsed);
+        return parseFloat(parsed[1]);
+    }
+    return rez;
 }
 
 export function isValidPrice(name) {

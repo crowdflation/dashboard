@@ -46,7 +46,7 @@ export async function getServerSideProps({query}) {
   const vendors = vendorObjects.map(v => v.name);
 
   return {
-    props: {data, category: category?category:null, country: country?country:null, apiKey, vendors}, // will be passed to the page component as props
+    props: {data, category: category?category:null, country: country?country:null, apiKey, vendors, vendor}, // will be passed to the page component as props
   }
 }
 
@@ -68,10 +68,15 @@ class Data extends Component {
       tags.push('country:' + (props.country as string));
     }
 
+    if(props.vendor) {
+      tags.push('vendor:' + (props.vendor as string))
+    }
+
     this.state = {
       column: null,
       data: props.data,
       country: props.country,
+      vendor: props.vendor,
       direction: null,
       errors: null,
       search: '',
@@ -309,10 +314,14 @@ class Data extends Component {
       .then((response) => {
         // handle success
 
+        console.log('received, ', response?.data);
+
         let sorted = _.sortBy(JSON.parse(response?.data), [function(o) { return o[column]}]);
         if(direction!== 'ascending') {
           sorted = sorted.reverse();
         }
+
+        console.log('sorted, ', sorted);
 
         this.updateState({
           error: null,
@@ -542,7 +551,7 @@ class Data extends Component {
 
     });
 
-    console.log('filteredData', filteredData, data);
+    //console.log('filteredData', filteredData, data);
 
     // If it is an array we can show a table
     if(data?.map) {

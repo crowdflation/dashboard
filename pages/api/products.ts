@@ -194,21 +194,29 @@ async function filterProducts(country: string | undefined, vendorName, ageInHour
         }
       }];
 
-    console.log('catFilter',catFilter);
+    //console.log('catFilter',catFilter);
 
     const products = await db.collection(vendor).aggregate(catFilter).limit(200).toArray();
-    products.forEach((d) => {
-      allProductData.push({
-        ...d,
-        dateTime: d?.dateTime?.toString(),
-        vendor,
-        name: d._id,
-        _id: allProductData.length + d._id,
-        priceValue: getPriceValue(d.price)
+    console.log('products', vendor, products.length);
+    try {
+      products.forEach((d) => {
+        allProductData.push({
+          ...d,
+          dateTime: d?.dateTime?.toString(),
+          vendor,
+          name: d._id,
+          _id: allProductData.length + d._id,
+          priceValue: getPriceValue(d.price)
+        });
       });
-    });
+    }
+    catch (e) {
+      console.error('Error saving', e);
+    }
     return;
   }));
+
+  console.log('app products',allProductData.length );
 
   return allProductData;
 
