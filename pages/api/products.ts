@@ -25,6 +25,13 @@ function categoryMatches(category, current) {
   return categoryMatches(category, categoriesMap[current.parent]);
 }
 
+function makeArrayRegex(search) {
+
+  const arr= search.map((s)=>`(?=.*${s.toLowerCase()})`).join('');
+  console.log('search', search, arr);
+  return new RegExp(`^${arr}.*$`);
+}
+
 
 async function filterByCategories(category: string | string[], country: string | undefined, vendorName, ageInHours, db, search, location, distance) {
   const categories = Object.keys(categoriesMap).filter((item) => {
@@ -49,6 +56,8 @@ async function filterByCategories(category: string | string[], country: string |
     timeOfRecordAge.setHours(timeOfRecordAge.getHours() - ageInHours);
   }
 
+  const searchRegexp = makeArrayRegex(search);
+
 
   const vendorNames = {};
   (await db.collection('_categories').find({...filter}).toArray()).forEach((cat) => {
@@ -58,7 +67,7 @@ async function filterByCategories(category: string | string[], country: string |
       return;
     }
 
-    if (search && !_.includes(cat?.name?.toLowerCase(), search?.toLowerCase())) {
+    if (search && !cat?.name.toLowerCase().match(searchRegexp)) {
       //console.log('does not', search, cat.name);
       return;
     } else {
@@ -161,7 +170,7 @@ async function filterProducts(country: string | undefined, vendorName, ageInHour
   }
 
   if(search) {
-    filter['name'] = {$regex : search, '$options' : 'i'};
+    filter['name'] = {$regex : makeArrayRegex(search), '$options' : 'i'};
   }
 
   const allProductData:any[] = [];
@@ -243,7 +252,7 @@ export default async function handler(
     if (req.method === 'GET') {
       const {country, category, longitude, latitude, distance, ageInHours, vendor, search} = req.query;
 
-      const dataByVendor = await getProducts(category as string, country as string, {longitude, latitude}, distance, vendor, search, ageInHours );
+      const dataByVendor = await getProducts(category as string, country as string, {longitude, latitude}, distance, vendor, search?JSON.parse(search as string):search, ageInHours );
 
       return res.status(200).json(JSON.stringify(dataByVendor, null, 2));
     }

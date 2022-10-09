@@ -46,18 +46,16 @@ export async function getServerSideProps({query}) {
   const vendors = vendorObjects.map(v => v.name);
 
   return {
-    props: {data, category: category?category:null, country: country?country:null, apiKey, vendors, vendor}, // will be passed to the page component as props
+    props: {data, category: category?category:null, country: country?country:null, apiKey, vendors, vendor: vendor?vendor:null}, // will be passed to the page component as props
   }
 }
 
+//TODO: load it from vendors
 const countries = ['US', 'TR', 'GB'];
 
 const distances = [1000, 3000, 5000, 10000, 20000, 30000, 50000];
 
 class Data extends Component {
-
-
-
   constructor(props: any) {
     super(props);
     const tags:string[] = [];
@@ -131,6 +129,8 @@ class Data extends Component {
       ...this.newState,
       ...newValues
     }
+    console.log('newState', this.newState);
+
     this.setState(this.newState);
   }
 
@@ -279,13 +279,17 @@ class Data extends Component {
     const state = this.newState;
 
     return ['category','country', 'longitude', 'latitude','distance','vendor', 'currency','search'].reduce((str, key) => {
-      const val = this.findValue(state, key);
+      let val = this.findValue(state, key);
       if(!val) {
         return str;
       }
       if(str!=='') {
         str +='&';
       }
+      if(key==='search') {
+        val = JSON.stringify(val);
+      }
+
       str += key + '=' + encodeURIComponent(val);
       return str;
     }, '');
@@ -310,18 +314,20 @@ class Data extends Component {
   reloadData = () => {
     // Make a request for a user with a given ID
     const { column, direction } = this.newState as any;
-    axios.get('/api/products?' + this.buildQueryURL())
+    const query = this.buildQueryURL();
+    console.log('Reloading', query, this.newState);
+    axios.get('/api/products?' + query)
       .then((response) => {
         // handle success
 
-        console.log('received, ', response?.data);
+        //console.log('received, ', response?.data);
 
         let sorted = _.sortBy(JSON.parse(response?.data), [function(o) { return o[column]}]);
         if(direction!== 'ascending') {
           sorted = sorted.reverse();
         }
 
-        console.log('sorted, ', sorted);
+        console.log('sorted, ', sorted.length);
 
         this.updateState({
           error: null,
@@ -407,7 +413,6 @@ class Data extends Component {
     searchValues.push(tag +':' + value);
 
     this.updateState({searchValues, [tag]:value});
-    this.reloadData();
   }
 
   setLocation = ( address) => {
@@ -446,27 +451,36 @@ class Data extends Component {
 
     this.setTags([...value]);
     setTimeout(()=> {
-      this.reloadData();
+      this.onChangeSearchInputValue({} as any,'','');
     }, 1);
   }
 
   timeout;
   onChangeSearchInputValue = (event: React.SyntheticEvent, value: string, reason: string) => {
     const that = this;
+    const {searchValues} = this.newState as any;
     clearTimeout(that.timeout);
 
-    const parameters = ['location:', 'category:','country:'];
+    const parameters = ['location:', 'category:','country:','vendor:','distance:'];
     if(parameters.find((p)=> _.startsWith(value, p) || _.startsWith(p, value))) {
       // ignore parameter input
-      return this.updateState({
-        search: ''
-      });
+      value = '';
+    }
+
+    const searchArr = searchValues.filter((param)=> {
+      return !parameters.find((p)=> _.startsWith(param, p));
+    });
+
+    if(_.trim(value)) {
+      searchArr.push(_.trim(value));
     }
 
     this.updateState({
-      search: value,
+      search: searchArr.map(p=>p?.toLowerCase()),
       inProgress: true
     });
+
+    console.log('New search arr', searchArr, searchValues);
 
     const timeout = setTimeout(()=> {
       if(timeout!==that.timeout) {
@@ -530,6 +544,8 @@ class Data extends Component {
         break;
     }
 
+
+
   };
 
   render = () => {
@@ -537,7 +553,6 @@ class Data extends Component {
     console.log('dialogContents', dialogContents);
 
     let representation = (<p>{JSON.stringify(data, null, 2)}</p>);
-
 
     const filteredData = data.filter((d)=> {
       if(!isValidPrice(d?.price)) {
@@ -547,8 +562,19 @@ class Data extends Component {
       if(!_.trim(search)) {
         return true;
       }
-      return _.includes(d.name?.toLowerCase(), search?.toLowerCase());
 
+      if(!search.length) {
+        return true;
+      }
+
+      const lowerCase = d?.name?.toLowerCase();
+      if(lowerCase) {
+        if(search.find((s)=>!_.includes(lowerCase,s))) {
+          return false;
+        }
+      }
+
+      return true;
     });
 
     //console.log('filteredData', filteredData, data);
