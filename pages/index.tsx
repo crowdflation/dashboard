@@ -8,52 +8,53 @@ const Home: NextPage = () => {
   return (
     <div className={styles.container}>
       <Head>
-        <title>Crowdflation - Crowdsourced Inflation Data Dashboard</title>
+        <title>Crowdflation - Crowdsourced Inflation and Economic Data</title>
       </Head>
 
       <main className={styles.main}>
-        <h1 className={styles.title}>
-          Welcome to the Crowdflation Community
-        </h1>
+        <div className={styles.showcase}>
+          <div className={styles.maindescr}>
+            <h3>
+              An independent, alternative source for inflation and economic data.
+            </h3>
+          </div>
+          <div className={styles.mainimage}>
+            <img src="./crowdf_dashb.png" alt="image" />
+          </div>
+        </div>
 
-        <h2>A transparent and decentralized source of data for Inflation</h2>
-        <p> We are building a global dashboard about inflation.
-            Our data is crowdsourced and then stored in a decentralized manner, available at any time for further consultation/verificatio/usage/analysis. 
-            Trust, but verify.
-        </p>
-
-        <iframe width="560" height="315" src="https://www.youtube.com/embed/AidIdovi7ok" title="Crowdflation Community"
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen></iframe>
-
-        <br/>
-        <p className={styles.description}>
-          Check out the <Link href='/faq'>FAQ here </Link>
-        </p>
-
-        <p className={styles.description}>
-          You can earn more CRWD tokens if you  <Link href="/contribute">contribute</Link>
+        {/* <h3>What's Crowdflation?</h3> */}
+        <p id={styles["first-parag"]}> 
+          Crowdflation gives you access to alternative measures about inflation and to the underlying raw data.
+          And to make data easily digestible, we are developing tools to help users gaining insights about what matters to them.
+          Whether this is how have house prices been trending in a particular zipcode, 
+          by how much your shopping list overall cost has changed over the past months or what's the inflation rate in US, you will be able to find
+          the answers that are most relevant to your questions.
         </p>
 
-        <p className={styles.description}>
-          Have further questions, or care to contribute in conversation - <a href="https://discord.gg/b6HrzTZ2tF">Join our Discord Channel</a>.
+        <h4>Our approach</h4>
+        <p> 
+          The raw data is gathered at the very root. We collect the actual prices of goods and services
+          from a variety of sources and our inflation measures are derived bottom-up from the raw prices.
+          The data collection process is designed to be performed via crowdsourcing. So, anybody could become a data contributor.
+          This two main aspects make us indipendent.  
+          And this also allows for a high degree of granularity, to the point where you could dive all the way down to single items price differences
+          to develop a better understanding of the higher level results you are seeing.  
         </p>
 
-        <p className={styles.description}>
-          We mine data by using a browser extension. You can download it here: <a href="https://www.dropbox.com/s/jpedyk5hoz18ct8/alphaCheap.zip?dl=1">Alpha Cheap</a>. You will need to load it as unpacked in development mode.
+        <h4>About the project</h4>
+        <p> 
+          Crowdflation is currently under development and is still in the early stages. <br /> 
+          For the most part, the project is open-source and is been intended to allow community members 
+          to contribute in different way.
+          You can find some more detail <Link href='/faq'>here </Link>, but the best way is to <a href="https://discord.gg/b6HrzTZ2tF" target="_blank" rel="noopener noreferrer">join </a> our Discord server and chat directly with us. 
+          Whether you want to contribute the raw prices of products, label them to improve our AI models or add support
+          for new vendors you can join along! 
         </p>
-        <p className={styles.description}>
-          Check out our inflation calculation for the US: <Link href='/inflation'>Dashboard Page </Link>
-        </p>
-        <p className={styles.description}>
-          All of our code is open source as is available on <a href={'https://github.com/crowdflation'}>GitHub</a>
-        </p>
-        <p className={styles.description}>
-          You can look at the uploaded data here: <Link href='/data'>Data Page </Link>
-        </p>
+
+        {/* <iframe src="https://crowdflation-dash.herokuapp.com/" frameBorder="0" width="1200" height="600"></iframe> */}
+
       </main>
-      <p>This page was built with <a href="https://nextjs.org/" target={'_blank'} rel="noreferrer">Next.JS</a></p>
       <br/>
     </div>
   )

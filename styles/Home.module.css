@@ -8,15 +8,18 @@
 
 .container {
   padding: 0 5rem;
-  display: flex;
+  /* display: flex;
   flex-direction: column;
-  /* justify-content: flex-start; */
-  align-items: center;
+  align-items: center; */
   width:80%;
   margin: 0 auto;
 }
 
 .container p {
+  text-align: left;
+}
+
+.container * {
   text-align: left;
 }
 
@@ -29,31 +32,30 @@
   font-size:small !important;
 }
 
-
-
 .main {
   padding: 1rem 0;
-  flex: 1;
+  /* flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: center;
+  align-items: center; */
 }
 
 .body {
-
+  font-family: 'Nunito Sans', sans-serif;
 }
+
+/* HEADER */
 
 .header {
   display: grid;
-  padding: 0 5rem;
+  padding: 0 8rem;
   grid-template-columns: 1fr 280px;
 }
 
-
 .header h1 {
   font-size: x-large;
-  padding: 18px 0;
+  margin: 15px 0;
   font-family: Iceberg;
   font-style: normal;
   font-weight: normal;
@@ -62,11 +64,89 @@
   color: #011DB4;
 }
 
+.header .navbar {
+  margin: 15px 0;
+}
+
 .MuiSelect-select {
   font-size: 1.6rem !important;
   padding-bottom: 0  !important;
   margin-right: 5px;
 }
+
+/* HOMEPAGE (index.tsx) */
+
+.showcase {
+  margin: 20px 0 80px 0;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 300px;
+}
+
+.maindescr {
+  margin-right: 10xp;
+  padding-top: 50px;
+  width: 50%;
+  font-size: 35px;
+}
+
+.mainimage {
+  margin-left: 25px;
+  display: flex;
+}
+
+.mainimage img {
+  height: auto;
+  width: 100%;
+  margin: auto;
+}
+
+.maindescr h3 {
+  font-size: 35px;
+}
+
+#first-parag {
+  padding-top: 25px;
+  margin-bottom: 35px;
+  font-size: 1.2rem;
+  line-height: 2.1rem;
+  word-spacing: 2px;
+  /* font-style: italic; */
+  border-top: black 1px solid;
+}
+
+@media (max-width: 900px) {
+
+  .showcase {
+    margin: 20px 0 80px 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 300px;
+  }
+  
+  .maindescr {
+    margin: 0 0 20px 0;
+    padding: 0;
+    width: 100%;
+    font-size: 25px;
+  }
+  
+  .maindescr h3 {
+    font-size: 25px;
+    text-align: center;
+  }
+  
+  .mainimage {
+    margin: 0;
+  }
+
+}
+
+/* INFLATION DASHBOARD */
 
 .inflation h2 {
   display: flex;
@@ -75,9 +155,9 @@
   justify-content: center;
 }
 
-.container h3 {
+/* .container h3 {
   font-size: 1.6rem !important;
-}
+} */
 
 .inflation h3 {
   font-size: 1.6rem !important;
@@ -87,7 +167,7 @@
   justify-content: center;
 }
 
-
+/* SUBMISSION PAGE */
 
 .submission h3 {
   font-size: 1.6rem;

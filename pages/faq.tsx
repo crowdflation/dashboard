@@ -14,7 +14,7 @@ const FAQ: NextPage<Untitlable> = (props:Untitlable) => {
   return (
     <div className={styles.container}>
       <Head>
-        <title>Crowdflation - Crowdsourced Inflation Calculation Group Dashboard</title>
+        <title>Crowdflation - FAQ</title>
       </Head>
 
       <main className={styles.main}>
