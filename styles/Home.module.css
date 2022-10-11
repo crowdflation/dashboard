@@ -172,6 +172,10 @@
 
 /* INFLATION DASHBOARD */
 
+.inflation p {
+  margin-bottom: 0;
+}
+
 .inflation h2 {
   display: flex;
   align-items: center;
@@ -184,7 +188,7 @@
 } */
 
 .inflation h3 {
-  font-size: 1.6rem !important;
+  font-size: 1.4rem !important;
   display: flex;
   align-items: center;
   flex-direction: row;
