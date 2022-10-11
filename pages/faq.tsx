@@ -14,6 +14,8 @@ const FAQ: NextPage<Untitlable> = (props:Untitlable) => {
   return (
     <div className={styles.container+' '+styles["faq-section"]}>
 
+      <title> Crowdflation - FAQ</title>
+
       <main className={styles.main}>
         {/* {!(props as any).untitled?(
           < h1 className={styles.title}>
