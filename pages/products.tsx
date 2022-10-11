@@ -238,16 +238,12 @@ class Data extends Component {
 
       switch(type) {
         case Parameters.Category:
-          console.log('categories', categories);
           dialogContents = (<DropdownTreeSelect data={categories} onChange={categoryChange.bind(that)} />);
           dialogLabel='Please choose a category';
           break;
         case Parameters.Country:
           dialogContents = (<Select
-              labelId="demo-simple-select-label"
-              id="demo-simple-select"
               label="Country"
-              defaultValue='US'
               className={styles["MuiSelect-select"]}
               onChange={countrySelectChange}
           >
@@ -257,10 +253,7 @@ class Data extends Component {
           break;
         case Parameters.Vendor:
           dialogContents = (<Select
-              labelId="demo-simple-select-label"
-              id="demo-simple-select"
-              label="Country"
-              defaultValue='US'
+              label="Vendor"
               className={styles["MuiSelect-select"]}
               onChange={vendorSelectChange}
           >
@@ -270,10 +263,7 @@ class Data extends Component {
           break;
         case Parameters.Distance:
           dialogContents = (<Select
-              labelId="demo-simple-select-label"
-              id="demo-simple-select"
-              label="Country"
-              defaultValue='US'
+              label="Distance"
               className={styles["MuiSelect-select"]}
               onChange={distanceSelectChange}
           >
@@ -286,14 +276,14 @@ class Data extends Component {
           dialogContents = (<Select
               labelId="demo-simple-select-label"
               id="demo-simple-select"
-              label="Country"
+              label="Age"
               defaultValue='1'
               className={styles["MuiSelect-select"]}
               onChange={ageSelectChange}
           >
             {Object.keys(ageNames).map((c)=>(<MenuItem key={c} value={c}>{ageNames[c]}</MenuItem>))}
           </Select>);
-          dialogLabel='Please choose maximum age';
+          dialogLabel='Please choose maximum data age';
           break;
       }
 
