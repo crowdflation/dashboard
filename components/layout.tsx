@@ -39,11 +39,20 @@ export class Layout extends Component {
           <div>
             <h1><Link href='/'>Crowdflation</Link></h1>
           </div>
+          
           <div>
-            <Tabs value={value} onChange={this.handleChange} aria-label="nav tabs example">
+            <Tabs
+              className={styles.navbar} 
+              value={value} 
+              onChange={this.handleChange} 
+              aria-label="nav tabs example" 
+              sx={{
+                '& .MuiTabs-flexContainer': {justifyContent: "end"}
+              }}
+            >
               <LinkTab label="Dashboard" href="/inflation" />
               <LinkTab label="FAQ" href="/faq" />
-              <LinkTab label="Code" href="/code" />
+              {/* <LinkTab label="Code" href="/code" /> */}
             </Tabs>
           </div>
         </div>
