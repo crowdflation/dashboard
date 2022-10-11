@@ -15,8 +15,14 @@
   margin: 0 auto;
 }
 
+.small-container {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
 .container p {
   text-align: left;
+  margin-bottom: 15px;
 }
 
 .container * {
@@ -56,12 +62,13 @@
 .header h1 {
   font-size: x-large;
   margin: 15px 0;
-  font-family: Iceberg;
+  font-family: 'Iceberg';
   font-style: normal;
   font-weight: normal;
   font-size: 32px;
   line-height: 39px;
-  color: #011DB4;
+  /* color: #011DB4; */
+  color: #4183C4;
 }
 
 .header .navbar {
@@ -115,6 +122,21 @@
   word-spacing: 2px;
   /* font-style: italic; */
   border-top: black 1px solid;
+}
+
+.main h4 {
+  font-size: 1.1rem;
+  margin: 25px 0 0 0;
+}
+
+.main p {
+  word-spacing: 1px;
+  letter-spacing: 0.5px;
+  margin-top: 0.6em;
+}
+
+.main a {
+  color: #4183C4;
 }
 
 @media (max-width: 900px) {
@@ -226,6 +248,19 @@
   margin: 0;
   line-height: 1.15;
   font-size: 4rem;
+}
+
+.faq-section h2 {
+  text-align: center;
+}
+
+div.faq-cell {
+  border-bottom: black 1px solid;
+  /* padding: 10px 0; */
+}
+
+div.faq-cell:last-child {
+  border-bottom: none;
 }
 
 .title,

@@ -39,7 +39,7 @@ export class Layout extends Component {
           <div>
             <h1><Link href='/'>Crowdflation</Link></h1>
           </div>
-          {/* <div className={styles.navbar}> */}
+          
           <div>
             <Tabs
               className={styles.navbar} 
