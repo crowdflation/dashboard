@@ -165,7 +165,7 @@ export default async function handler(
     return await handleDataRequest(req, res);
   } catch(err) {
     if(err instanceof ValidationError) {
-      const verr = err as ValidationError;
+      const verr = err ;
       console.log('verr', verr);
       return res.status(400).json({message: `Validation error - ${explainReasons(verr.reasons)}`});
     } else {
@@ -174,4 +174,4 @@ export default async function handler(
     }
   }
 
-};
+}

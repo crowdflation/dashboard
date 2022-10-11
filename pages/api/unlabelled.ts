@@ -38,14 +38,16 @@ export async function getUnlabelled(country, language, vendor, search) {
     countryFilter = {$in: [country, null]};
   }
 
+  console.log('vendorfilter', {name: vendor, country: countryFilter});
+
   const vendorsObj = await db.collection('_vendors').find({name: vendor, country: countryFilter}).toArray();
 
   if( vendorsObj?.length!== 1) {
     throw new Error('Failed to find one vendor');
   }
 
-  let categories = await db.collection('_categories').find().toArray();
-  let categoryByProduct = {};
+  const categories = await db.collection('_categories').find().toArray();
+  const categoryByProduct = {};
   categories.reduce((r, item) => {
     categoryByProduct[item.name] = item.category;
   }, {});
@@ -59,21 +61,24 @@ export async function getUnlabelled(country, language, vendor, search) {
   }
 
   let count = 0;
-  let prices = await db
+  const prices = await db
       .collection(vendor)
       .find({...searchFilter, country: countryFilter})
       .limit(200)
       .toArray();
 
+  console.log('found', prices, {...searchFilter, country: countryFilter});
+
   const now = new Date();
-  let labels = await db.collection('_labels').find({language, $or: [ {count: { $gt: minimumLabelCount }}, { waitUntil: { $lt: now}} ] }).toArray();
-  let labelsMap = {};
+  const labels = await db.collection('_labels').find({language, $or: [ {count: { $gt: minimumLabelCount }}, { waitUntil: { $lt: now}} ] }).toArray();
+  const labelsMap = {};
   labels.reduce((r, item) => {
     labelsMap[item.name] = item.count;
   }, {});
 
   await Promise.all(prices.map(async (price) => {
-    let category = getCategory(price.vendor, price.name, categoryByProduct);
+    const category = getCategory(price.vendor, price.name, categoryByProduct);
+    console.log('category founds', category);
     if (!category) {
       const cleanedUpName = cleanupPriceName(price.name);
       if(labels[cleanedUpName]) {
@@ -99,7 +104,7 @@ export default async function handler(
 
   try {
     if (req.method === 'GET') {
-      let {country, language, vendor, search} = req.query;
+      const {country, language, vendor, search} = req.query;
       const dataObj = await getUnlabelled(country, language, vendor, search);
       return res.status(200).json(JSON.stringify(dataObj, null, 2));
     } else if (req.method === 'POST') {

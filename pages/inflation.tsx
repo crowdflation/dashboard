@@ -38,7 +38,7 @@ export async function getServerSideProps() {
     const vendorObjects = (await getVendors(db)).map(v=> { return {...v, _id:v._id.toString()} });
     const vendorsNames = vendorObjects.filter(v=>!v.country || v.country=='US').map(v => v.name);
 
-    let vendorsFilterSelect = { label :
+    const vendorsFilterSelect = { label :
         "All vendors",
             value :
         "All vendors",
@@ -48,7 +48,7 @@ export async function getServerSideProps() {
 
     console.log('vendorObjects',vendorObjects);
 
-    let countryCodes = {};
+    const countryCodes = {};
     vendorObjects.map((v:any)=>{ return v.country && (countryCodes[v.country]=v.country);});
     countryCodes['US'] = 'US';
     countryCodes['TR'] = 'TR';
@@ -103,7 +103,7 @@ class Inflation extends Component<any, any> {
 
     onChange(currentNode, selectedNodes) {
         console.log('onChange::', currentNode, selectedNodes);
-        let basket: string[] = [];
+        const basket: string[] = [];
         _.map(selectedNodes, (item: any) => {
             basket.push(item.label);
         });
@@ -115,7 +115,7 @@ class Inflation extends Component<any, any> {
     }
 
     onChangeVendors(currentNode, selectedNodes) {
-        let vendors: string[] = [];
+        const vendors: string[] = [];
         _.map(selectedNodes, (item: any) => {
             vendors.push(item.label);
         });
@@ -224,15 +224,16 @@ class Inflation extends Component<any, any> {
         axios.get('/api/inflation' + '?' + this.buildQueryURL(state))
             .then((response) => {
                 // handle success
+                const parsed = JSON.parse(response.data);
                 this.setState({
                     ...state,
                     errors,
                     error: null,
                     inProgress: false,
-                    inflationInDayPercent: response.data.inflationInDayPercent,
-                    inflationOnLastDay: response.data.inflationOnLastDay,
-                    explanationByDay: response.data.explanationByDay,
-                    totalInflation: response.data.totalInflation,
+                    inflationInDayPercent: parsed.inflationInDayPercent,
+                    inflationOnLastDay: parsed.inflationOnLastDay,
+                    explanationByDay: parsed.explanationByDay,
+                    totalInflation: parsed.totalInflation,
                 });
             }).catch((error) => {
             this.setState({
@@ -263,7 +264,7 @@ class Inflation extends Component<any, any> {
         console.log('setting country', country, lat, lng);
 
         const vendorNames = this.vendorObjects.filter(v=>(!v.country && country=='US') || v.country==country).map(v => v.name);
-        let vendorsFilterSelect = { label :
+        const vendorsFilterSelect = { label :
                 "All vendors",
             value :
                 "All vendors",
@@ -306,7 +307,7 @@ class Inflation extends Component<any, any> {
 
         let chart: any;
         // If it is an array we can show a table
-        let categories = {};
+        const categories = {};
         categories[country] = [];
         let maxY = 0;
         let minY = 0;
@@ -320,7 +321,7 @@ class Inflation extends Component<any, any> {
         const series = _.map(categories, (value:any, key) => {
             let newValue = value;
             if(cumulative==='true' || cumulative===true) {
-                let running:number = 0;
+                let running = 0;
                 newValue = value.map(({x,y})=> {
                     running += y || 0;
                     return {x, y: running};
@@ -374,7 +375,7 @@ class Inflation extends Component<any, any> {
                     >
                         {that.countries.map((c)=>(<MenuItem key={c.code} value={c.code}>{c.name}</MenuItem>))}
                     </Select> {' '}
-                    Inflation: {totalInflation || 0}% total for period
+                    Inflation: {totalInflation?.toFixed(2) || 0}% total for period
                 </h3>
                 <Accordion>
                     <AccordionSummary

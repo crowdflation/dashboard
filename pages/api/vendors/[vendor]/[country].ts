@@ -5,6 +5,9 @@ import _ from 'lodash';
 import { runMiddleware, tryParse } from '../../../../lib/util/middleware'
 import { countries, countryCodes, countryCodesMap } from '../../../../data/countries'
 import { countryToLanguage } from '../../../../data/languages'
+import { connectToDatabase } from "../../../../lib/util/mongodb";
+import axios from "axios";
+import {cleanupPriceName} from "../../../../lib/util/utils";
 
 // Initializing the cors middleware
 const cors = Cors({
@@ -16,9 +19,11 @@ function validateAndDenormalise(location:{latitude:number,longitude:number }) {
   //Round to hours so we can combine data
   dateTime.setMinutes(0, 0, 0);
 
+
   //Make location rought so that we can combine results
   //TODO: use kilomoters for roughtness and check with Ekon team how rought it should be
   const roughLocation = location?{latitude:parseFloat(location.latitude?.toString()).toFixed(3), longitude: parseFloat(location.longitude?.toString()).toFixed(3)}:null;
+
   return function(item:any) {
     if(!item.name || !item.price) {
       throw new Error('Submission data must have name and price fields');
@@ -27,10 +32,7 @@ function validateAndDenormalise(location:{latitude:number,longitude:number }) {
   }
 }
 
-//TODO: Validation and assigning to a user
-import { connectToDatabase } from "../../../../lib/util/mongodb";
-import axios from "axios";
-import {cleanupPriceName} from "../../../../lib/util/utils";
+
 
 function wait(delay) {
   return new Promise(function(succ) {
@@ -57,7 +59,7 @@ async function getCategoriesFromModel(namesNotCategorised: string[], language) {
   throw new Error("Timeout trying to access the model")
 }
 
-export async function handleDataRequest(vendor: string | string[], country: any, page: number=0, limit: number=200, req: NextApiRequest, res: NextApiResponse<any>) {
+export async function handleDataRequest(vendor: string | string[], country: any, page=0, limit=200, req: NextApiRequest, res: NextApiResponse<any>) {
   if (!vendor || _.includes(vendor, '_')) {
     return res.status(400).json({error: 'Non-allowed vendor name'});
   }
@@ -100,7 +102,7 @@ export async function handleDataRequest(vendor: string | string[], country: any,
       let prices = null;
       if (req.query.aggregate) {
         console.log('aggregate');
-        let what = tryParse(req.query.aggregate, null);
+        const what = tryParse(req.query.aggregate, null);
         if (what) {
           prices = await db
               .collection(vendor)
@@ -135,7 +137,7 @@ export async function handleDataRequest(vendor: string | string[], country: any,
       return res.status(400).json({error: (e as any)?.toString()});
     }*/
   } else if (req.method === 'POST') {
-    const enriched = req.body.payload.data.map(validateAndDenormalise(req.body.location));
+    const enriched = req.body.payload.data.map(validateAndDenormalise(req.body.payload.location));
     //Add each item from the list
     const namesFound = {};
     enriched.forEach(async function (item: any) {
@@ -171,7 +173,7 @@ export async function handleDataRequest(vendor: string | string[], country: any,
 
 
 
-    let categorised = await getCategoriesFromModel(namesNotCategorised, language);
+    const categorised = await getCategoriesFromModel(namesNotCategorised, language);
     const confidenceThreshold = (parseFloat(process.env.CATEGORISATOION_CONFIDENCE_TRESHOLD as string)) || 0.8;
 
 
@@ -179,17 +181,20 @@ export async function handleDataRequest(vendor: string | string[], country: any,
     await Promise.all(Object.keys(categorised).map(async (key)=> {
       const val = categorised[key];
 
+      console.log(key, val, confidenceThreshold);
+
       if(val?.confidence>confidenceThreshold) {
         const category = val?.prediction;
         if(category) {
           await db.collection('_categories').updateOne(
               {name: key, country: countryFilter},
-              {$set: {name: key, category, country, language}},
+              {$set: {name: key, category, country, language, vendor}},
               {
                 upsert: true
               });
           itemCategoriesUpdated++;
         }
+
       }
 
     }));
@@ -207,6 +212,6 @@ export default async function handler(
 
   // Run the middleware
   await runMiddleware(req, res, cors);
-  let { vendor, country, page, limit } = req.query;
+  const { vendor, country, page, limit } = req.query;
   return await handleDataRequest(vendor as string, country,  (page as string | undefined) as (number | undefined), parseInt(limit as string), req, res);
-};
+}

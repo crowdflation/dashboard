@@ -34,19 +34,19 @@ const Contribute: NextPage<Untitlable> = (props:Untitlable) => {
                         Adding new Scrapers
                     </h3>
                     <p className={styles.description}>
-                        We mine data by using a browser extension. The browser extension is using scrapers. A scraper is an a method on how data can be extracted from a website. If you know <a href={"https://www.w3schools.com/css/"} target={"_blank"}>CSS</a> you can add scrapers in this <Link href={'/scrapers'}>page</Link>
+                        We mine data by using a browser extension. The browser extension is using scrapers. A scraper is an a method on how data can be extracted from a website. If you know <a href={"https://www.w3schools.com/css/"} target={"_blank"} rel="noreferrer">CSS</a> you can add scrapers in this <Link href={'/scrapers'}>page</Link>
                     </p>
                     <h3>
                         You can mine data
                     </h3>
                     <p className={styles.description}>
-                        We mine data using a browser extension. This <a href={"https://docs.google.com/document/d/1Zg1YG3l65V7peDHPdZC5sDVNXa6cyq68bsowtcl0UoM/edit"} target={"_blank"}>document</a> describes how to install the browser extension. Once you navigate ot one of the websites that has scrapers the data collection should happen automatically. Make sure to have <a href={"https://metamask.io/"} target={"_blank"}>https://metamask.io/</a> installed to get rewards once this is set up.
+                        We mine data using a browser extension. This <a href={"https://docs.google.com/document/d/1Zg1YG3l65V7peDHPdZC5sDVNXa6cyq68bsowtcl0UoM/edit"} target={"_blank"} rel="noreferrer">document</a> describes how to install the browser extension. Once you navigate ot one of the websites that has scrapers the data collection should happen automatically. Make sure to have <a href={"https://metamask.io/"} target={"_blank"} rel="noreferrer">https://metamask.io/</a> installed to get rewards once this is set up.
                     </p>
                     <h3>
                         Being active in the Discord
                     </h3>
                     <div className={styles.description}>
-                        If you are active in the <a href={"https://discord.gg/b6HrzTZ2tF"} target={"_blank"}>Discord</a>, this will be recognised a number of rewards. Anyone can note relevant posts with a custom icon (:crwd:) and those posting will be rewarded. Post a meme, a screenshot or link to your accomplishments or just participate in Discord with your wits to brighten someones day. Discord bot is still in testing, so let us know in case of any hiccups.
+                        If you are active in the <a href={"https://discord.gg/b6HrzTZ2tF"} target={"_blank"} rel="noreferrer">Discord</a>, this will be recognised a number of rewards. Anyone can note relevant posts with a custom icon (:crwd:) and those posting will be rewarded. Post a meme, a screenshot or link to your accomplishments or just participate in Discord with your wits to brighten someones day. Discord bot is still in testing, so let us know in case of any hiccups.
                     </div>
                 </div>
             </main>

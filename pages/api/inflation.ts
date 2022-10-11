@@ -268,7 +268,7 @@ export async function calculateInflation(db, query) {
     const queryVendors = tryParse(query.vendors, null);
     if(queryVendors) {
       if(queryVendors.indexOf('All vendors')===-1) {
-        let newVendors = queryVendors.filter(v => vendors.indexOf(v) !== -1);
+        const newVendors = queryVendors.filter(v => vendors.indexOf(v) !== -1);
         if (newVendors.length <= 0) {
           throw new Error('None of the Vendors provided do not match what is in the database');
         }
@@ -279,8 +279,8 @@ export async function calculateInflation(db, query) {
   }
 
 
-  let categories = await db.collection('_categories').find().toArray();
-  let categoryByProduct = {};
+  const categories = await db.collection('_categories').find().toArray();
+  const categoryByProduct = {};
   categories.reduce((r, item) => {
     categoryByProduct[item.name] = item.category;
   }, {});
@@ -297,7 +297,7 @@ export async function calculateInflation(db, query) {
   const pricesByDate = {};
 
   await Promise.all(vendors.map(async (vendor) => {
-    let prices = await db
+    const prices = await db
       .collection(vendor)
       .find({country: countryFilter, dateTime: {$gte: from, $lt: to}})
       .toArray();
@@ -305,11 +305,11 @@ export async function calculateInflation(db, query) {
     await storePricesByDate(prices, latitude, longitude, distanceMiles, pricesByDate, vendor, period);
   }));
 
-  const inflationInDayPercent = {};
+  const inflationInDayPercent:any = {};
   const explanationByDay = {};
 
   for (let i = dates.length - 1; i >= 1; i--) {
-    const current = pricesByDate[dates[i]];
+    const current: any = pricesByDate[dates[i]];
     const pricesByCategory = {};
     _.map(current, (productPrices, key) => {
       //Product not found

@@ -65,4 +65,4 @@ export default async function handler(
     return res.status(200).json({});
   }
   return res.status(404).json({message:'Invalid request type'});
-};
+}

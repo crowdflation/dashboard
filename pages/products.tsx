@@ -23,7 +23,7 @@ import DropdownTreeSelect from "react-dropdown-tree-select";
 import categories from "../data/categories";
 import 'react-dropdown-tree-select/dist/styles.css';
 import {connectToDatabase, getVendors} from "../lib/util/mongodb";
-import {cleanupPriceName} from "../lib/util/utils";
+import {cleanupPriceName, getPriceValue, isValidPrice} from "../lib/util/utils";
 
 enum Parameters {
   Category = "category",
@@ -36,8 +36,8 @@ enum Parameters {
 
 
 export async function getServerSideProps({query}) {
-  const {category, country, vendor} = query;
-  const data = await getProducts(category, country, undefined, undefined, vendor, undefined);
+  const {category, country, vendor, search} = query;
+  const data = await getProducts(category, country, undefined, undefined, vendor, search, undefined);
   const apiKey: string = (process.env as any).GOOGLE_MAPS_API_KEY as string;
 
   const {db} = await connectToDatabase();
@@ -46,12 +46,16 @@ export async function getServerSideProps({query}) {
   const vendors = vendorObjects.map(v => v.name);
 
   return {
-    props: {data, category: category?category:null, country: country?country:null, apiKey, vendors}, // will be passed to the page component as props
+    props: {data, category: category?category:null, country: country?country:null, apiKey, vendors, vendor: vendor?vendor:null}, // will be passed to the page component as props
   }
 }
 
-class Data extends Component {
+//TODO: load it from vendors
+const countries = ['US', 'TR', 'GB'];
 
+const distances = [1000, 3000, 5000, 10000, 20000, 30000, 50000];
+
+class Data extends Component {
   constructor(props: any) {
     super(props);
     const tags:string[] = [];
@@ -62,14 +66,20 @@ class Data extends Component {
       tags.push('country:' + (props.country as string));
     }
 
+    if(props.vendor) {
+      tags.push('vendor:' + (props.vendor as string))
+    }
+
     this.state = {
       column: null,
       data: props.data,
+      country: props.country,
+      vendor: props.vendor,
       direction: null,
       errors: null,
       search: '',
       searchValues:[...tags],
-      tagOptions: ['category:'+ (props.category as string),'country:'+(props.country as string), 'location:', 'distance:','vendor:', 'currency:'].map((o)=>{ return {label:o};}),
+      tagOptions: [...this.makeAllCategories(),...countries.map((c)=>'country:'+c.toLowerCase()), ...distances.map((d)=>'distance:'+d), ...props.vendors.map((v)=> 'vendor:' + v)].map((o)=>{ return {label:o};}),
       tags,
       dialogContents: null,
       dialogLabel:'',
@@ -84,6 +94,17 @@ class Data extends Component {
     Geocode.setLanguage("en");
   }
 
+  addAllCategories = (here, categories) => {
+    here.push('category:' + categories.label);
+    categories?.children.map((c)=>this.addAllCategories(here, c));
+  }
+
+  makeAllCategories =() => {
+    const catList = [];
+    this.addAllCategories(catList, categories);
+    return catList;
+  }
+
   handleSort = (column:string, state: any) => {
     if (state.column === column) {
       return this.updateState( {
@@ -95,7 +116,7 @@ class Data extends Component {
 
     this.updateState({
       column: column,
-      data: _.sortBy(state.data, [column]),
+      data: _.sortBy(state.data, [function(o) { return o[column]}]),
       direction: 'ascending',
     });
   }
@@ -108,6 +129,8 @@ class Data extends Component {
       ...this.newState,
       ...newValues
     }
+    console.log('newState', this.newState);
+
     this.setState(this.newState);
   }
 
@@ -131,6 +154,8 @@ class Data extends Component {
         newState[tag] = null;
       }
     });
+
+    console.log('newState', newState);
     this.updateState(newState);
     return newState;
   }
@@ -184,9 +209,6 @@ class Data extends Component {
         }
       };
 
-      const countries = ['US', 'TR', 'GB'];
-
-      const distances = [1000, 3000, 5000, 10000, 20000, 30000, 50000];
 
       const distanceNames = {};
 
@@ -254,16 +276,20 @@ class Data extends Component {
   }
 
   buildQueryURL = () => {
-    const state = this.state;
+    const state = this.newState;
 
-    return ['category','country', 'longitude', 'latitude','distance','vendor', 'currency'].reduce((str, key) => {
-      const val = this.findValue(state, key);
+    return ['category','country', 'longitude', 'latitude','distance','vendor', 'currency','search'].reduce((str, key) => {
+      let val = this.findValue(state, key);
       if(!val) {
         return str;
       }
       if(str!=='') {
         str +='&';
       }
+      if(key==='search') {
+        val = JSON.stringify(val);
+      }
+
       str += key + '=' + encodeURIComponent(val);
       return str;
     }, '');
@@ -287,17 +313,32 @@ class Data extends Component {
 
   reloadData = () => {
     // Make a request for a user with a given ID
-    axios.get('/api/products?' + this.buildQueryURL())
+    const { column, direction } = this.newState as any;
+    const query = this.buildQueryURL();
+    console.log('Reloading', query, this.newState);
+    axios.get('/api/products?' + query)
       .then((response) => {
         // handle success
+
+        //console.log('received, ', response?.data);
+
+        let sorted = _.sortBy(JSON.parse(response?.data), [function(o) { return o[column]}]);
+        if(direction!== 'ascending') {
+          sorted = sorted.reverse();
+        }
+
+        console.log('sorted, ', sorted.length);
+
         this.updateState({
           error: null,
-          data: response?.data
+          data: sorted,
+          inProgress: false
         });
       }).catch((error) => {
         this.updateState({
           error: this.tryGetErrorMessage(error),
-          data: []
+          data: [],
+          inProgress: false
       });
     });
   }
@@ -328,10 +369,11 @@ class Data extends Component {
                 console.log('address',address, response.results[0]);
                 this.updateState({
                   location: {
-                    latitude,
-                    longitude,
                     address
                   },
+                  latitude,
+                  longitude,
+                  distance: 1000,
                   inProgress: false
                 });
                 this.setLocation( address);
@@ -341,10 +383,11 @@ class Data extends Component {
                 const address = latitude + ' ' + longitude;
                 this.updateState({
                   location: {
-                    latitude,
-                    longitude,
                     address: latitude + ' ' + longitude
                   },
+                  latitude,
+                  longitude,
+                  distance: 1000,
                   inProgress: false
                 });
                 this.setLocation(address);
@@ -370,7 +413,6 @@ class Data extends Component {
     searchValues.push(tag +':' + value);
 
     this.updateState({searchValues, [tag]:value});
-    this.reloadData();
   }
 
   setLocation = ( address) => {
@@ -387,29 +429,66 @@ class Data extends Component {
     });
 
     tagOptions.push({label:'location:' + address});
+    searchValues.push({label:'distance:'+1000});
     this.setTags(searchValues, tagOptions);
+    this.reloadData();
   }
 
   onChangeTagsInputValue = (event, value, reason) => {
+    console.log('onChangeTagsInputValue', value);
+
+    const state = {};
+    value.map((v)=> {
+      const split = v?.label?.split(':');
+      if (split && split.length >= 2) {
+        const key = split.shift();
+        const rez = split.join(':');
+        state[key] = rez;
+      }
+    });
+
+    this.updateState(state);
+
     this.setTags([...value]);
     setTimeout(()=> {
-      this.reloadData();
+      this.onChangeSearchInputValue({} as any,'','');
     }, 1);
   }
 
+  timeout;
   onChangeSearchInputValue = (event: React.SyntheticEvent, value: string, reason: string) => {
+    const that = this;
+    const {searchValues} = this.newState as any;
+    clearTimeout(that.timeout);
 
-    const parameters = ['location:', 'category:','country:'];
+    const parameters = ['location:', 'category:','country:','vendor:','distance:'];
     if(parameters.find((p)=> _.startsWith(value, p) || _.startsWith(p, value))) {
       // ignore parameter input
-      return this.updateState({
-        search: ''
-      });
+      value = '';
+    }
+
+    const searchArr = searchValues.filter((param)=> {
+      return !parameters.find((p)=> _.startsWith(param, p));
+    });
+
+    if(_.trim(value)) {
+      searchArr.push(_.trim(value));
     }
 
     this.updateState({
-      search: value
+      search: searchArr.map(p=>p?.toLowerCase()),
+      inProgress: true
     });
+
+    console.log('New search arr', searchArr, searchValues);
+
+    const timeout = setTimeout(()=> {
+      if(timeout!==that.timeout) {
+        return;
+      }
+      that.reloadData();
+    }, 500);
+    that.timeout = timeout;
   }
 
   parsePrice = (price) => {
@@ -465,6 +544,8 @@ class Data extends Component {
         break;
     }
 
+
+
   };
 
   render = () => {
@@ -473,16 +554,30 @@ class Data extends Component {
 
     let representation = (<p>{JSON.stringify(data, null, 2)}</p>);
 
-
     const filteredData = data.filter((d)=> {
+      if(!isValidPrice(d?.price)) {
+        return false;
+      }
+
       if(!_.trim(search)) {
         return true;
       }
-      return _.includes(d.name?.toLowerCase(), search?.toLowerCase());
 
+      if(!search.length) {
+        return true;
+      }
+
+      const lowerCase = d?.name?.toLowerCase();
+      if(lowerCase) {
+        if(search.find((s)=>!_.includes(lowerCase,s))) {
+          return false;
+        }
+      }
+
+      return true;
     });
 
-    console.log('filteredData', filteredData, data);
+    //console.log('filteredData', filteredData, data);
 
     // If it is an array we can show a table
     if(data?.map) {
@@ -497,8 +592,8 @@ class Data extends Component {
                 Name
               </Table.HeaderCell>
               <Table.HeaderCell
-                sorted={column === 'price' ? direction : null}
-                onClick={() => this.handleSort('price', this.state)}
+                sorted={column === 'priceValue' ? direction : null}
+                onClick={() => this.handleSort('priceValue', this.state)}
               >
                 Price
               </Table.HeaderCell>
