@@ -86,7 +86,11 @@ class Data extends Component {
       search: '',
       age: props.age,
       searchValues:[...tags],
-      tagOptions: [...this.makeAllCategories(),...countries.map((c)=>'country:'+c.toLowerCase()), ...distances.map((d)=>'distance:'+d), ...props.vendors.map((v)=> 'vendor:' + v)].map((o)=>{ return {label:o};}),
+      tagOptions: [
+        //...this.makeAllCategories(),
+        ...countries.map((c)=>'country:'+c.toLowerCase()),
+        //...distances.map((d)=>'distance:'+d),
+        ...props.vendors.map((v)=> 'vendor:' + v)].map((o)=>{ return {label:o};}),
       tags,
       dialogContents: null,
       dialogLabel:'',
@@ -630,7 +634,7 @@ class Data extends Component {
               >
                 Vendor
               </Table.HeaderCell>
-              <Table.HeaderCell
+              <Table.HeaderCell hidden={true}
                 sorted={column === 'distance' ? direction : null}
                 onClick={() => this.handleSort('distance', this.state)}
               >
@@ -650,7 +654,7 @@ class Data extends Component {
                 <Table.Cell>{name}</Table.Cell>
                 <Table.Cell>{cleanupPriceName(price)}</Table.Cell>
                 <Table.Cell>{vendor}</Table.Cell>
-                <Table.Cell>{distance}</Table.Cell>
+                <Table.Cell hidden={true}>{distance}</Table.Cell>
                 <Table.Cell>{new Date(dateTime).toLocaleString()}</Table.Cell>
               </Table.Row>
             ))}
@@ -664,7 +668,7 @@ class Data extends Component {
     return (
       <div className={styles.container}>
         <Box sx={{ display: 'grid', gap: 1, gridTemplateColumns: '1fr 1fr' }}>
-          <Link onClick={() =>this.getLocation()}><FontAwesomeIcon icon={faLocationCrosshairs} size="3x" color="silver"/></Link>
+          <Link hidden={true} onClick={() =>this.getLocation()}><FontAwesomeIcon icon={faLocationCrosshairs} size="3x" color="silver"/></Link>
           <Link onClick={(e) =>this.handleClick(e)}><FontAwesomeIcon icon={faCircleChevronDown}  size="3x" color="silver"/></Link>
           <Menu
               id="basic-menu"
@@ -676,10 +680,10 @@ class Data extends Component {
            open={!!anchorEl}>
             <MenuItem onClick={this.handleClear}>Clear All</MenuItem>
             <MenuItem onClick={this.handleClose}>Add:</MenuItem>
-            <MenuItem onClick={()=>this.handleAdd(Parameters.Location)}>Location</MenuItem>
+            <MenuItem onClick={()=>this.handleAdd(Parameters.Location)} hidden={true}>Location</MenuItem>
             <MenuItem onClick={()=>this.handleAdd(Parameters.Country)}>Country</MenuItem>
-            <MenuItem onClick={()=>this.handleAdd(Parameters.Category)}>Category</MenuItem>
-            <MenuItem onClick={()=>this.handleAdd(Parameters.Distance)}>Distance</MenuItem>
+            <MenuItem onClick={()=>this.handleAdd(Parameters.Category)} hidden={true}>Category</MenuItem>
+            <MenuItem onClick={()=>this.handleAdd(Parameters.Distance)} hidden={true}>Distance</MenuItem>
             <MenuItem onClick={()=>this.handleAdd(Parameters.Vendor)}>Vendor</MenuItem>
             <MenuItem onClick={()=>this.handleAdd(Parameters.Age)}>Age</MenuItem>
           </Menu>
