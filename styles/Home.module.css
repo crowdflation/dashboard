@@ -74,14 +74,12 @@
   color: #4183C4;
 }
 
-.header .navbar {
-  margin: 15px 0;
+.header .navbar a {
+  font-family: 'Nunito Sans', sans-serif;
 }
 
-.MuiSelect-select {
-  font-size: 1.6rem !important;
-  padding-bottom: 0  !important;
-  margin-right: 5px;
+.header .navbar {
+  margin: 15px 0;
 }
 
 /* HOMEPAGE (index.tsx) */
@@ -173,6 +171,11 @@
 
 /* INFLATION DASHBOARD */
 
+.inflation * {
+  font-size: 16px;
+  font-family: 'Nunito Sans', sans-serif;
+}
+
 .inflation p {
   margin-bottom: 0;
 }
@@ -189,17 +192,22 @@
 } */
 
 .inflation h3 {
-  font-size: 1.4rem !important;
+  font-size: 1.2rem !important;
   display: flex;
   align-items: center;
   flex-direction: row;
   justify-content: center;
 }
 
-/* SUBMISSION PAGE */
+/* NOT AN ELEGANT AND RIGHT WAY TO DO IT, BUT WORKS FOR NOW */
+.inflation h3 div {
+  font-family: 'Nunito Sans', sans-serif;
+}
 
-.submission h3 {
-  font-size: 1.6rem;
+.MuiSelect-select {
+  font-size: 1.4rem !important;
+  padding-bottom: 0  !important;
+  margin-right: 5px;
 }
 
 .recalculateButton {
@@ -209,6 +217,12 @@
   justify-content: center;
   padding: 5px;
   margin:10px !important;
+}
+
+/* SUBMISSION PAGE */
+
+.submission h3 {
+  font-size: 1.6rem;
 }
 
 .inputs input {

@@ -15,7 +15,7 @@ function MyApp({ Component, pageProps }: AppProps) {
       <Layout>
         <Component {...pageProps} />
       </Layout>
-      <footer className={styles.footer}>© Crowdflation Inc. 2022. All rights reserved.</footer>
+      <footer className={styles.footer}>© Crowdflation Inc. {new Date().getFullYear()}. All rights reserved.</footer>
     </div>
   );
 }

@@ -32,13 +32,15 @@ enum Parameters {
   Location = "location",
   Distance = "distance",
   Vendor = "vendor",
-  Currency= "currency"
+  Currency= "currency",
+  Age="age"
 }
 
 
 export async function getServerSideProps({query}) {
-  const {category, country, vendor, search} = query;
-  const data = await getProducts(category, country, undefined, undefined, vendor, search, undefined);
+  const {category, country, vendor, search, age} = query;
+  const ageInHours = parseInt(age) || undefined;
+  const data = await getProducts(category, country, undefined, undefined, vendor, search, ageInHours);
   const apiKey: string = (process.env as any).GOOGLE_MAPS_API_KEY as string;
 
   const {db} = await connectToDatabase();
@@ -47,7 +49,7 @@ export async function getServerSideProps({query}) {
   const vendors = vendorObjects.map(v => v.name);
 
   return {
-    props: {data, category: category?category:null, country: country?country:null, apiKey, vendors, vendor: vendor?vendor:null}, // will be passed to the page component as props
+    props: {data, category: category?category:null, country: country?country:null, apiKey, vendors, vendor: vendor?vendor:null, age:ageInHours?ageInHours:null}, // will be passed to the page component as props
   }
 }
 
@@ -71,6 +73,10 @@ class Data extends Component {
       tags.push('vendor:' + (props.vendor as string))
     }
 
+    if(props.age) {
+      tags.push('age:' + (props.age as string))
+    }
+
     this.state = {
       column: null,
       data: props.data,
@@ -79,8 +85,13 @@ class Data extends Component {
       direction: null,
       errors: null,
       search: '',
+      age: props.age,
       searchValues:[...tags],
-      tagOptions: [...this.makeAllCategories(),...countries.map((c)=>'country:'+c.toLowerCase()), ...distances.map((d)=>'distance:'+d), ...props.vendors.map((v)=> 'vendor:' + v)].map((o)=>{ return {label:o};}),
+      tagOptions: [
+        //...this.makeAllCategories(),
+        ...countries.map((c)=>'country:'+c.toLowerCase()),
+        //...distances.map((d)=>'distance:'+d),
+        ...props.vendors.map((v)=> 'vendor:' + v)].map((o)=>{ return {label:o};}),
       tags,
       dialogContents: null,
       dialogLabel:'',
@@ -186,6 +197,11 @@ class Data extends Component {
         result['distance'] = distance;
       };
 
+      const ageSelectChange = (event) => {
+        const age = event.target.value;
+        result['age'] = age;
+      };
+
       const categoryChange = (currentNode, selectedNodes) => {
         console.log('onChange::', currentNode, selectedNodes);
         let category = null;
@@ -217,18 +233,22 @@ class Data extends Component {
         distanceNames[d] = `${d / 1000} km ${(d/1600).toFixed(1)} miles`;
       });
 
+      const ageNames = {
+        [1]: 'One Hour',
+        [24]: 'Day',
+        [24*7] :'Week',
+        [24*7*31]: 'Month',
+        [24*7*365]:'Year'
+      };
+
       switch(type) {
         case Parameters.Category:
-          console.log('categories', categories);
           dialogContents = (<DropdownTreeSelect data={categories} onChange={categoryChange.bind(that)} />);
           dialogLabel='Please choose a category';
           break;
         case Parameters.Country:
           dialogContents = (<Select
-              labelId="demo-simple-select-label"
-              id="demo-simple-select"
               label="Country"
-              defaultValue='US'
               className={styles["MuiSelect-select"]}
               onChange={countrySelectChange}
           >
@@ -238,10 +258,7 @@ class Data extends Component {
           break;
         case Parameters.Vendor:
           dialogContents = (<Select
-              labelId="demo-simple-select-label"
-              id="demo-simple-select"
-              label="Country"
-              defaultValue='US'
+              label="Vendor"
               className={styles["MuiSelect-select"]}
               onChange={vendorSelectChange}
           >
@@ -251,16 +268,27 @@ class Data extends Component {
           break;
         case Parameters.Distance:
           dialogContents = (<Select
-              labelId="demo-simple-select-label"
-              id="demo-simple-select"
-              label="Country"
-              defaultValue='US'
+              label="Distance"
               className={styles["MuiSelect-select"]}
               onChange={distanceSelectChange}
           >
             {distances.map((c)=>(<MenuItem key={c} value={c}>{distanceNames[c]}</MenuItem>))}
           </Select>);
           dialogLabel='Please choose distance maximum';
+          break;
+
+        case Parameters.Age:
+          dialogContents = (<Select
+              labelId="demo-simple-select-label"
+              id="demo-simple-select"
+              label="Age"
+              defaultValue='1'
+              className={styles["MuiSelect-select"]}
+              onChange={ageSelectChange}
+          >
+            {Object.keys(ageNames).map((c)=>(<MenuItem key={c} value={c}>{ageNames[c]}</MenuItem>))}
+          </Select>);
+          dialogLabel='Please choose maximum data age';
           break;
       }
 
@@ -279,7 +307,7 @@ class Data extends Component {
   buildQueryURL = () => {
     const state = this.newState;
 
-    return ['category','country', 'longitude', 'latitude','distance','vendor', 'currency','search'].reduce((str, key) => {
+    return ['category','country', 'longitude', 'latitude','distance','vendor', 'currency','search','age'].reduce((str, key) => {
       let val = this.findValue(state, key);
       if(!val) {
         return str;
@@ -462,7 +490,7 @@ class Data extends Component {
     const {searchValues} = this.newState as any;
     clearTimeout(that.timeout);
 
-    const parameters = ['location:', 'category:','country:','vendor:','distance:'];
+    const parameters = Object.values(Parameters).map((p)=>p+':');
     if(parameters.find((p)=> _.startsWith(value, p) || _.startsWith(p, value))) {
       // ignore parameter input
       value = '';
@@ -531,16 +559,19 @@ class Data extends Component {
         const {country} = (await this.showDialog(what)) as any;
         if(country) {
           this.updateTag(what, country.toLowerCase());
+          this.onChangeSearchInputValue({} as any,'','');
         }
         break;
 
       case Parameters.Category:
       case Parameters.Distance:
       case Parameters.Vendor:
+      case Parameters.Age:
         const data = (await this.showDialog(what)) as any;
         const value = data[what];
         if(value) {
           this.updateTag(what, value);
+          this.onChangeSearchInputValue({} as any,'','');
         }
         break;
     }
@@ -604,7 +635,7 @@ class Data extends Component {
               >
                 Vendor
               </Table.HeaderCell>
-              <Table.HeaderCell
+              <Table.HeaderCell hidden={true}
                 sorted={column === 'distance' ? direction : null}
                 onClick={() => this.handleSort('distance', this.state)}
               >
@@ -624,7 +655,7 @@ class Data extends Component {
                 <Table.Cell>{name}</Table.Cell>
                 <Table.Cell>{cleanupPriceName(price)}</Table.Cell>
                 <Table.Cell>{vendor}</Table.Cell>
-                <Table.Cell>{distance}</Table.Cell>
+                <Table.Cell hidden={true}>{distance}</Table.Cell>
                 <Table.Cell>{new Date(dateTime).toLocaleString()}</Table.Cell>
               </Table.Row>
             ))}
@@ -638,7 +669,7 @@ class Data extends Component {
     return (
       <div className={styles.container}>
         <Box sx={{ display: 'grid', gap: 1, gridTemplateColumns: '1fr 1fr' }}>
-          <Link onClick={() =>this.getLocation()}><FontAwesomeIcon icon={faLocationCrosshairs} size="3x" color="silver"/></Link>
+          <Link hidden={true} onClick={() =>this.getLocation()}><FontAwesomeIcon icon={faLocationCrosshairs} size="3x" color="silver"/></Link>
           <Link onClick={(e) =>this.handleClick(e)}><FontAwesomeIcon icon={faCircleChevronDown}  size="3x" color="silver"/></Link>
           <Menu
               id="basic-menu"
@@ -650,11 +681,12 @@ class Data extends Component {
            open={!!anchorEl}>
             <MenuItem onClick={this.handleClear}>Clear All</MenuItem>
             <MenuItem onClick={this.handleClose}>Add:</MenuItem>
-            <MenuItem onClick={()=>this.handleAdd(Parameters.Location)}>Location</MenuItem>
+            <MenuItem onClick={()=>this.handleAdd(Parameters.Location)} hidden={true}>Location</MenuItem>
             <MenuItem onClick={()=>this.handleAdd(Parameters.Country)}>Country</MenuItem>
-            <MenuItem onClick={()=>this.handleAdd(Parameters.Category)}>Category</MenuItem>
-            <MenuItem onClick={()=>this.handleAdd(Parameters.Distance)}>Distance</MenuItem>
+            <MenuItem onClick={()=>this.handleAdd(Parameters.Category)} hidden={true}>Category</MenuItem>
+            <MenuItem onClick={()=>this.handleAdd(Parameters.Distance)} hidden={true}>Distance</MenuItem>
             <MenuItem onClick={()=>this.handleAdd(Parameters.Vendor)}>Vendor</MenuItem>
+            <MenuItem onClick={()=>this.handleAdd(Parameters.Age)}>Age</MenuItem>
           </Menu>
         </Box>
         {inProgress ? (<Box style={boxStyle}><CircularProgress/></Box>) : null}
