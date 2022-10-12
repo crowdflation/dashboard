@@ -1,5 +1,6 @@
 import styles from '../styles/Home.module.css'
 import React, { Component } from 'react'
+import 'semantic-ui-css/semantic.min.css'
 import { Table } from 'semantic-ui-react'
 import _ from 'lodash'
 import { calculateCategoriesCount } from './api/categories'

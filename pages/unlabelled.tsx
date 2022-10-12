@@ -1,6 +1,7 @@
 import styles from '../styles/Home.module.css'
 import React, { Component } from 'react'
 import { Table } from 'semantic-ui-react'
+import 'semantic-ui-css/semantic.min.css'
 import _ from 'lodash'
 import axios from 'axios';
 import { connectToDatabase } from "../lib/util/mongodb"

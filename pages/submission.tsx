@@ -21,7 +21,7 @@ export async function getServerSideProps() {
 const Submission: NextPage = (props) => {
   return <div className={styles.container}>
     <Head>
-      <title>Crowdflation Inc - Submission for the 1729 Inflation Dashboard Challenge</title>
+      <title>Crowdflation - Submission for the 1729 Inflation Dashboard Challenge</title>
     </Head>
 
     <main className={styles.main}>
@@ -71,23 +71,11 @@ const Submission: NextPage = (props) => {
 
         </div>
       </div>
-      <h2>Our Approach Explained Via 80 Second Video</h2>
-      <iframe width="560" height="315" src="https://www.youtube.com/embed/AidIdovi7ok" title="Crowdflation Community"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen></iframe>
       <h2>
         Calculator
       </h2>
       <Inflation {...props}/>
 
-
-      <h2>
-        The Future of Crowdflation Inc & FAQ
-      </h2>
-      <p className={styles.description}>You can check out the presentation about our company <a
-        href={'https://www.dropbox.com/s/fhf04mvmuv4elkk/Crowdflation%20Inc.%20Deck.pdf?dl=0'} target={'_blank'}
-        rel="noreferrer">here</a></p>
       <FAQ untitled={true}/>
       <Code untitled={true}/>
     </main>
