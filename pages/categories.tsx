@@ -96,7 +96,7 @@ class Categories extends Component {
               <Table.Row key={category}>
                 <Table.Cell>{(category=='Unknown')?(<Link href="unlabelled" target="_blank">Unknown</Link>):category}</Table.Cell>
                 <Table.Cell>{count}</Table.Cell>
-                <Table.Cell>{_.map(vendors, (key, val)=> { return `${val}:${key}`;}).join(',')}</Table.Cell>
+                <Table.Cell>{_.map(vendors, (key, val)=> { return `${val}:${key}`;}).join(', ')}</Table.Cell>
               </Table.Row>
             ))}
           </Table.Body>
