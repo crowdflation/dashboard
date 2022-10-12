@@ -73,16 +73,21 @@ export async function calculateCategoriesCount(all) {
       .toArray();
 
     await Promise.all(prices.map(async (price) => {
-      let category = getCategory(price.vendor, price.name, categoryByProduct);
+      let category = getCategory(vendor, price.name, categoryByProduct);
 
       if(!category) {
         category = 'Unknown';
       }
 
       if(!categoriesCount[category]) {
-        categoriesCount[category] = 1;
+        categoriesCount[category] = {count:1, vendors: {[vendor]:1}};
       } else {
-        categoriesCount[category]++;
+        categoriesCount[category].count++;
+        if(!categoriesCount[category].vendors[vendor]) {
+          categoriesCount[category].vendors[vendor] = 1;
+        } else {
+          categoriesCount[category].vendors[vendor]++;
+        }
       }
     }));
   }));

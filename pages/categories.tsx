@@ -4,6 +4,7 @@ import 'semantic-ui-css/semantic.min.css'
 import { Table } from 'semantic-ui-react'
 import _ from 'lodash'
 import { calculateCategoriesCount } from './api/categories'
+import Link from "next/link";
 
 
 export async function getServerSideProps({query}) {
@@ -15,7 +16,7 @@ export async function getServerSideProps({query}) {
 
 function transformData(categoriesCount) {
   return _.map(categoriesCount, (item, key) => {
-    return {category: key, count: item };
+    return {category: key, count: item.count, vendors: item.vendors };
   });
 }
 
@@ -85,13 +86,17 @@ class Categories extends Component {
               >
                 Count
               </Table.HeaderCell>
+              <Table.HeaderCell>
+                Vendors
+              </Table.HeaderCell>
             </Table.Row>
           </Table.Header>
           <Table.Body>
-            {data && data.map(({ category, count  }) => (
+            {data && data.map(({ category, count, vendors  }) => (
               <Table.Row key={category}>
-                <Table.Cell>{category}</Table.Cell>
+                <Table.Cell>{(category=='Unknown')?(<Link href="unlabelled" target="_blank">Unknown</Link>):category}</Table.Cell>
                 <Table.Cell>{count}</Table.Cell>
+                <Table.Cell>{_.map(vendors, (key, val)=> { return `${val}:${key}`;}).join(',')}</Table.Cell>
               </Table.Row>
             ))}
           </Table.Body>
