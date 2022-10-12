@@ -73,7 +73,7 @@ export async function calculateCategoriesCount(all) {
       .toArray();
 
     await Promise.all(prices.map(async (price) => {
-      let category = getCategory(vendor, price.name, categoryByProduct);
+      let category = getCategory(undefined, price.name, categoryByProduct);
 
       if(!category) {
         category = 'Unknown';
