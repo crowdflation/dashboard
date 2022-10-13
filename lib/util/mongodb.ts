@@ -49,11 +49,49 @@ export async function connectToDatabase() {
   return cached.conn
 }
 
+
 export async function getVendorNames(db, countryFilter) {
   let vendors = await db.collection('_vendors').find(countryFilter).toArray();
   vendors = vendors.map(v => v.name);
   return _.union(vendors, ['walmart', 'kroger', 'zillow']);
 }
+
+export async function createIndicesOnVendors(db) {
+  const vendors = await getVendorNames(db, {});
+  await Promise.all(vendors.map(v=> {
+    console.log('creating index for', v);
+
+    db.collection(v).createIndex(
+        {
+          name: 1,
+        },
+        {
+          background: 1
+        }
+    );
+
+    db.collection(v).createIndex(
+        {
+          price: 1,
+        },
+        {
+          background: 1
+        }
+    );
+
+    db.collection(v).createIndex(
+        {
+          dateTime: -1
+        },
+        {
+          background: 1
+        }
+    );
+  }));
+  console.log('Indexes created for', vendors);
+}
+
+
 
 
 export async function getVendors(db) {

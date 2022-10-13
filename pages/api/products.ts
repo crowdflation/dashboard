@@ -4,7 +4,8 @@ import { runMiddleware } from '../../lib/util/middleware';
 import Cors from 'cors';
 import categoriesMap from '../../data/map';
 import {getPriceValue} from "../../lib/util/utils";
-import _ from 'lodash'
+import _ from 'lodash';
+const keywordExtractor = require("keyword-extractor");
 
 // Initializing the cors middleware
 const cors = Cors({
@@ -33,7 +34,7 @@ function makeArrayRegex(search) {
 }
 
 
-async function filterByCategories(category: string | string[], country: string | undefined, vendorName, ageInHours, db, search, location, distance) {
+async function filterByCategories(category: string | string[], country: string | undefined, vendorName, ageInHours, db, search:string[], location, distance) {
   const categories = Object.keys(categoriesMap).filter((item) => {
     return categoryMatches(category, categoriesMap[item]);
   });
@@ -137,7 +138,7 @@ async function filterByCategories(category: string | string[], country: string |
   return allProductData;
 }
 
-async function filterProducts(country: string | undefined, vendorName, ageInHours, db, search, location, distance) {
+async function filterProducts(country: string | undefined, vendorName, ageInHours, db, search:string[], location, distance) {
 
   const vendorsFilter = {};
   if (country) {
@@ -179,28 +180,28 @@ async function filterProducts(country: string | undefined, vendorName, ageInHour
     const catFilter = [{
       $match: filter
     },
-      {
-        $group: {
-          _id: '$name',
-          price: {
-            $last: '$price'
-          },
-          date: {
-            $last: '$dateTime'
-          }
+    {
+      $group: {
+        _id: '$name',
+        price: {
+          $last: '$price'
+        },
+        date: {
+          $last: '$dateTime'
         }
-      },
-      {
-        $project: {
-          price: '$price',
-          dateTime: '$date'
-        }
-      },
-      {
-        $sort: {
-          "dateTime": -1
-        }
-      }];
+      }
+    },
+    {
+      $project: {
+        price: '$price',
+        dateTime: '$date'
+      }
+    },
+    {
+      $sort: {
+        "dateTime": -1
+      }
+    }];
 
     //console.log('catFilter',catFilter);
 
@@ -230,13 +231,20 @@ async function filterProducts(country: string | undefined, vendorName, ageInHour
 
 }
 
-export async function getProducts(category:string, country: string|undefined, location, distance, vendorName, search, ageInHours) {
+export async function getProducts(category:string, country: string|undefined, location, distance, vendorName, search:string, ageInHours) {
   const {db} = await connectToDatabase();
+  const words = keywordExtractor.extract(search,{
+    language:"english",
+    remove_digits: false,
+    return_changed_case:true,
+    remove_duplicates: false
+  });
+
   if(category) {
-    return await filterByCategories(category, country?.toUpperCase(), vendorName, ageInHours, db, search, location, distance);
+    return await filterByCategories(category, country?.toUpperCase(), vendorName, ageInHours, db, words, location, distance);
   }
 
-  return await filterProducts(country?.toUpperCase(), vendorName, ageInHours, db, search, location, distance);
+  return await filterProducts(country?.toUpperCase(), vendorName, ageInHours, db, words, location, distance);
 
 }
 
@@ -250,10 +258,13 @@ export default async function handler(
   try {
     if (req.method === 'GET') {
       const {country, category, longitude, latitude, distance, age, vendor, search} = req.query;
+      const start = new Date();
 
       const ageInHours = parseInt(age as string) || undefined;
 
       const dataByVendor = await getProducts(category as string, country as string, {longitude, latitude}, distance, vendor, search?JSON.parse(search as string):search, ageInHours );
+
+      console.log('Duration', (Math.abs( (new Date()).getTime() - start.getTime())/1000).toFixed(3));
 
       return res.status(200).json(JSON.stringify(dataByVendor, null, 2));
     }

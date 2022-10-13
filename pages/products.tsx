@@ -6,25 +6,24 @@ import _ from 'lodash'
 import axios from 'axios'
 import { getProducts } from "./api/products";
 import Geocode from "react-geocode";
-import Autocomplete from '@mui/material/Autocomplete';
+import SearchBar from "material-ui-search-bar";
 import {
   Box,
   CircularProgress,
   Link,
   Menu,
-  MenuItem,
-  TextField
+  MenuItem
 } from "@mui/material";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLocationCrosshairs, faCircleChevronDown } from '@fortawesome/free-solid-svg-icons';
-import { DialogComponent } from '../components/dialog-component';
+import { DialogComponent } from '@/components/dialog-component';
 import Select from "@material-ui/core/Select";
 import {codeToCountryMap} from "../data/countries";
 import DropdownTreeSelect from "react-dropdown-tree-select";
 import categories from "../data/categories";
 import 'react-dropdown-tree-select/dist/styles.css';
-import {connectToDatabase, getVendors} from "../lib/util/mongodb";
-import {cleanupPriceName, getPriceValue, isValidPrice} from "../lib/util/utils";
+import {connectToDatabase, createIndicesOnVendors, getVendors} from "../lib/util/mongodb";
+import {cleanupPriceName, isValidPrice} from "../lib/util/utils";
 
 enum Parameters {
   Category = "category",
@@ -36,14 +35,19 @@ enum Parameters {
   Age="age"
 }
 
-
+let startupCodeCheck = false;
 export async function getServerSideProps({query}) {
+  const {db} = await connectToDatabase();
+  if(!startupCodeCheck) {
+    startupCodeCheck = true;
+    console.log('Starting server');
+    createIndicesOnVendors(db).then();
+  }
+
   const {category, country, vendor, search, age} = query;
   const ageInHours = parseInt(age) || undefined;
   const data = await getProducts(category, country, undefined, undefined, vendor, search, ageInHours);
   const apiKey: string = (process.env as any).GOOGLE_MAPS_API_KEY as string;
-
-  const {db} = await connectToDatabase();
 
   const vendorObjects = (await getVendors(db)).map(v=> { return {...v, _id:v._id.toString()} });
   const vendors = vendorObjects.map(v => v.name);
@@ -109,12 +113,6 @@ class Data extends Component {
   addAllCategories = (here, categories) => {
     here.push('category:' + categories.label);
     categories?.children.map((c)=>this.addAllCategories(here, c));
-  }
-
-  makeAllCategories =() => {
-    const catList = [];
-    this.addAllCategories(catList, categories);
-    return catList;
   }
 
   handleSort = (column:string, state: any) => {
@@ -347,9 +345,6 @@ class Data extends Component {
     console.log('Reloading', query, this.newState);
     axios.get('/api/products?' + query)
       .then((response) => {
-        // handle success
-
-        //console.log('received, ', response?.data);
 
         let sorted = _.sortBy(JSON.parse(response?.data), [function(o) { return o[column]}]);
         if(direction!== 'ascending') {
@@ -480,12 +475,12 @@ class Data extends Component {
 
     this.setTags([...value]);
     setTimeout(()=> {
-      this.onChangeSearchInputValue({} as any,'','');
+      this.onChangeSearchInputValue('');
     }, 1);
   }
 
   timeout;
-  onChangeSearchInputValue = (event: React.SyntheticEvent, value: string, reason: string) => {
+  onChangeSearchInputValue = (value: string) => {
     const that = this;
     const {searchValues} = this.newState as any;
     clearTimeout(that.timeout);
@@ -505,11 +500,9 @@ class Data extends Component {
     }
 
     this.updateState({
-      search: searchArr.map(p=>p?.toLowerCase()),
+      search: searchArr.map(p=>p?.toLowerCase()).join(' '),
       inProgress: true
     });
-
-    console.log('New search arr', searchArr, searchValues);
 
     const timeout = setTimeout(()=> {
       if(timeout!==that.timeout) {
@@ -559,7 +552,7 @@ class Data extends Component {
         const {country} = (await this.showDialog(what)) as any;
         if(country) {
           this.updateTag(what, country.toLowerCase());
-          this.onChangeSearchInputValue({} as any,'','');
+          this.onChangeSearchInputValue('');
         }
         break;
 
@@ -571,7 +564,7 @@ class Data extends Component {
         const value = data[what];
         if(value) {
           this.updateTag(what, value);
-          this.onChangeSearchInputValue({} as any,'','');
+          this.onChangeSearchInputValue('');
         }
         break;
     }
@@ -601,7 +594,7 @@ class Data extends Component {
 
       const lowerCase = d?.name?.toLowerCase();
       if(lowerCase) {
-        if(search.find((s)=>!_.includes(lowerCase,s))) {
+        if(search.split(' ').find((s)=>!_.includes(lowerCase,s))) {
           return false;
         }
       }
@@ -666,12 +659,13 @@ class Data extends Component {
     const boxStyle = {display: 'flex', 'align-items': 'center', justifyContent: 'center'};
 
 
+
     return (
       <div className={styles.container}>
         <Box sx={{ display: 'grid', gap: 1, gridTemplateColumns: '1fr 1fr' }}>
           <Link hidden={true} onClick={() =>this.getLocation()}><FontAwesomeIcon icon={faLocationCrosshairs} size="3x" color="silver"/></Link>
-          <Link onClick={(e) =>this.handleClick(e)}><FontAwesomeIcon icon={faCircleChevronDown}  size="3x" color="silver"/></Link>
-          <Menu
+          <Link hidden={true} onClick={(e) =>this.handleClick(e)}><FontAwesomeIcon icon={faCircleChevronDown}  size="3x" color="silver"/></Link>
+          <Menu 
               id="basic-menu"
               anchorEl={anchorEl}
               onClose={this.handleClose}
@@ -690,26 +684,13 @@ class Data extends Component {
           </Menu>
         </Box>
         {inProgress ? (<Box style={boxStyle}><CircularProgress/></Box>) : null}
-        <Autocomplete
+        <SearchBar
+            // @ts-ignore
             sx={{ width: 1 }}
             style={{ margin: "10px 0" }}
-            multiple
-            id="tags-outlined"
-            options={tagOptions}
-            defaultValue={[...tags]}
-            freeSolo
-            value={[...searchValues]}
-            onInputChange={(event: React.SyntheticEvent, value: string, reason: string)=>this.onChangeSearchInputValue(event, value, reason)}
-            onChange={(e, value, reason) => this.onChangeTagsInputValue(e, value, reason)}
-            renderInput={(params) => (
-                <TextField
-                    {...params}
-                    label="Search"
-                    placeholder="Type search parameters or use plus button to add filters"
-                    value={tags}
-                />
-            )}
-        />;
+            value={search}
+            onChange={newValue => this.onChangeSearchInputValue(newValue)}
+        />
         <span className={styles.error}>{error}</span>
         {representation}
         <DialogComponent label={dialogLabel} show={!!dialogContents} onResult={dialogCallback}>{dialogContents}</DialogComponent>
