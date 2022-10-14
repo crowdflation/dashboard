@@ -118,7 +118,7 @@ export async function getServerSideProps({req, query}) {
 
 
   const ageInHours = parseInt(age) || undefined;
-  const data = await getProducts(category, country, undefined, undefined, vendor, search, ageInHours);
+  const data = await getProducts(category, country || geoCountry, undefined, undefined, vendor, search, ageInHours);
   const apiKey: string = (process.env as any).GOOGLE_MAPS_API_KEY as string;
 
   const vendorObjects = (await getVendors(db)).map(v=> { return {...v, _id:v._id.toString()} });
