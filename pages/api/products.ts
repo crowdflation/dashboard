@@ -231,20 +231,15 @@ async function filterProducts(country: string | undefined, vendorName, ageInHour
 
 }
 
-export async function getProducts(category:string, country: string|undefined, location, distance, vendorName, search:string, ageInHours) {
+export async function getProducts(category:string, country: string|undefined, location, distance, vendorName, search:string[], ageInHours) {
   const {db} = await connectToDatabase();
-  const words = keywordExtractor.extract(search,{
-    language:"english",
-    remove_digits: false,
-    return_changed_case:true,
-    remove_duplicates: false
-  });
+
 
   if(category) {
-    return await filterByCategories(category, country?.toUpperCase(), vendorName, ageInHours, db, words, location, distance);
+    return await filterByCategories(category, country?.toUpperCase(), vendorName, ageInHours, db, search, location, distance);
   }
 
-  return await filterProducts(country?.toUpperCase(), vendorName, ageInHours, db, words, location, distance);
+  return await filterProducts(country?.toUpperCase(), vendorName, ageInHours, db, search, location, distance);
 
 }
 

@@ -24,6 +24,7 @@ import categories from "../data/categories";
 import 'react-dropdown-tree-select/dist/styles.css';
 import {connectToDatabase, createIndicesOnVendors, getVendors} from "../lib/util/mongodb";
 import {cleanupPriceName, isValidPrice} from "../lib/util/utils";
+import keywordExtractor from "keyword-extractor";
 
 enum Parameters {
   Category = "category",
@@ -35,16 +36,70 @@ enum Parameters {
   Age="age"
 }
 
+const parameterDefaults = {}
+Object.values(Parameters).forEach(p=>parameterDefaults[p]=null);
+
+
+function getParamValue(p) {
+  const split = p?.split(':');
+  if (split && split.length >= 2) {
+    const key = split.shift();
+    const val = split.join(':');
+    return  {key, val};
+  }
+  return undefined;
+}
+
+function extractKeywordsAndParams(search) {
+
+  const params = {};
+  if(!search) {
+    return {search:[]};
+  }
+  Object.values(Parameters).map((p=>{
+    const regexp = new RegExp(`\\s*${p}\\:(\\w*)`, 'g')
+    const matches = [...search.matchAll(regexp)];
+    _.forEach(matches, (match)=> {
+      params[p]=match[1];
+      search = search.replace(match[0],'');
+    });
+  }));
+
+  let words = keywordExtractor.extract(search,{
+    language:"english",
+    remove_digits: false,
+    return_changed_case:true,
+    remove_duplicates: false,
+  });
+
+
+  const keywords:string[] = [];
+  words.forEach((w:string)=> {
+    keywords.push(w);
+  });
+
+  return {
+    ...params,
+    search: keywords
+  };
+}
+
+function makeNull(val) {
+  if(val===undefined) {
+    return null;
+  }
+  return val;
+}
+
 let startupCodeCheck = false;
 export async function getServerSideProps({query}) {
   const {db} = await connectToDatabase();
   if(!startupCodeCheck) {
     startupCodeCheck = true;
-    console.log('Starting server');
     createIndicesOnVendors(db).then();
   }
 
-  const {category, country, vendor, search, age} = query;
+  const {category, country, vendor, search, age, searchText} = { ...query, ...extractKeywordsAndParams(query.search) } as any;
   const ageInHours = parseInt(age) || undefined;
   const data = await getProducts(category, country, undefined, undefined, vendor, search, ageInHours);
   const apiKey: string = (process.env as any).GOOGLE_MAPS_API_KEY as string;
@@ -53,7 +108,7 @@ export async function getServerSideProps({query}) {
   const vendors = vendorObjects.map(v => v.name);
 
   return {
-    props: {data, category: category?category:null, country: country?country:null, apiKey, vendors, vendor: vendor?vendor:null, age:ageInHours?ageInHours:null}, // will be passed to the page component as props
+    props: {data, category: makeNull(category), country: makeNull(country), apiKey, vendors, vendor: makeNull(vendor), age:makeNull(ageInHours), search, searchText: searchText ||''}, // will be passed to the page component as props
   }
 }
 
@@ -88,7 +143,8 @@ class Data extends Component {
       vendor: props.vendor,
       direction: null,
       errors: null,
-      search: '',
+      search: props.search,
+      searchText: props.searchText,
       age: props.age,
       searchValues:[...tags],
       tagOptions: [
@@ -338,13 +394,31 @@ class Data extends Component {
     return vendor;
   }
 
+  requestNumber=0;
+  responseNumber=0;
   reloadData = () => {
     // Make a request for a user with a given ID
     const { column, direction } = this.newState as any;
     const query = this.buildQueryURL();
     console.log('Reloading', query, this.newState);
-    axios.get('/api/products?' + query)
+
+    this.requestNumber++;
+
+    axios.get(`/api/products?requestNumber=${this.requestNumber}&` + query)
       .then((response) => {
+
+        const url = new URL(
+            response.request.responseURL
+        );
+        const lastRequestReceived = parseInt(url.searchParams.get('requestNumber') as string);
+        if(lastRequestReceived<this.responseNumber) {
+          //Ignore out of date responses
+          return;
+        }
+
+        this.responseNumber = lastRequestReceived;
+
+
 
         let sorted = _.sortBy(JSON.parse(response?.data), [function(o) { return o[column]}]);
         if(direction!== 'ascending') {
@@ -485,22 +559,12 @@ class Data extends Component {
     const {searchValues} = this.newState as any;
     clearTimeout(that.timeout);
 
-    const parameters = Object.values(Parameters).map((p)=>p+':');
-    if(parameters.find((p)=> _.startsWith(value, p) || _.startsWith(p, value))) {
-      // ignore parameter input
-      value = '';
-    }
-
-    const searchArr = searchValues.filter((param)=> {
-      return !parameters.find((p)=> _.startsWith(param, p));
-    });
-
-    if(_.trim(value)) {
-      searchArr.push(_.trim(value));
-    }
+    const newValues = extractKeywordsAndParams(value);
 
     this.updateState({
-      search: searchArr.map(p=>p?.toLowerCase()).join(' '),
+      ...parameterDefaults,
+      ...newValues,
+      searchText: value,
       inProgress: true
     });
 
@@ -568,13 +632,10 @@ class Data extends Component {
         }
         break;
     }
-
-
-
   };
 
   render = () => {
-    const { dialogContents, dialogCallback, dialogLabel, column, data, direction, search, searchValues, error, location, tags, tagOptions, inProgress, anchorEl } = this.state as any;
+    const { dialogContents, dialogCallback, dialogLabel, column, data, direction, search, searchText, error, location, inProgress, anchorEl } = this.state as any;
     console.log('dialogContents', dialogContents);
 
     let representation = (<p>{JSON.stringify(data, null, 2)}</p>);
@@ -594,7 +655,7 @@ class Data extends Component {
 
       const lowerCase = d?.name?.toLowerCase();
       if(lowerCase) {
-        if(search.split(' ').find((s)=>!_.includes(lowerCase,s))) {
+        if(search.find((s)=>!_.includes(lowerCase,s))) {
           return false;
         }
       }
@@ -665,7 +726,7 @@ class Data extends Component {
         <Box sx={{ display: 'grid', gap: 1, gridTemplateColumns: '1fr 1fr' }}>
           <Link hidden={true} onClick={() =>this.getLocation()}><FontAwesomeIcon icon={faLocationCrosshairs} size="3x" color="silver"/></Link>
           <Link hidden={true} onClick={(e) =>this.handleClick(e)}><FontAwesomeIcon icon={faCircleChevronDown}  size="3x" color="silver"/></Link>
-          <Menu 
+          <Menu
               id="basic-menu"
               anchorEl={anchorEl}
               onClose={this.handleClose}
@@ -688,7 +749,7 @@ class Data extends Component {
             // @ts-ignore
             sx={{ width: 1 }}
             style={{ margin: "10px 0" }}
-            value={search}
+            value={searchText}
             onChange={newValue => this.onChangeSearchInputValue(newValue)}
         />
         <span className={styles.error}>{error}</span>
