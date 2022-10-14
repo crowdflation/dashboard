@@ -99,6 +99,9 @@ function makeNull(val) {
   return val;
 }
 
+//TODO: load it from vendors
+const countries = ['US', 'TR', 'GB'];
+
 let startupCodeCheck = false;
 export async function getServerSideProps({req, query}) {
   const {db} = await connectToDatabase();
@@ -111,8 +114,12 @@ export async function getServerSideProps({req, query}) {
   const ip = forwarded ? forwarded.split(/, /)[0] : req.connection.remoteAddress
   console.log('ip', ip);
   const geo = geoip.lookup(ip);
-  const geoCountry = makeNull(geo?.country?.toLowerCase());
+  let geoCountry = makeNull(geo?.country?.toLowerCase());
   console.log('geoCountry',geoCountry);
+
+  if(geoCountry && !countries.find(c=>c.toLowerCase()===geoCountry)) {
+    geoCountry = countries[0].toLowerCase();
+  }
 
   const {category, country, vendor, search, age, searchText} = { ...query, ...extractKeywordsAndParams(query.search) } as any;
 
@@ -129,8 +136,7 @@ export async function getServerSideProps({req, query}) {
   }
 }
 
-//TODO: load it from vendors
-const countries = ['US', 'TR', 'GB'];
+
 
 const distances = [1000, 3000, 5000, 10000, 20000, 30000, 50000];
 
