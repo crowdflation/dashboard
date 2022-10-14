@@ -40,6 +40,9 @@ const parameterDefaults = {}
 Object.values(Parameters).forEach(p=>parameterDefaults[p]=null);
 
 
+parameterDefaults[Parameters.Age] = 24*7*31;
+
+
 function getParamValue(p) {
   const split = p?.split(':');
   if (split && split.length >= 2) {
