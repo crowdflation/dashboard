@@ -36,6 +36,7 @@
     "dayjs": "^1.10.7",
     "dns": "^0.2.2",
     "express": "^4.17.1",
+    "geoip-lite": "^1.4.6",
     "google-maps-react": "^2.0.6",
     "gun": "^0.2020.1235",
     "heroku-ssl-redirect": "^0.1.1",

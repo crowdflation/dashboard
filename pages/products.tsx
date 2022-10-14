@@ -25,6 +25,9 @@ import 'react-dropdown-tree-select/dist/styles.css';
 import {connectToDatabase, createIndicesOnVendors, getVendors} from "../lib/util/mongodb";
 import {cleanupPriceName, isValidPrice} from "../lib/util/utils";
 import keywordExtractor from "keyword-extractor";
+import geoip from 'geoip-lite';
+
+
 
 enum Parameters {
   Category = "category",
@@ -97,14 +100,23 @@ function makeNull(val) {
 }
 
 let startupCodeCheck = false;
-export async function getServerSideProps({query}) {
+export async function getServerSideProps({req, query}) {
   const {db} = await connectToDatabase();
   if(!startupCodeCheck) {
     startupCodeCheck = true;
     createIndicesOnVendors(db).then();
   }
 
+  const forwarded = req.headers["x-forwarded-for"]
+  const ip = forwarded ? forwarded.split(/, /)[0] : req.connection.remoteAddress
+  console.log('ip', ip);
+  const geo = geoip.lookup(ip);
+  const geoCountry = makeNull(geo?.country?.toLowerCase());
+  console.log('geoCountry',geoCountry);
+
   const {category, country, vendor, search, age, searchText} = { ...query, ...extractKeywordsAndParams(query.search) } as any;
+
+
   const ageInHours = parseInt(age) || undefined;
   const data = await getProducts(category, country, undefined, undefined, vendor, search, ageInHours);
   const apiKey: string = (process.env as any).GOOGLE_MAPS_API_KEY as string;
@@ -113,7 +125,7 @@ export async function getServerSideProps({query}) {
   const vendors = vendorObjects.map(v => v.name);
 
   return {
-    props: {data, category: makeNull(category), country: makeNull(country), apiKey, vendors, vendor: makeNull(vendor), age:makeNull(ageInHours), search, searchText: searchText ||''}, // will be passed to the page component as props
+    props: {data, category: makeNull(category), country: makeNull(country) || geoCountry, apiKey, vendors, vendor: makeNull(vendor), age:makeNull(ageInHours), search, searchText: searchText ||''}, // will be passed to the page component as props
   }
 }
 
@@ -131,6 +143,7 @@ class Data extends Component {
     }
     if(props.country) {
       tags.push('country:' + (props.country as string));
+      parameterDefaults[Parameters.Country] = props.country as string;
     }
 
     if(props.vendor) {
