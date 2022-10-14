@@ -55,6 +55,7 @@ function getParamValue(p) {
 
 function extractKeywordsAndParams(search) {
 
+  const searchText = search;
   const params = {};
   if(!search) {
     return {search:[]};
@@ -83,6 +84,7 @@ function extractKeywordsAndParams(search) {
 
   return {
     ...params,
+    searchText,
     search: keywords
   };
 }
