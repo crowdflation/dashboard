@@ -101,13 +101,18 @@ async function filterByCategories(category: string | string[], country: string |
       $match: productFilter
     },
       {
+        $sort: {
+          "dateTime": -1
+        }
+      },
+      {
         $group: {
           _id: '$name',
           price: {
             $last: '$price'
           },
           date: {
-            $max: '$dateTime'
+            $last: '$dateTime'
           }
         }
       },
@@ -115,11 +120,6 @@ async function filterByCategories(category: string | string[], country: string |
         $project: {
           price: '$price',
           dateTime: '$date'
-        }
-      },
-      {
-        $sort: {
-          "dateTime": -1
         }
       }];
 
@@ -182,13 +182,18 @@ async function filterProducts(country: string | undefined, vendorName, ageInHour
       $match: filter
     },
     {
+      $sort: {
+        "dateTime": -1
+      }
+    },
+    {
       $group: {
         _id: '$name',
         price: {
           $last: '$price'
         },
         date: {
-          $max: '$dateTime'
+          $last: '$dateTime'
         }
       }
     },
@@ -196,11 +201,6 @@ async function filterProducts(country: string | undefined, vendorName, ageInHour
       $project: {
         price: '$price',
         dateTime: '$date'
-      }
-    },
-    {
-      $sort: {
-        "dateTime": -1
       }
     }];
 

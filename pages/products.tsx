@@ -133,7 +133,7 @@ export async function getServerSideProps({req, query}) {
   const vendors = vendorObjects.map(v => v.name);
 
   return {
-    props: {data:data.map((d)=>{return {...d, dateTimeSort: new Date(d.dateTime).getTime()};}), category: makeNull(category), country: makeNull(country) || geoCountry, apiKey, vendors, vendor: makeNull(vendor), age:makeNull(ageInHours) || parameterDefaults[Parameters.Age], search, searchText: searchText ||''}, // will be passed to the page component as props
+    props: {data:data.map((d)=>{return {...d, dateTimeSort: new Date(d.dateTime).getTime()/1000};}), category: makeNull(category), country: makeNull(country) || geoCountry, apiKey, vendors, vendor: makeNull(vendor), age:makeNull(ageInHours) || parameterDefaults[Parameters.Age], search, searchText: searchText ||''}, // will be passed to the page component as props
   }
 }
 
@@ -454,7 +454,7 @@ class Data extends Component {
 
         this.updateState({
           error: null,
-          data: sorted.map((d)=>{return {...d, dateTimeSort: new Date(d.dateTime).getTime()};}),
+          data: sorted.map((d)=>{return {...d, dateTimeSort: new Date(d.dateTime).getTime()/1000};}),
           inProgress: false
         });
       }).catch((error) => {
@@ -729,13 +729,13 @@ class Data extends Component {
             </Table.Row>
           </Table.Header>
           <Table.Body>
-            {filteredData && filteredData.map(({ _id, name, price, vendor, distance, dateTime  }) => (
+            {filteredData && filteredData.map(({ _id, name, price, vendor, distance, dateTime, dateTimeSort  }) => (
               <Table.Row key={_id}>
                 <Table.Cell>{name}</Table.Cell>
                 <Table.Cell>{cleanupPriceName(price)}</Table.Cell>
                 <Table.Cell>{vendor}</Table.Cell>
                 <Table.Cell hidden={true}>{distance}</Table.Cell>
-                <Table.Cell>{new Date(dateTime).toLocaleString()}</Table.Cell>
+                <Table.Cell>{new Date(dateTime).toLocaleString()},{dateTimeSort}</Table.Cell>
               </Table.Row>
             ))}
           </Table.Body>
