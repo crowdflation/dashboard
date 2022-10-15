@@ -107,7 +107,7 @@ async function filterByCategories(category: string | string[], country: string |
             $last: '$price'
           },
           date: {
-            $last: '$dateTime'
+            $max: '$dateTime'
           }
         }
       },
@@ -127,7 +127,7 @@ async function filterByCategories(category: string | string[], country: string |
     return Promise.all(products.map(async (d) => {
       return allProductData.push({
         ...d,
-        dateTime: d?.dateTime?.toString(),
+        dateTime: d?.dateTime?.toISOString(),
         vendor,
         name: d._id,
         _id: allProductData.length + d._id,
@@ -164,6 +164,7 @@ async function filterProducts(country: string | undefined, vendorName, ageInHour
   if (ageInHours) {
     const timeOfRecordAge = new Date();
     timeOfRecordAge.setHours(timeOfRecordAge.getHours() - ageInHours);
+    console.log('ageInHours', ageInHours, timeOfRecordAge.toISOString());
     filter['dateTime'] = {$gt: timeOfRecordAge};
   }
 
@@ -187,7 +188,7 @@ async function filterProducts(country: string | undefined, vendorName, ageInHour
           $last: '$price'
         },
         date: {
-          $last: '$dateTime'
+          $max: '$dateTime'
         }
       }
     },
@@ -211,7 +212,7 @@ async function filterProducts(country: string | undefined, vendorName, ageInHour
       products.forEach((d) => {
         allProductData.push({
           ...d,
-          dateTime: d?.dateTime?.toString(),
+          dateTime: d?.dateTime?.toISOString(),
           vendor,
           name: d._id,
           _id: allProductData.length + d._id,

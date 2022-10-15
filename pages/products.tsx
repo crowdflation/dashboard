@@ -43,7 +43,7 @@ const parameterDefaults = {}
 Object.values(Parameters).forEach(p=>parameterDefaults[p]=null);
 
 
-parameterDefaults[Parameters.Age] = 24*7*31;
+parameterDefaults[Parameters.Age] = 24*31;
 
 
 function getParamValue(p) {
@@ -125,14 +125,15 @@ export async function getServerSideProps({req, query}) {
 
 
   const ageInHours = parseInt(age) || undefined;
-  const data = await getProducts(category, country || geoCountry, undefined, undefined, vendor, search, ageInHours);
+  const data = await getProducts(category, country || geoCountry, undefined, undefined, vendor, search, ageInHours || parameterDefaults[Parameters.Age]);
+
   const apiKey: string = (process.env as any).GOOGLE_MAPS_API_KEY as string;
 
   const vendorObjects = (await getVendors(db)).map(v=> { return {...v, _id:v._id.toString()} });
   const vendors = vendorObjects.map(v => v.name);
 
   return {
-    props: {data, category: makeNull(category), country: makeNull(country) || geoCountry, apiKey, vendors, vendor: makeNull(vendor), age:makeNull(ageInHours), search, searchText: searchText ||''}, // will be passed to the page component as props
+    props: {data:data.map((d)=>{return {...d, dateTimeSort: new Date(d.dateTime).getTime()};}), category: makeNull(category), country: makeNull(country) || geoCountry, apiKey, vendors, vendor: makeNull(vendor), age:makeNull(ageInHours) || parameterDefaults[Parameters.Age], search, searchText: searchText ||''}, // will be passed to the page component as props
   }
 }
 
@@ -315,8 +316,8 @@ class Data extends Component {
         [1]: 'One Hour',
         [24]: 'Day',
         [24*7] :'Week',
-        [24*7*31]: 'Month',
-        [24*7*365]:'Year'
+        [24*31]: 'Month',
+        [24*365]:'Year'
       };
 
       switch(type) {
@@ -453,7 +454,7 @@ class Data extends Component {
 
         this.updateState({
           error: null,
-          data: sorted,
+          data: sorted.map((d)=>{return {...d, dateTimeSort: new Date(d.dateTime).getTime()};}),
           inProgress: false
         });
       }).catch((error) => {
@@ -720,8 +721,8 @@ class Data extends Component {
                 Location
               </Table.HeaderCell>
               <Table.HeaderCell
-                sorted={column === 'dateTime' ? direction : null}
-                onClick={() => this.handleSort('dateTime', this.state)}
+                sorted={column === 'dateTimeSort' ? direction : null}
+                onClick={() => this.handleSort('dateTimeSort', this.state)}
               >
                 Last Date/Time
               </Table.HeaderCell>
