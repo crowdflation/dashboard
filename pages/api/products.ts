@@ -5,6 +5,7 @@ import Cors from 'cors';
 import categoriesMap from '../../data/map';
 import {getPriceValue} from "../../lib/util/utils";
 import _ from 'lodash';
+import {sha256} from "js-sha256";
 const keywordExtractor = require("keyword-extractor");
 
 // Initializing the cors middleware
@@ -186,6 +187,7 @@ async function filterProducts(country: string | undefined, vendorName, ageInHour
         "dateTime": -1
       }
     },
+    { $limit: 100 },
     {
       $group: {
         _id: '$name',
@@ -206,7 +208,7 @@ async function filterProducts(country: string | undefined, vendorName, ageInHour
 
     //console.log('catFilter',catFilter);
 
-    const products = await db.collection(vendor).aggregate(catFilter).limit(200).toArray();
+    const products = await db.collection(vendor).aggregate(catFilter).limit(50).toArray();
     console.log('products', vendor, products.length);
     try {
       products.forEach((d) => {
@@ -235,12 +237,38 @@ async function filterProducts(country: string | undefined, vendorName, ageInHour
 export async function getProducts(category:string, country: string|undefined, location, distance, vendorName, search:string[], ageInHours) {
   const {db} = await connectToDatabase();
 
+  const dateTime = new Date();
+  //Round to hours so we can combine data
+  dateTime.setMinutes(0, 0, 0);
 
-  if(category) {
-    return await filterByCategories(category, country?.toUpperCase(), vendorName, ageInHours, db, search, location, distance);
+  const queryHash = sha256(JSON.stringify({category, country, location, distance, vendorName, search, ageInHours, dateTime}));
+  const cacheDisabled = process.env.CACHE_DISABLED || false;
+  const algorithmVersion = '1.0.0';
+
+  const cacheCollection = '_cacheProducts';
+
+
+  if(!cacheDisabled) {
+    const result = await db.collection(cacheCollection)
+        .findOne({queryHash, algorithmVersion});
+
+    if (result) {
+      return result.dataObj;
+    }
   }
 
-  return await filterProducts(country?.toUpperCase(), vendorName, ageInHours, db, search, location, distance);
+  let dataObj:any[] = [];
+  if(category) {
+    dataObj = await filterByCategories(category, country?.toUpperCase(), vendorName, ageInHours, db, search, location, distance);
+  } else {
+    dataObj = await filterProducts(country?.toUpperCase(), vendorName, ageInHours, db, search, location, distance);
+  }
+
+  db.collection(cacheCollection).insertOne({queryHash, algorithmVersion, dataObj}).catch((ex) => {
+    console.error('Failed to cache item for query', ex.toString());
+  });
+
+  return dataObj;
 
 }
 

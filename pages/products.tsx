@@ -112,10 +112,8 @@ export async function getServerSideProps({req, query}) {
 
   const forwarded = req.headers["x-forwarded-for"]
   const ip = forwarded ? forwarded.split(/, /)[0] : req.connection.remoteAddress
-  console.log('ip', ip);
   const geo = geoip.lookup(ip);
   let geoCountry = makeNull(geo?.country?.toLowerCase());
-  console.log('geoCountry',geoCountry);
 
   if(geoCountry && !countries.find(c=>c.toLowerCase()===geoCountry)) {
     geoCountry = countries[0].toLowerCase();
@@ -136,8 +134,6 @@ export async function getServerSideProps({req, query}) {
     props: {data:data.map((d)=>{return {...d, dateTimeSort: new Date(d.dateTime).getTime()/1000};}), category: makeNull(category), country: makeNull(country) || geoCountry, apiKey, vendors, vendor: makeNull(vendor), age:makeNull(ageInHours) || parameterDefaults[Parameters.Age], search, searchText: searchText ||''}, // will be passed to the page component as props
   }
 }
-
-
 
 const distances = [1000, 3000, 5000, 10000, 20000, 30000, 50000];
 
