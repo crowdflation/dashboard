@@ -233,6 +233,22 @@ async function filterProducts(country: string | undefined, vendorName, ageInHour
 
 }
 
+function cacheQuery(searchText: string, db, params: { country: string | undefined; search: string[]; distance: any; location: any; category: string; vendorName: any; age: any }, algorithmVersion: string) {
+  searchText = _.trim(searchText);
+
+  if (searchText && searchText.length >= 5) {
+    const queriesCollection = '_queries';
+    db.collection(queriesCollection).updateOne({searchText}, {
+      $set: {searchText, ...params, algorithmVersion},
+      $inc: {count: 1}
+    }, {
+      upsert: true
+    }).catch((ex) => {
+      console.error('Failed to cache query', searchText, ex.toString());
+    });
+  }
+}
+
 export async function getProducts(category:string, country: string|undefined, location, distance, vendorName, search:string[], searchText:string, ageInHours) {
   const {db} = await connectToDatabase();
 
@@ -247,19 +263,6 @@ export async function getProducts(category:string, country: string|undefined, lo
 
   const algorithmVersion = '1.0.0';
 
-  searchText = _.trim(searchText);
-
-  if(searchText && searchText.length >= 5) {
-    const queriesCollection = '_queries';
-    db.collection(queriesCollection).updateOne({searchText}, {
-      $set: {searchText, ...params, algorithmVersion},
-      $inc: {count: 1}
-    }, {
-      upsert: true
-    }).catch((ex) => {
-      console.error('Failed to cache query', searchText, ex.toString());
-    });
-  }
 
 
   const cacheCollection = '_cacheProducts';
@@ -280,9 +283,12 @@ export async function getProducts(category:string, country: string|undefined, lo
     dataObj = await filterProducts(country?.toUpperCase(), vendorName, ageInHours, db, search, location, distance);
   }
 
-  db.collection(cacheCollection).insertOne({queryHash, algorithmVersion, dataObj}).catch((ex) => {
-    console.error('Failed to cache item for query', ex.toString());
-  });
+  if(dataObj.length>0) {
+    db.collection(cacheCollection).insertOne({queryHash, algorithmVersion, dataObj}).catch((ex) => {
+      console.error('Failed to cache item for query', ex.toString());
+    });
+    cacheQuery(searchText, db, params, algorithmVersion);
+  }
 
   return dataObj;
 

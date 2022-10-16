@@ -721,7 +721,7 @@ class Data extends Component {
     //console.log('filteredData', filteredData, data);
 
     // If it is an array we can show a table
-    if(data?.map) {
+    if(filteredData?.map && filteredData?.length) {
       representation =
         (<Table sortable celled fixed>
           <Table.Header>
@@ -770,6 +770,12 @@ class Data extends Component {
             ))}
           </Table.Body>
         </Table>);
+    } else {
+      if(inProgress) {
+        representation = (<div><p>Loading data...</p><p>&nbsp;</p></div>);
+      } else {
+        representation = (<div><p>No data has been found, please change your search, such as remove some terms or use a different term</p><p>&nbsp;</p></div>);
+      }
     }
 
     const boxStyle = {display: 'flex', 'align-items': 'center', justifyContent: 'center'};
