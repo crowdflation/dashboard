@@ -5,12 +5,9 @@ import 'react-vis/dist/style.css'
 import styles from '../styles/Home.module.css'
 import { Layout } from '../components/layout'
 import * as React from "react";
-import {connectToDatabase, createIndicesOnVendors} from "../lib/util/mongodb";
-
-
 
 function MyApp({ Component, pageProps }: AppProps) {
-  return (
+    return (
     <div>
       <div id="overlay">
         <div id="text">This website is not compatible with small screens. Please turn on Desktop Mode or rotate the device.</div>

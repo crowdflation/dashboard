@@ -3,6 +3,8 @@ import Head from 'next/head'
 import Link from 'next/link'
 import styles from '../styles/Home.module.css'
 import 'normalize.css';
+import Script from "next/dist/client/script";
+import * as React from "react";
 
 const Home: NextPage = () => {
   return (
@@ -10,7 +12,6 @@ const Home: NextPage = () => {
       <Head>
         <title>Crowdflation - Crowdsourced Inflation and Economic Data</title>
       </Head>
-
       <main className={styles.main}>
         <div className={styles.showcase}>
           <div className={styles.maindescr}>
