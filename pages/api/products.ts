@@ -6,7 +6,6 @@ import categoriesMap from '../../data/map';
 import {getPriceValue} from "../../lib/util/utils";
 import _ from 'lodash';
 import {sha256} from "js-sha256";
-const keywordExtractor = require("keyword-extractor");
 
 // Initializing the cors middleware
 const cors = Cors({
@@ -34,7 +33,7 @@ function makeArrayRegex(search) {
   return new RegExp(`^${arr}.*$`);
 }
 
-
+//FIXME: This function might be out of date
 async function filterByCategories(category: string | string[], country: string | undefined, vendorName, ageInHours, db, search:string[], location, distance) {
   const categories = Object.keys(categoriesMap).filter((item) => {
     return categoryMatches(category, categoriesMap[item]);
@@ -234,19 +233,36 @@ async function filterProducts(country: string | undefined, vendorName, ageInHour
 
 }
 
-export async function getProducts(category:string, country: string|undefined, location, distance, vendorName, search:string[], ageInHours) {
+export async function getProducts(category:string, country: string|undefined, location, distance, vendorName, search:string[], searchText:string, ageInHours) {
   const {db} = await connectToDatabase();
 
   const dateTime = new Date();
   //Round to hours so we can combine data
   dateTime.setMinutes(0, 0, 0);
 
-  const queryHash = sha256(JSON.stringify({category, country, location, distance, vendorName, search, ageInHours, dateTime}));
+  const params = {category, country, location, distance, vendorName, search, age:ageInHours};
+
+  const queryHash = sha256(JSON.stringify({...params, dateTime}));
   const cacheDisabled = process.env.CACHE_DISABLED || false;
+
   const algorithmVersion = '1.0.0';
 
-  const cacheCollection = '_cacheProducts';
+  searchText = _.trim(searchText);
 
+  if(searchText && searchText.length >= 5) {
+    const queriesCollection = '_queries';
+    db.collection(queriesCollection).updateOne({searchText}, {
+      $set: {searchText, ...params, algorithmVersion},
+      $inc: {count: 1}
+    }, {
+      upsert: true
+    }).catch((ex) => {
+      console.error('Failed to cache query', searchText, ex.toString());
+    });
+  }
+
+
+  const cacheCollection = '_cacheProducts';
 
   if(!cacheDisabled) {
     const result = await db.collection(cacheCollection)
@@ -257,7 +273,7 @@ export async function getProducts(category:string, country: string|undefined, lo
     }
   }
 
-  let dataObj:any[] = [];
+  let dataObj:any[];
   if(category) {
     dataObj = await filterByCategories(category, country?.toUpperCase(), vendorName, ageInHours, db, search, location, distance);
   } else {
@@ -281,12 +297,12 @@ export default async function handler(
 
   try {
     if (req.method === 'GET') {
-      const {country, category, longitude, latitude, distance, age, vendor, search} = req.query;
+      const {country, category, longitude, latitude, distance, age, vendor, search, searchText} = req.query;
       const start = new Date();
 
       const ageInHours = parseInt(age as string) || undefined;
 
-      const dataByVendor = await getProducts(category as string, country as string, {longitude, latitude}, distance, vendor, search?JSON.parse(search as string):search, ageInHours );
+      const dataByVendor = await getProducts(category as string, country as string, {longitude, latitude}, distance, vendor, search?JSON.parse(search as string):search, searchText as string, ageInHours );
 
       console.log('Duration', (Math.abs( (new Date()).getTime() - start.getTime())/1000).toFixed(3));
 

@@ -6,13 +6,12 @@ import _ from 'lodash'
 import axios from 'axios'
 import { getProducts } from "./api/products";
 import Geocode from "react-geocode";
-import SearchBar from "material-ui-search-bar";
 import {
   Box,
   CircularProgress,
   Link,
   Menu,
-  MenuItem
+  MenuItem, TextField
 } from "@mui/material";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLocationCrosshairs, faCircleChevronDown } from '@fortawesome/free-solid-svg-icons';
@@ -26,6 +25,9 @@ import {connectToDatabase, createIndicesOnVendors, getVendors} from "../lib/util
 import {cleanupPriceName, isValidPrice} from "../lib/util/utils";
 import keywordExtractor from "keyword-extractor";
 import geoip from 'geoip-lite';
+import {getQueries} from "./api/queries";
+import Autocomplete from '@mui/material/Autocomplete';
+
 
 
 
@@ -123,15 +125,17 @@ export async function getServerSideProps({req, query}) {
 
 
   const ageInHours = parseInt(age) || undefined;
-  const data = await getProducts(category, country || geoCountry, undefined, undefined, vendor, search, ageInHours || parameterDefaults[Parameters.Age]);
+  const data = await getProducts(category, country || geoCountry, undefined, undefined, vendor, search, searchText,ageInHours || parameterDefaults[Parameters.Age]);
 
   const apiKey: string = (process.env as any).GOOGLE_MAPS_API_KEY as string;
 
   const vendorObjects = (await getVendors(db)).map(v=> { return {...v, _id:v._id.toString()} });
   const vendors = vendorObjects.map(v => v.name);
 
+  const queries = await getQueries(query);
+
   return {
-    props: {data:data.map((d)=>{return {...d, dateTimeSort: new Date(d.dateTime).getTime()/1000};}), category: makeNull(category), country: makeNull(country) || geoCountry, apiKey, vendors, vendor: makeNull(vendor), age:makeNull(ageInHours) || parameterDefaults[Parameters.Age], search, searchText: searchText ||''}, // will be passed to the page component as props
+    props: {data:data.map((d)=>{return {...d, dateTimeSort: new Date(d.dateTime).getTime()/1000};}), category: makeNull(category), country: makeNull(country) || geoCountry, apiKey, vendors, vendor: makeNull(vendor), age:makeNull(ageInHours) || parameterDefaults[Parameters.Age], search, searchText: searchText ||'', queries}, // will be passed to the page component as props
   }
 }
 
@@ -168,6 +172,7 @@ class Data extends Component {
       searchText: props.searchText,
       age: props.age,
       searchValues:[...tags],
+      queries: props.queries,
       tagOptions: [
         //...this.makeAllCategories(),
         ...countries.map((c)=>'country:'+c.toLowerCase()),
@@ -382,7 +387,7 @@ class Data extends Component {
   buildQueryURL = () => {
     const state = this.newState;
 
-    return ['category','country', 'longitude', 'latitude','distance','vendor', 'currency','search','age'].reduce((str, key) => {
+    return ['category','country', 'longitude', 'latitude','distance','vendor', 'currency','search','age','searchText'].reduce((str, key) => {
       let val = this.findValue(state, key);
       if(!val) {
         return str;
@@ -415,6 +420,34 @@ class Data extends Component {
     return vendor;
   }
 
+  checkResponseOutdated(response, requestNumberField, responseNumberField) {
+    const url = new URL(
+        response.request.responseURL
+    );
+    const lastRequestReceived = parseInt(url.searchParams.get('requestNumberField') as string);
+    if(lastRequestReceived<this[responseNumberField]) {
+      //Ignore out of date responses
+      return true;
+    }
+
+    this[responseNumberField] = lastRequestReceived;
+    return false;
+  }
+
+  requestNumberQueries=0;
+  responseNumberQueries=0
+  getQueriesRequest = async () => {
+    const query = this.buildQueryURL();
+    this.requestNumberQueries++;
+    const response = await axios.get(`/api/queries?requestNumberQueries=${this.requestNumberQueries}&${query}`);
+
+    if(this.checkResponseOutdated(response,'requestNumberQueries', 'responseNumberQueries' )) {
+      return;
+    }
+
+    this.updateState({queries: JSON.parse(response?.data)});
+  }
+
   requestNumber=0;
   responseNumber=0;
   reloadData = () => {
@@ -425,7 +458,8 @@ class Data extends Component {
 
     this.requestNumber++;
 
-    axios.get(`/api/products?requestNumber=${this.requestNumber}&` + query)
+    // todo = use await
+    axios.get(`/api/products?requestNumber=${this.requestNumber}&${query}`)
       .then((response) => {
 
         const url = new URL(
@@ -578,6 +612,7 @@ class Data extends Component {
   onChangeSearchInputValue = (value: string) => {
     const that = this;
     const {searchValues} = this.newState as any;
+    this.getQueriesRequest().then();
     clearTimeout(that.timeout);
 
     const newValues = extractKeywordsAndParams(value);
@@ -656,8 +691,7 @@ class Data extends Component {
   };
 
   render = () => {
-    const { dialogContents, dialogCallback, dialogLabel, column, data, direction, search, searchText, error, location, inProgress, anchorEl } = this.state as any;
-    console.log('dialogContents', dialogContents);
+    const { dialogContents, dialogCallback, dialogLabel, column, data, direction, search, searchText, error, location, inProgress, anchorEl, queries } = this.state as any;
 
     let representation = (<p>{JSON.stringify(data, null, 2)}</p>);
 
@@ -731,7 +765,7 @@ class Data extends Component {
                 <Table.Cell>{cleanupPriceName(price)}</Table.Cell>
                 <Table.Cell>{vendor}</Table.Cell>
                 <Table.Cell hidden={true}>{distance}</Table.Cell>
-                <Table.Cell>{new Date(dateTime).toLocaleString()},{dateTimeSort}</Table.Cell>
+                <Table.Cell>{new Date(dateTime).toLocaleString()}</Table.Cell>
               </Table.Row>
             ))}
           </Table.Body>
@@ -766,12 +800,24 @@ class Data extends Component {
           </Menu>
         </Box>
         {inProgress ? (<Box style={boxStyle}><CircularProgress/></Box>) : null}
-        <SearchBar
-            // @ts-ignore
+        <Autocomplete
             sx={{ width: 1 }}
             style={{ margin: "10px 0" }}
+            id="tags-outlined"
+            options={queries}
+            defaultValue={searchText}
+            freeSolo
             value={searchText}
-            onChange={newValue => this.onChangeSearchInputValue(newValue)}
+            onInputChange={(event: React.SyntheticEvent, value: string, reason: string)=>this.onChangeSearchInputValue(value)}
+            //onChange={(e, value, reason) => this.onChangeTagsInputValue(e, value, reason)}
+            renderInput={(params) => (
+                <TextField
+                    {...params}
+                    label="Search"
+                    placeholder="Type any product or Bran, for example: Milk"
+                    value={searchText}
+                />
+            )}
         />
         <span className={styles.error}>{error}</span>
         {representation}
