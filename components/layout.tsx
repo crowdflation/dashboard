@@ -1,33 +1,52 @@
-// components/Layout.js
 import React, { Component } from 'react';
 import styles from '../styles/Home.module.css'
-import Box from '@mui/material/Box';
+import 'semantic-ui-css/semantic.min.css'
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Link from "next/dist/client/link";
+import {NextRouter, withRouter} from 'next/router'
+
 
 function LinkTab(props) {
   return (
     <Tab
       component="a"
       onClick={(event) => {
-        event.preventDefault();
+        //event.preventDefault();
       }}
       {...props}
     />
   );
 }
 
-export class Layout extends Component {
+interface WithRouterProps {
+  router: NextRouter
+}
+
+interface MyComponentProps extends WithRouterProps {}
+
+class Layout extends Component<MyComponentProps> {
   constructor(props: any) {
     super(props);
+
+    let tab:number|undefined = undefined;
+    switch(this?.props?.router?.pathname) {
+      case '/products':
+        tab = 0;
+        break;
+      case '/faq':
+        tab = 1;
+        break;
+    }
+
     this.state = {
+      value: tab
     };
   }
 
+
   handleChange = (event, newValue) => {
-    console.log('newValue', newValue);
-    this.setState(newValue);
+    this.setState({value: newValue || 0});
   };
 
   render () {
@@ -36,21 +55,21 @@ export class Layout extends Component {
     return (
       <div>
         <div className={styles.header}>
-          <div>
+          <div className={styles.lcontainer}>
             <h1><Link href='/'>Crowdflation</Link></h1>
           </div>
           
           <div>
             <Tabs
-              className={styles.navbar} 
-              value={value} 
-              onChange={this.handleChange} 
+              className={styles.navbar}
+              value={value}
+              onChange={this.handleChange}
               aria-label="nav tabs example" 
               sx={{
                 '& .MuiTabs-flexContainer': {justifyContent: "end"}
               }}
             >
-              <LinkTab label="Dashboard" href="/inflation" />
+              <LinkTab label="Price Comparison" href="/products" />
               <LinkTab label="FAQ" href="/faq" />
               {/* <LinkTab label="Code" href="/code" /> */}
             </Tabs>
@@ -63,3 +82,4 @@ export class Layout extends Component {
     );
   }
 }
+export default withRouter(Layout);

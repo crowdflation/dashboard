@@ -3,8 +3,9 @@ import '../styles/globals.css'
 import { AppProps } from 'next/app'
 import 'react-vis/dist/style.css'
 import styles from '../styles/Home.module.css'
-import { Layout } from '../components/layout'
+import Layout from '../components/layout'
 import * as React from "react";
+
 
 function MyApp({ Component, pageProps }: AppProps) {
     return (
