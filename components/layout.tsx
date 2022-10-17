@@ -58,7 +58,7 @@ class Layout extends Component<MyComponentProps> {
             <h1><Link href='/'><a className={styles.headerLink}>Crowdflation</a></Link></h1>
           </div>
           <div className={styles.subtitle}>
-            <span>Saving time and money shopping</span>
+            <span>Save time and money shopping</span>
           </div>
           <div>
             <Tabs

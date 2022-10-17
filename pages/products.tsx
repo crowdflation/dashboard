@@ -1,6 +1,7 @@
 import styles from '../styles/Home.module.css'
 import React, { Component } from 'react'
 import 'semantic-ui-css/components/table.min.css'
+import 'semantic-ui-css/components/icon.min.css'
 import { Table } from 'semantic-ui-react'
 import _ from 'lodash'
 import axios from 'axios'

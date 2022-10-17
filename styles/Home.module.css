@@ -398,6 +398,6 @@ div.description {
   }
 
   .subtitle {
-    display: none;
+    /*display: none;*/
   }
 }
