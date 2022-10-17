@@ -1,6 +1,6 @@
 import styles from '../styles/Home.module.css'
 import React, { Component } from 'react'
-import 'semantic-ui-css/semantic.min.css'
+import 'semantic-ui-css/components/table.min.css'
 import { Table } from 'semantic-ui-react'
 import _ from 'lodash'
 import axios from 'axios'
@@ -723,7 +723,7 @@ class Data extends Component {
     // If it is an array we can show a table
     if(filteredData?.map && filteredData?.length) {
       representation =
-        (<Table sortable celled fixed>
+        (<Table sortable celled fixed className={styles.table}>
           <Table.Header>
             <Table.Row>
               <Table.HeaderCell
@@ -820,7 +820,7 @@ class Data extends Component {
                 <TextField
                     {...params}
                     label="Search"
-                    placeholder="Type any product or Bran, for example: Milk"
+                    placeholder="Type any product or Brand, for example: Milk"
                     value={searchText}
                 />
             )}

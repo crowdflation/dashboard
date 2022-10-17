@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import styles from '../styles/Home.module.css'
-import 'semantic-ui-css/semantic.min.css'
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Link from "next/dist/client/link";
@@ -55,7 +54,7 @@ class Layout extends Component<MyComponentProps> {
     return (
       <div>
         <div className={styles.header}>
-          <div className={styles.lcontainer}>
+          <div>
             <h1><Link href='/'>Crowdflation</Link></h1>
           </div>
           

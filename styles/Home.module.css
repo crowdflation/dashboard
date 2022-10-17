@@ -38,6 +38,10 @@
   margin-bottom: 0;
 }
 
+.container table.table {
+  font-size: 14px;
+}
+
 .small-dropdowns {
   font-size:small !important;
 }
@@ -356,10 +360,6 @@ div.description {
 .logo {
   height: 1em;
   margin-left: 0.5rem;
-}
-
-.lcontainer {
-  margin-top: 20px;
 }
 
 
