@@ -55,9 +55,11 @@ class Layout extends Component<MyComponentProps> {
       <div>
         <div className={styles.header}>
           <div>
-            <h1><Link href='/'>Crowdflation</Link></h1>
+            <h1><Link href='/'><a className={styles.headerLink}>Crowdflation</a></Link></h1>
           </div>
-          
+          <div className={styles.subtitle}>
+            <span>Saving time and money shopping</span>
+          </div>
           <div>
             <Tabs
               className={styles.navbar}
@@ -65,7 +67,7 @@ class Layout extends Component<MyComponentProps> {
               onChange={this.handleChange}
               aria-label="nav tabs example" 
               sx={{
-                '& .MuiTabs-flexContainer': {justifyContent: "end"}
+                '& .MuiTabs-flexContainer': {justifyContent: "center"}
               }}
             >
               <LinkTab label="Price Comparison" href="/products" />

@@ -56,6 +56,6 @@ a {
 @media (max-width: 480px) {
 
   #overlay {
-    display: block;
+    /*display: block;*/
   }
 }
