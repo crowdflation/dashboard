@@ -1,6 +1,7 @@
 import styles from '../styles/Home.module.css'
 import React, { Component } from 'react'
-import 'semantic-ui-css/semantic.min.css'
+import 'semantic-ui-css/components/table.min.css'
+import 'semantic-ui-css/components/icon.min.css'
 import { Table } from 'semantic-ui-react'
 import _ from 'lodash'
 import { calculateCategoriesCount } from './api/categories'
@@ -68,6 +69,35 @@ class Categories extends Component {
     }
   }
 
+  timeSince= (date) => {
+
+    // @ts-ignore
+    var seconds = Math.floor((new Date() - date) / 1000);
+
+    var interval = seconds / 31536000;
+
+    if (interval > 1) {
+      return Math.floor(interval) + " years";
+    }
+    interval = seconds / 2592000;
+    if (interval > 1) {
+      return Math.floor(interval) + " months";
+    }
+    interval = seconds / 86400;
+    if (interval > 1) {
+      return Math.floor(interval) + " days";
+    }
+    interval = seconds / 3600;
+    if (interval > 1) {
+      return Math.floor(interval) + " hours";
+    }
+    interval = seconds / 60;
+    if (interval > 1) {
+      return Math.floor(interval) + " minutes";
+    }
+    return Math.floor(seconds) + " seconds";
+  }
+
 
   render = () => {
     const { column, data, direction } = this.state as any;
@@ -96,7 +126,7 @@ class Categories extends Component {
               <Table.Row key={category}>
                 <Table.Cell>{(category=='Unknown')?(<Link href="unlabelled" target="_blank">Unknown</Link>):category}</Table.Cell>
                 <Table.Cell>{count}</Table.Cell>
-                <Table.Cell>{_.map(vendors, (key, val)=> { return `${val}:${key}`;}).join(', ')}</Table.Cell>
+                <Table.Cell>{_.map(vendors, (val, key)=> { return (<p>{`${key}:${val.count}, ${this.timeSince(val.dateTime)} ago`}</p>)})}</Table.Cell>
               </Table.Row>
             ))}
           </Table.Body>

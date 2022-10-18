@@ -80,15 +80,17 @@ export async function calculateCategoriesCount(all) {
       }
 
       if(!categoriesCount[category]) {
-        categoriesCount[category] = {count:1, vendors: {[vendor]:1}};
-      } else {
-        categoriesCount[category].count++;
-        if(!categoriesCount[category].vendors[vendor]) {
-          categoriesCount[category].vendors[vendor] = 1;
-        } else {
-          categoriesCount[category].vendors[vendor]++;
-        }
+        categoriesCount[category] = {count:1, vendors: {[vendor]:{count:0, dateTime: price.dateTime}}};
       }
+      categoriesCount[category].count++;
+      if(!categoriesCount[category].vendors[vendor]) {
+        categoriesCount[category].vendors[vendor] = {count:0, dateTime: price.dateTime};
+      }
+      categoriesCount[category].vendors[vendor].count++;
+      categoriesCount[category].vendors[vendor].dateTime = Math.max(
+          price.dateTime,
+          categoriesCount[category].vendors[vendor].dateTime
+      );
     }));
   }));
 
