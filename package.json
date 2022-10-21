@@ -55,6 +55,7 @@
     "react-dropdown-tree-select": "^2.7.1",
     "react-geocode": "^0.2.3",
     "react-helmet": "^6.1.0",
+    "react-string-replace": "^1.1.0",
     "react-syntax-highlighter": "^15.4.4",
     "react-vis": "^1.11.7",
     "semantic-ui-css": "^2.4.1",

@@ -28,6 +28,7 @@ import keywordExtractor from "keyword-extractor";
 import geoip from 'geoip-lite';
 import {getQueries} from "./api/queries";
 import Autocomplete from '@mui/material/Autocomplete';
+import reactStringReplace from 'react-string-replace';
 
 
 enum Parameters {
@@ -809,10 +810,11 @@ class Data extends Component {
                                                                vendor,
                                                                distance,
                                                                dateTime,
+                                                               metadata,
                                                                dateTimeSort
                                                            }) => (
                             <Table.Row key={_id}>
-                                <Table.Cell>{name}</Table.Cell>
+                                <Table.Cell>{this.formatName(name,metadata)}</Table.Cell>
                                 <Table.Cell>{cleanupPriceName(price)}</Table.Cell>
                                 <Table.Cell>{vendor}</Table.Cell>
                                 <Table.Cell hidden={true}>{distance}</Table.Cell>
@@ -886,6 +888,20 @@ class Data extends Component {
                                  onResult={dialogCallback}>{dialogContents}</DialogComponent>
             </div>
         )
+    }
+
+    private formatName(name: string, metadata: any) {
+        if(!metadata) {
+            return name;
+        }
+
+        let rez:any = name;
+
+        _.map(metadata, (key,val)=> {
+            rez = reactStringReplace(rez, val,(match, i) => ((<pre>{match}</pre>)));
+        });
+
+        return rez;
     }
 }
 

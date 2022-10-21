@@ -59,6 +59,27 @@ async function getCategoriesFromModel(namesNotCategorised: string[], language) {
   throw new Error("Timeout trying to access the model")
 }
 
+
+async function extractUnitsFromModel(namesNotExtracted: string[], language) {
+  if(!namesNotExtracted?.length) {
+    return [];
+  }
+
+  const modelUrl = process.env.UNIT_EXTRACTION_MODEL_URL as string;
+  for (let i =0;i<=5;i++) {
+    try {
+      return (await axios.post(`${modelUrl}/extraction`, {
+        "product_list": namesNotExtracted,
+        "lang": language.toLowerCase()
+      })).data;
+    } catch (ex) {
+      console.warn('got error, waiting', ex);
+      await wait(5000);
+    }
+  }
+  throw new Error("Timeout trying to access the model")
+}
+
 export async function handleDataRequest(vendor: string | string[], country: any, page=0, limit=200, req: NextApiRequest, res: NextApiResponse<any>) {
   if (!vendor || _.includes(vendor, '_')) {
     return res.status(400).json({error: 'Non-allowed vendor name'});
@@ -171,11 +192,8 @@ export async function handleDataRequest(vendor: string | string[], country: any,
       }
     }));
 
-
-
     const categorised = await getCategoriesFromModel(namesNotCategorised, language);
     const confidenceThreshold = (parseFloat(process.env.CATEGORISATOION_CONFIDENCE_TRESHOLD as string)) || 0.8;
-
 
     let itemCategoriesUpdated = 0;
     await Promise.all(Object.keys(categorised).map(async (key)=> {
@@ -199,7 +217,43 @@ export async function handleDataRequest(vendor: string | string[], country: any,
 
     }));
 
+
     console.debug('itemCategoriesUpdated', itemCategoriesUpdated);
+
+    const namesNotExtracted:string[] = [];
+    await Promise.all(Object.keys(namesFound).map(async (name)=> {
+      const found = await db.collection('_extracted').findOne({name, country: countryFilter, language: languageFilter});
+      if(!found) {
+        namesNotExtracted.push(name);
+      }
+    }));
+
+
+    const extracted = await extractUnitsFromModel(namesNotExtracted, language);
+    let itemExtractedUpdated = 0;
+    await Promise.all(Object.keys(extracted).map(async (key)=> {
+      const val = extracted[key];
+      const entities = val?.entities;
+      console.log('got result',val);
+      if(entities) {
+
+        const metadata = {name: key, country, language, vendor};
+        entities.forEach((e)=> {
+          metadata[e.label] = e.text;
+        });
+
+        await db.collection('_extracted').updateOne(
+            {name: key, country: countryFilter},
+            {$set: metadata},
+            {
+              upsert: true
+            });
+        itemExtractedUpdated++;
+      }
+    }));
+
+    console.debug('itemExtractedUpdated', itemExtractedUpdated);
+
     return;
   }
   return res.status(404).json({message: 'Invalid request type'});

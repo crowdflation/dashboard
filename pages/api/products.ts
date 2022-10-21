@@ -283,7 +283,22 @@ export async function getProducts(category:string, country: string|undefined, lo
     dataObj = await filterProducts(country?.toUpperCase(), vendorName, ageInHours, db, search, location, distance);
   }
 
+
   if(dataObj.length>0) {
+    const metadata = await db.collection('_extracted').find({ name: { $in: dataObj}, country});
+
+    const byName = {};
+    metadata.forEach((m)=>byName[m.name]={...m});
+
+    dataObj.forEach((d)=> {
+      if(metadata[d.name]) {
+        delete metadata[d.name].name;
+        d.metadata = metadata[d.name];
+      } else {
+        d.metadata = {};
+      }
+    });
+
     db.collection(cacheCollection).insertOne({queryHash, algorithmVersion, dataObj}).catch((ex) => {
       console.error('Failed to cache item for query', ex.toString());
     });
