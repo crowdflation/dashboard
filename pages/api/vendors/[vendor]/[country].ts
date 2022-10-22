@@ -243,7 +243,7 @@ export async function handleDataRequest(vendor: string | string[], country: any,
         });
 
         await db.collection('_extracted').updateOne(
-            {name: key, country: countryFilter},
+            {name: key, country: countryFilter?.toLowerCase()},
             {$set: metadata},
             {
               upsert: true

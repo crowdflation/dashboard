@@ -8,7 +8,7 @@ import axios from 'axios'
 import {getProducts} from "./api/products";
 import Geocode from "react-geocode";
 import {
-    Box,
+    Box, Chip,
     CircularProgress,
     Link,
     Menu,
@@ -895,12 +895,11 @@ class Data extends Component {
             return name;
         }
 
-        let rez:any = name;
+        let rez:any = [name];
 
         _.map(metadata, (key,val)=> {
-            rez = reactStringReplace(rez, val,(match, i) => ((<pre>{match}</pre>)));
+            rez = reactStringReplace(rez, key,(match, i) => { return (<Chip label={match} variant="outlined" />);});
         });
-
         return rez;
     }
 }

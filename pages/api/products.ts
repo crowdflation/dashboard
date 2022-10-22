@@ -282,18 +282,21 @@ export async function getProducts(category:string, country: string|undefined, lo
   } else {
     dataObj = await filterProducts(country?.toUpperCase(), vendorName, ageInHours, db, search, location, distance);
   }
-
-
+  
   if(dataObj.length>0) {
-    const metadata = await db.collection('_extracted').find({ name: { $in: dataObj}, country});
+    const metadata = await db.collection('_extracted').find({ name: { $in: dataObj.map((d)=>d.name)}/*, country*/}).toArray();
 
     const byName = {};
     metadata.forEach((m)=>byName[m.name]={...m});
 
     dataObj.forEach((d)=> {
-      if(metadata[d.name]) {
-        delete metadata[d.name].name;
-        d.metadata = metadata[d.name];
+      if(byName[d.name]) {
+        delete byName[d.name].name;
+        delete byName[d.name]._id;
+        delete byName[d.name].country;
+        delete byName[d.name].language;
+        delete byName[d.name].vendor;
+        d.metadata = byName[d.name];
       } else {
         d.metadata = {};
       }
