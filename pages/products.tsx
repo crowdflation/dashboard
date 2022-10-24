@@ -877,7 +877,7 @@ class Data extends Component {
                         <TextField
                             {...params}
                             label="Search"
-                            placeholder="Type any product or Bran, for example: Milk"
+                            placeholder="Type any product or brand, for example: Milk"
                             value={searchText}
                         />
                     )}
