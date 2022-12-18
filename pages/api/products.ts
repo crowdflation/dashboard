@@ -123,7 +123,7 @@ async function filterByCategories(category: string | string[], country: string |
         }
       }];
 
-    const products = await db.collection(vendor).aggregate(catFilter).limit(200).toArray();
+    const products = await db.collection(vendor).aggregate(catFilter).limit(5).toArray();
     return Promise.all(products.map(async (d) => {
       return allProductData.push({
         ...d,
@@ -186,7 +186,7 @@ async function filterProducts(country: string | undefined, vendorName, ageInHour
         "dateTime": -1
       }
     },
-    { $limit: 100 },
+    { $limit: 10 },
     {
       $group: {
         _id: '$name',
@@ -207,7 +207,7 @@ async function filterProducts(country: string | undefined, vendorName, ageInHour
 
     //console.log('catFilter',catFilter);
 
-    const products = await db.collection(vendor).aggregate(catFilter).limit(50).toArray();
+    const products = await db.collection(vendor).aggregate(catFilter).limit(5).toArray();
     console.log('products', vendor, products.length);
     try {
       products.forEach((d) => {
@@ -327,8 +327,6 @@ export default async function handler(
       const ageInHours = parseInt(age as string) || undefined;
 
       const dataByVendor = await getProducts(category as string, country as string, {longitude, latitude}, distance, vendor, search?JSON.parse(search as string):search, searchText as string, ageInHours );
-
-      console.log('Duration', (Math.abs( (new Date()).getTime() - start.getTime())/1000).toFixed(3));
 
       return res.status(200).json(JSON.stringify(dataByVendor, null, 2));
     }

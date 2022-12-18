@@ -15,7 +15,7 @@ import {
     MenuItem, TextField
 } from "@mui/material";
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
-import {faLocationCrosshairs, faCircleChevronDown} from '@fortawesome/free-solid-svg-icons';
+import {faLocationCrosshairs, faCircleChevronDown, faCartArrowDown, faCartPlus} from '@fortawesome/free-solid-svg-icons';
 import {DialogComponent} from '@/components/dialog-component';
 import Select from "@material-ui/core/Select";
 import {codeToCountryMap} from "../data/countries";
@@ -23,12 +23,14 @@ import DropdownTreeSelect from "react-dropdown-tree-select";
 import categories from "../data/categories";
 import 'react-dropdown-tree-select/dist/styles.css';
 import {connectToDatabase, createIndicesOnVendors, getVendors} from "../lib/util/mongodb";
-import {cleanupPriceName, isValidPrice} from "../lib/util/utils";
+import {cleanupPriceName, getPriceValue, isValidPrice} from "../lib/util/utils";
 import keywordExtractor from "keyword-extractor";
 import geoip from 'geoip-lite';
 import {getQueries} from "./api/queries";
 import Autocomplete from '@mui/material/Autocomplete';
 import reactStringReplace from 'react-string-replace';
+import {getSession, loadBaskets, obtainSessionAndBasket} from "./api/baskets";
+
 
 
 enum Parameters {
@@ -92,7 +94,7 @@ const countries = ['US', 'TR', 'GB'];
 
 let startupCodeCheck = false;
 
-export async function getServerSideProps({req, query}) {
+export async function getServerSideProps({req, res, query}) {
     const {db} = await connectToDatabase();
     if (!startupCodeCheck) {
         startupCodeCheck = true;
@@ -107,7 +109,7 @@ export async function getServerSideProps({req, query}) {
     if (geoCountry && !countries.find(c => c.toLowerCase() === geoCountry)) {
         geoCountry = countries[0].toLowerCase();
     }
-
+    const vendorBaskets = await obtainSessionAndBasket(req, res, db);
     const {
         category,
         country,
@@ -126,7 +128,6 @@ export async function getServerSideProps({req, query}) {
     if (!sortDirection) {
         sortDirection = 'ascending';
     }
-
 
     const ageInHours = parseInt(age) || undefined;
     const data = _.sortBy(await getProducts(category, country || geoCountry, undefined, undefined, vendor, search, searchText, ageInHours || parameterDefaults[Parameters.Age]), [function (o) {
@@ -157,14 +158,15 @@ export async function getServerSideProps({req, query}) {
             searchText: searchText || '',
             queries,
             sortDirection,
-            sortColumn
+            sortColumn,
+            vendorBaskets
         }, // will be passed to the page component as props
     }
 }
 
 const distances = [1000, 3000, 5000, 10000, 20000, 30000, 50000];
 
-class Data extends Component {
+class Products extends Component {
     newState = {};
     requestNumberQueries = 0;
     responseNumberQueries = 0
@@ -203,6 +205,7 @@ class Data extends Component {
             age: props.age,
             searchValues: [...tags],
             queries: props.queries,
+            vendorBaskets: props.vendorBaskets || {},
             tagOptions: [
                 //...this.makeAllCategories(),
                 ...countries.map((c) => 'country:' + c.toLowerCase()),
@@ -219,8 +222,6 @@ class Data extends Component {
         this.newState = this.state;
 
         Geocode.setApiKey(props.apiKey);
-
-        // set response language. Defaults to english.
         Geocode.setLanguage("en");
     }
 
@@ -720,6 +721,108 @@ class Data extends Component {
         }
     };
 
+    changeBasketCount = (vendorBaskets, vendor, name, amount) => {
+        if(!vendorBaskets[vendor]) {
+            vendorBaskets[vendor] = {};
+        }
+
+        if(!vendorBaskets[vendor][name]) {
+            vendorBaskets[vendor][name] = {};
+            const {data} = this.state as any;
+            const item = data.find((i)=> {
+                return i.vendor === vendor && i.name === name;
+            });
+            if(item) {
+                vendorBaskets[vendor][name].price = getPriceValue(item.price);
+                vendorBaskets[vendor][name].dateTime = item.dateTime;
+                vendorBaskets[vendor][name].metadata = item.metadata;
+            }
+        }
+
+        if(!vendorBaskets[vendor][name].amount) {
+            if(amount<0) {
+                return;
+            }
+        }
+
+        vendorBaskets[vendor][name].amount= amount;
+
+        axios.put('/api/baskets/', {vendorBaskets}, { withCredentials: true }).then();
+
+        this.updateState({vendorBaskets:{...vendorBaskets}});
+    }
+
+    getBasketCount = (vendorBaskets, vendor, name) => {
+        let amount = 0;
+        if(vendorBaskets && vendorBaskets[vendor]) {
+
+            if(vendorBaskets[vendor][name]) {
+                const productData = vendorBaskets[vendor][name] as any;
+                amount = productData?.amount || 0;
+            }
+        }
+
+        return (<>
+            <Box
+                display="flex"
+                justifyContent="center"
+                alignItems="center"
+                minHeight="100%"
+            >
+                <FontAwesomeIcon icon={faCartPlus} onClick={()=>this.changeBasketCount(vendorBaskets, vendor, name, amount+1)} size="2x" color="silver"/>
+                <TextField size='small' sx={{ width: 1/2, margin: 0.5}} inputProps={{ inputMode: 'numeric', pattern: '[0-9]?[0-9]?' }} value={amount} onChange={(e)=> this.changeBasketCount(vendorBaskets, vendor, name, Math.max(0,parseInt(e.target.value)))}/>
+                <FontAwesomeIcon icon={faCartArrowDown} onClick={()=>this.changeBasketCount(vendorBaskets, vendor, name, amount-1)} size="2x" color="silver"/>
+            </Box>
+        </>);
+    }
+
+    getNumberOfBaskets = () => {
+        const {vendorBaskets} = this.state as any;
+        let count = 0;
+        Object.keys(vendorBaskets).forEach((v)=> {
+            if(Object.keys(vendorBaskets[v]).find((p)=> {
+                return vendorBaskets[v][p].amount>0;
+            })) {
+                count++;
+            }
+        });
+        return count;
+    }
+
+    getBasketItems = () => {
+        const items:any[] = [];
+        const {vendorBaskets, data, vendor:vendorFilter} = this.state as any;
+        Object.keys(vendorBaskets).forEach((vendor:string)=> {
+            if(vendorFilter && vendorFilter!==vendor) {
+                return;
+            }
+
+            Object.keys(vendorBaskets[vendor]).forEach((name:string)=> {
+                if(vendorBaskets[vendor][name].amount <=0)
+                {
+                    return;
+                }
+
+                const basketItem = vendorBaskets[vendor][name];
+                if (basketItem) {
+                    if (basketItem.amount <= 0) {
+                        return;
+                    }
+                }
+
+                const found = data.find((d) => {
+                    return d.name == name;
+                });
+
+                if (!found) {
+                    items.push({...vendorBaskets[vendor][name], vendor, name, price: basketItem.price.toFixed(2)});
+                }
+            });
+        });
+
+        return items;
+    }
+
     render = () => {
         const {
             dialogContents,
@@ -734,7 +837,8 @@ class Data extends Component {
             location,
             inProgress,
             anchorEl,
-            queries
+            queries,
+            vendorBaskets
         } = this.state as any;
 
         let representation = (<p>{JSON.stringify(data, null, 2)}</p>);
@@ -771,6 +875,12 @@ class Data extends Component {
                     <Table.Header>
                         <Table.Row>
                             <Table.HeaderCell
+                                sorted={column === 'basket' ? direction : null}
+                                onClick={() => this.handleSort('basket', this.state)}
+                            >
+                                Basket
+                            </Table.HeaderCell>
+                            <Table.HeaderCell
                                 sorted={column === 'name' ? direction : null}
                                 onClick={() => this.handleSort('name', this.state)}
                             >
@@ -803,24 +913,8 @@ class Data extends Component {
                         </Table.Row>
                     </Table.Header>
                     <Table.Body>
-                        {filteredData && filteredData.map(({
-                                                               _id,
-                                                               name,
-                                                               price,
-                                                               vendor,
-                                                               distance,
-                                                               dateTime,
-                                                               metadata,
-                                                               dateTimeSort
-                                                           }) => (
-                            <Table.Row key={_id}>
-                                <Table.Cell>{this.formatName(name,metadata)}</Table.Cell>
-                                <Table.Cell>{cleanupPriceName(price)}</Table.Cell>
-                                <Table.Cell>{vendor}</Table.Cell>
-                                <Table.Cell hidden={true}>{distance}</Table.Cell>
-                                <Table.Cell>{new Date(dateTime).toLocaleString()}</Table.Cell>
-                            </Table.Row>
-                        ))}
+                        {this.generateBody(this.getBasketItems(), vendorBaskets)}
+                        {this.generateBody(filteredData, vendorBaskets)}
                     </Table.Body>
                 </Table>);
         } else {
@@ -883,11 +977,36 @@ class Data extends Component {
                     )}
                 />
                 <span className={styles.error}>{error}</span>
+                <h2>{(this.getNumberOfBaskets()>=2)?(<Link href='/baskets'>Compare Products in {this.getNumberOfBaskets()} Baskets</Link>):(<span>Add items from multiple vendors to baskets for comparison</span>)}</h2>
                 {representation}
                 <DialogComponent label={dialogLabel} show={!!dialogContents}
                                  onResult={dialogCallback}>{dialogContents}</DialogComponent>
             </div>
         )
+    }
+
+    private generateBody(filteredData, vendorBaskets) {
+        return <>
+            {filteredData && filteredData.map(({
+                                                   _id,
+                                                   name,
+                                                   price,
+                                                   vendor,
+                                                   distance,
+                                                   dateTime,
+                                                   metadata,
+                                                   dateTimeSort
+                                               }) => (
+                <Table.Row key={_id}>
+                    <Table.Cell>{this.getBasketCount(vendorBaskets, vendor, name)}</Table.Cell>
+                    <Table.Cell>{this.formatName(name, metadata)}</Table.Cell>
+                    <Table.Cell>{cleanupPriceName(price)}</Table.Cell>
+                    <Table.Cell>{vendor}</Table.Cell>
+                    <Table.Cell hidden={true}>{distance}</Table.Cell>
+                    <Table.Cell>{new Date(dateTime).toLocaleString()}</Table.Cell>
+                </Table.Row>
+            ))}
+        </>;
     }
 
     private formatName(name: string, metadata: any) {
@@ -898,10 +1017,10 @@ class Data extends Component {
         let rez:any = [name];
 
         _.map(metadata, (key,val)=> {
-            rez = reactStringReplace(rez, key,(match, i) => { return (<Chip label={match} variant="outlined" />);});
+            rez = reactStringReplace(rez, key,(match, i) => { return (<Chip key={key+val+i} label={match} variant="outlined" />);});
         });
         return rez;
     }
 }
 
-export default Data
+export default Products
