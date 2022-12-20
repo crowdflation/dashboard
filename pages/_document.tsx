@@ -18,7 +18,7 @@ export default class MyDocument extends Document {
                             // @ts-ignore
                             if(window) {
                             // @ts-ignore
-                                window.dataLayer?.push(arguments);
+                                window.dataLayer.push(arguments);
                             }
                         }
                         gtag('js', new Date());

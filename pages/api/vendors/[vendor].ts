@@ -8,6 +8,14 @@ const cors = Cors({
   methods: ['GET', 'POST'],
 });
 
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '50mb' // Set desired value here
+    }
+  }
+}
+
 export default async function handler(
     req: NextApiRequest,
     res: NextApiResponse<any>

@@ -9,11 +9,12 @@ import {getProducts} from "./api/products";
 import Geocode from "react-geocode";
 import {
     Box, Chip,
-    CircularProgress,
+    CircularProgress, Grid,
     Link,
     Menu,
-    MenuItem, TextField
+    MenuItem, TextField, Typography
 } from "@mui/material";
+import Image from 'next/image'
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
 import {faLocationCrosshairs, faCircleChevronDown, faCartArrowDown, faCartPlus} from '@fortawesome/free-solid-svg-icons';
 import {DialogComponent} from '@/components/dialog-component';
@@ -257,6 +258,13 @@ class Products extends Component {
         console.log('newState', this.newState);
 
         this.setState(this.newState);
+    }
+
+    getProductImage(imgHash) {
+        if(!imgHash) {
+            return null;
+        }
+        return (<Image width="50px" height="50px" alt={'Product image'} src={`https://res.cloudinary.com/dpjegpzyq/image/upload/v1671495698/${imgHash}.jpg`}/>)
     }
 
     setTags = (searchValues, tagOptions = undefined) => {
@@ -991,6 +999,7 @@ class Products extends Component {
                                                    _id,
                                                    name,
                                                    price,
+                                                   imgHash,
                                                    vendor,
                                                    distance,
                                                    dateTime,
@@ -999,7 +1008,20 @@ class Products extends Component {
                                                }) => (
                 <Table.Row key={_id}>
                     <Table.Cell>{this.getBasketCount(vendorBaskets, vendor, name)}</Table.Cell>
-                    <Table.Cell>{this.formatName(name, metadata)}</Table.Cell>
+                    <Table.Cell>
+                        {imgHash?(
+                            <Grid container spacing={2} direction="row" alignItems="center">
+                                <Grid item xs="auto">
+                                    {this.getProductImage(imgHash)}
+                                </Grid>
+                                <Grid item xs>
+                                    <Typography>
+                                        {this.formatName(name, metadata)}
+                                    </Typography>
+                                </Grid>
+                            </Grid>
+                        ):this.formatName(name, metadata)}
+                    </Table.Cell>
                     <Table.Cell>{cleanupPriceName(price)}</Table.Cell>
                     <Table.Cell>{vendor}</Table.Cell>
                     <Table.Cell hidden={true}>{distance}</Table.Cell>

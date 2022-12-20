@@ -8,11 +8,28 @@ import { countryToLanguage } from '../../../../data/languages'
 import { connectToDatabase } from "../../../../lib/util/mongodb";
 import axios from "axios";
 import {cleanupPriceName} from "../../../../lib/util/utils";
+import {sha256} from "js-sha256";
+
+// Require the cloudinary library
+const cloudinary = require('cloudinary').v2;
+
+// Return "https" URLs by setting secure: true
+cloudinary.config({
+  secure: true
+});
 
 // Initializing the cors middleware
 const cors = Cors({
   methods: ['GET', 'POST'],
 });
+
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '50mb' // Set desired value here
+    }
+  }
+}
 
 function validateAndDenormalise(location:{latitude:number,longitude:number }) {
   const dateTime = new Date();
@@ -162,6 +179,29 @@ export async function handleDataRequest(vendor: string | string[], country: any,
     //Add each item from the list
     const namesFound = {};
     enriched.forEach(async function (item: any) {
+      const img = item.img;
+      if(img) {
+        delete item.img;
+        const imgHash = sha256(img);
+        item.imgHash = imgHash;
+        const imageMetadata = {imgHash, vendor, name: item.name};
+        const image = await db.collection('_images').findOne(imageMetadata);
+        if(!image) {
+          const options = {
+            public_id: imgHash,
+            unique_filename: false,
+            overwrite: false,
+          };
+
+          try {
+            cloudinary.uploader.upload(img, options);
+          }
+          catch (e) {
+            console.error('Failed to upload image file for ', item.name);
+          }
+        }
+      }
+
       const itemFilter = {...item, country: countryFilter};
       const found = await db
           .collection(vendor).findOne(itemFilter);

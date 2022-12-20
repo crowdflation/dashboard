@@ -161,6 +161,7 @@ async function filterProducts(country: string | undefined, vendorName, ageInHour
     filter['locationArray'] = {$geoWithin: {$centerSphere: [[parseFloat(location.longitude), parseFloat(location.latitude)], parseFloat(distance)]}};
   }
 
+
   if (ageInHours) {
     const timeOfRecordAge = new Date();
     timeOfRecordAge.setHours(timeOfRecordAge.getHours() - ageInHours);
@@ -195,13 +196,17 @@ async function filterProducts(country: string | undefined, vendorName, ageInHour
         },
         date: {
           $last: '$dateTime'
+        },
+        imgHash: {
+          $last: '$imgHash'
         }
       }
     },
     {
       $project: {
         price: '$price',
-        dateTime: '$date'
+        dateTime: '$date',
+        imgHash: '$imgHash'
       }
     }];
 
@@ -322,7 +327,6 @@ export default async function handler(
   try {
     if (req.method === 'GET') {
       const {country, category, longitude, latitude, distance, age, vendor, search, searchText} = req.query;
-      const start = new Date();
 
       const ageInHours = parseInt(age as string) || undefined;
 
