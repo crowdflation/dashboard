@@ -234,12 +234,6 @@ class Scrapers extends Component {
                                 Website
                             </Table.HeaderCell>
                             <Table.HeaderCell
-                                sorted={column === 'walletAddress' ? direction : null}
-                                onClick={() => this.handleSort('walletAddress', this.state)}
-                            >
-                                Author Wallet Address
-                            </Table.HeaderCell>
-                            <Table.HeaderCell
                                 sorted={column === 'added' ? direction : null}
                                 onClick={() => this.handleSort('added', this.state)}
                             >
@@ -261,7 +255,6 @@ class Scrapers extends Component {
                                                        requiredFields,
                                                        copyFields,
                                                        website,
-                                                       walletAddress,
                                                        added
                                                    }) => (
                             <Table.Row key={_id}>
@@ -273,7 +266,6 @@ class Scrapers extends Component {
                                 <Table.Cell>{JSON.stringify(requiredFields)}</Table.Cell>
                                 <Table.Cell>{JSON.stringify(copyFields)}</Table.Cell>
                                 <Table.Cell>{website}</Table.Cell>
-                                <Table.Cell>{walletAddress}</Table.Cell>
                                 <Table.Cell>{added}</Table.Cell>
                                 <Table.Cell>
                                     <button onClick={() => this.useAsTemplate({
@@ -285,7 +277,6 @@ class Scrapers extends Component {
                                         requiredFields,
                                         copyFields,
                                         website,
-                                        walletAddress,
                                         added
                                     })}>Use as Template
                                     </button>

@@ -195,6 +195,7 @@ export async function handleDataRequest(vendor: string | string[], country: any,
 
           try {
             cloudinary.uploader.upload(img, options);
+            await db.collection('_images').insertOne(imageMetadata);
           }
           catch (e) {
             console.error('Failed to upload image file for ', item.name);

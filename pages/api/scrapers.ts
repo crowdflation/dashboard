@@ -27,7 +27,7 @@ const isScraper = toi
                   .and(
                       toi.obj.keys(
                           {
-                            name: toi.str.min(5).and(toi.str.max(100)).and(toi.required()),
+                            name: toi.str.min(3).and(toi.str.max(100)).and(toi.required()),
                             country: toi.str.min(2).and(toi.str.max(2)).and(toi.required()),
                             urlRegex: toi.str.min(5).and(toi.str.max(100)).and(toix.str.startsWith('/')).and(toix.str.endsWith('/')).and(toi.required()),
                             itemSelector: toi.str.min(5).and(toi.str.max(250)).and(toi.required()),
@@ -87,6 +87,7 @@ export async function handleDataRequest(req: NextApiRequest, res: NextApiRespons
   //TODO: put methods in constants
   if (req.method === 'GET') {
     const scrapers = await getScrapers(db);
+    scrapers.forEach((s)=>s.walletAddress=null)
     return res.status(200).json(JSON.stringify(scrapers, null, 2));
   } else if (req.method === 'POST') {
     const item = req.body;
@@ -131,10 +132,9 @@ export async function handleDataRequest(req: NextApiRequest, res: NextApiRespons
     if (!found) {
       await db.collection(collection).insertOne({...item, added: new Date(), uuid: uuidv4(), domain, type:'simple-css'});
     } else {
-      // TODO: Check signatures
-      throw new Error('Updating is not currently implemented');
+      // TODO: check signature
       // console.log('updating', found, item);
-      // await db.collection(collection).updateOne(filter, {$set: item});
+      await db.collection(collection).updateOne(filter, {$set: item});
     }
     return res.status(200).json({});
   }
