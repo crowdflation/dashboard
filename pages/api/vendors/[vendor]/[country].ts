@@ -178,6 +178,7 @@ export async function handleDataRequest(vendor: string | string[], country: any,
     const enriched = req.body.payload.data.map(validateAndDenormalise(req.body.payload.location));
     //Add each item from the list
     const namesFound = {};
+    const imagesFound = {};
     enriched.forEach(async function (item: any) {
       const img = item.img;
       if(img) {
@@ -186,20 +187,26 @@ export async function handleDataRequest(vendor: string | string[], country: any,
         item.imgHash = imgHash;
         const imageMetadata = {imgHash, vendor, name: item.name};
         const image = await db.collection('_images').findOne(imageMetadata);
-        if(!image) {
+        if(!image && !imagesFound[imgHash]) {
           const options = {
             public_id: imgHash,
             unique_filename: false,
             overwrite: false,
           };
 
+          imagesFound[imgHash] = true;
+
           try {
-            cloudinary.uploader.upload(img, options);
-            await db.collection('_images').insertOne(imageMetadata);
+            cloudinary.uploader.upload(img, options).then(()=> {
+              db.collection('_images').insertOne(imageMetadata);
+              console.log('uploaded image', imgHash);
+            });
           }
           catch (e) {
-            console.error('Failed to upload image file for ', item.name);
+            console.error('Failed to upload image file for ', item.name, e, img?.length);
           }
+        } else {
+            console.log('Image already exists');
         }
       }
 
