@@ -1020,7 +1020,7 @@ class Products extends Component {
                                     </Typography>
                                 </Grid>
                             </Grid>
-                        ):this.formatName(name, metadata)}
+                        ):(<Typography>{this.formatName(name, metadata)}</Typography>)}
                     </Table.Cell>
                     <Table.Cell>{cleanupPriceName(price)}</Table.Cell>
                     <Table.Cell>{vendor}</Table.Cell>

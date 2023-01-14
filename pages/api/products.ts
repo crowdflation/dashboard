@@ -7,6 +7,8 @@ import {getPriceValue} from "../../lib/util/utils";
 import _ from 'lodash';
 import {sha256} from "js-sha256";
 
+const blankHash = 'aa0a9f4a1136f9986a383cfa1040cfa81718c036d98dbc5dcde0c80e6a3632cd'
+
 // Initializing the cors middleware
 const cors = Cors({
   methods: ['GET'],
@@ -135,7 +137,27 @@ async function filterByCategories(category: string | string[], country: string |
       });
     }));
   }));
+
+  await enrichProductImages(allProductData, db);
   return allProductData;
+}
+
+async function enrichProductImages(allProductData: any[], db) {
+  // get images for products
+  const imgHashes = allProductData.map((p) => p.imgHash);
+  const imgFilter = {hash: {$in: imgHashes}};
+  const images = await db.collection('_images').find(imgFilter).toArray();
+  const imgHashToImg = {};
+  images.forEach((i) => {
+    if (i.imgHash !== blankHash) {
+      imgHashToImg[i.name] = i.imgHash;
+    }
+  });
+  allProductData.forEach((p) => {
+    if (!p.imgHash && imgHashToImg[p.name]) {
+      p.imgHash = imgHashToImg[p.name];
+    }
+  });
 }
 
 async function filterProducts(country: string | undefined, vendorName, ageInHours, db, search:string[], location, distance) {
@@ -233,6 +255,8 @@ async function filterProducts(country: string | undefined, vendorName, ageInHour
   }));
 
   console.log('app products',allProductData.length );
+
+  await enrichProductImages(allProductData, db);
 
   return allProductData;
 
