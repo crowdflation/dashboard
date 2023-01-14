@@ -142,20 +142,26 @@ async function filterByCategories(category: string | string[], country: string |
   return allProductData;
 }
 
+
+function combineNameAndVendor(name, vendor) {
+  return `${name} ${vendor}`;
+}
+
 async function enrichProductImages(allProductData: any[], db) {
   // get images for products
-  const imgHashes = allProductData.map((p) => p.imgHash);
-  const imgFilter = {hash: {$in: imgHashes}};
+  const imgHashes = allProductData.map((p) => p.name);
+  const imgFilter = {name: {$in: imgHashes}};
   const images = await db.collection('_images').find(imgFilter).toArray();
   const imgHashToImg = {};
   images.forEach((i) => {
     if (i.imgHash !== blankHash) {
-      imgHashToImg[i.name] = i.imgHash;
+      imgHashToImg[combineNameAndVendor(i.name, i.vendor)] = i.imgHash;
     }
   });
   allProductData.forEach((p) => {
-    if (!p.imgHash && imgHashToImg[p.name]) {
-      p.imgHash = imgHashToImg[p.name];
+    if (!p.imgHash && imgHashToImg[combineNameAndVendor(p.name, p.vendor)]) {
+      console.log('setting img hash', p.name, p.vendor, imgHashToImg[combineNameAndVendor(p.name, p.vendor)]);
+      p.imgHash = imgHashToImg[combineNameAndVendor(p.name, p.vendor)];
     }
   });
 }
