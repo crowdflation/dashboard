@@ -179,7 +179,7 @@ export async function handleDataRequest(vendor: string | string[], country: any,
     //Add each item from the list
     const namesFound = {};
     const imagesFound = {};
-    enriched.forEach(async function (item: any) {
+    for (const item of enriched) {
       const img = item.img;
       if(img) {
         delete item.img;
@@ -197,6 +197,7 @@ export async function handleDataRequest(vendor: string | string[], country: any,
           imagesFound[imgHash] = true;
 
           try {
+            // @ts-ignore
             cloudinary.uploader.upload(img, options).then(()=> {
               db.collection('_images').insertOne(imageMetadata);
               console.log('uploaded image', imgHash);
@@ -221,7 +222,7 @@ export async function handleDataRequest(vendor: string | string[], country: any,
         //If item is found just increment the counter
         await db.collection(vendor).updateOne({...item, country: countryFilter}, {$inc: {count: 1}});
       }
-    });
+    }
 
     await db.collection('_vendors').updateOne(
       {name: vendor, country: countryFilter},

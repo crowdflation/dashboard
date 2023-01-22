@@ -56,6 +56,27 @@ export async function getVendorNames(db, countryFilter) {
   return _.union(vendors, ['walmart', 'kroger', 'zillow']);
 }
 
+export const currentDBVersion = 1;
+
+export async function checkDBVersionHigherThan(db, version) {
+  const version = currentDBVersion;
+  const dbVersion = await db.collection('_version').findOne({});
+  if (dbVersion && dbVersion.version) {
+    return dbVersion.version > version;
+  }
+  return false;
+}
+
+export async function updateDBVersion(db) {
+  const version = currentDBVersion;
+  await db.collection('_version').updateOne({}, {$set: {version}}, {upsert: true});
+}
+
+export async function createIndicesForImages(db) {
+  await db.collection('_images').createIndex({name: 1}, {background: 1});
+  await db.collection('_images').createIndex({name: 1, vendor:1, imgHash: 1}, {background: 1});
+}
+
 export async function createIndicesOnVendors(db) {
   const vendors = await getVendorNames(db, {});
   await Promise.all(vendors.map(v=> {

@@ -23,7 +23,7 @@ import {codeToCountryMap} from "../data/countries";
 import DropdownTreeSelect from "react-dropdown-tree-select";
 import categories from "../data/categories";
 import 'react-dropdown-tree-select/dist/styles.css';
-import {connectToDatabase, createIndicesOnVendors, getVendors} from "../lib/util/mongodb";
+import {connectToDatabase, createIndicesForImages, createIndicesOnVendors, getVendors} from "../lib/util/mongodb";
 import {cleanupPriceName, getPriceValue, isValidPrice} from "../lib/util/utils";
 import keywordExtractor from "keyword-extractor";
 import geoip from 'geoip-lite';
@@ -100,6 +100,7 @@ export async function getServerSideProps({req, res, query}) {
     if (!startupCodeCheck) {
         startupCodeCheck = true;
         createIndicesOnVendors(db).then();
+        createIndicesForImages(db).then();
     }
 
     const forwarded = req.headers["x-forwarded-for"]

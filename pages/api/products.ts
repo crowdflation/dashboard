@@ -149,8 +149,8 @@ function combineNameAndVendor(name, vendor) {
 
 async function enrichProductImages(allProductData: any[], db) {
   // get images for products
-  const imgHashes = allProductData.map((p) => p.name);
-  const imgFilter = {name: {$in: imgHashes}};
+  const imgNames = allProductData.map((p) => p.name);
+  const imgFilter = {name: {$in: imgNames}};
   const images = await db.collection('_images').find(imgFilter).toArray();
   const imgHashToImg = {};
   images.forEach((i) => {
@@ -160,7 +160,6 @@ async function enrichProductImages(allProductData: any[], db) {
   });
   allProductData.forEach((p) => {
     if (!p.imgHash && imgHashToImg[combineNameAndVendor(p.name, p.vendor)]) {
-      console.log('setting img hash', p.name, p.vendor, imgHashToImg[combineNameAndVendor(p.name, p.vendor)]);
       p.imgHash = imgHashToImg[combineNameAndVendor(p.name, p.vendor)];
     }
   });
