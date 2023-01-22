@@ -59,7 +59,6 @@ export async function getVendorNames(db, countryFilter) {
 export const currentDBVersion = 1;
 
 export async function checkDBVersionHigherThan(db, version) {
-  const version = currentDBVersion;
   const dbVersion = await db.collection('_version').findOne({});
   if (dbVersion && dbVersion.version) {
     return dbVersion.version > version;

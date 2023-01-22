@@ -58,7 +58,7 @@ class Layout extends Component<MyComponentProps> {
             <h1><Link href='/'><a className={styles.headerLink}>Crowdflation</a></Link></h1>
           </div>
           <div className={styles.subtitle}>
-            <span>Save time and money shopping</span>
+            <h2>Decentralized Inflation Data</h2>
           </div>
           <div>
             <Tabs
@@ -70,7 +70,7 @@ class Layout extends Component<MyComponentProps> {
                 '& .MuiTabs-flexContainer': {justifyContent: "center"}
               }}
             >
-              <LinkTab label="Price Comparison" href="/products" />
+              <LinkTab label="Inflation Dashboard" href="/inflation" />
               <LinkTab label="FAQ" href="/faq" />
               {/* <LinkTab label="Code" href="/code" /> */}
             </Tabs>
