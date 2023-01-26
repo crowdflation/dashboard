@@ -287,6 +287,9 @@ class Scrapers extends Component {
                 </Table>);
         }
 
+        const countrySelected = inputData.country || 'US';
+        console.log('countrySelected',countrySelected);
+
         return (
             <div className={styles.container}>
                 <h1>Scrapers</h1>
@@ -316,8 +319,8 @@ class Scrapers extends Component {
                     <FormControl>
                         <h4>Country</h4>
                         <Select aria-describedby="country-helper-text" name='country'
-                                defaultValue={inputData.country || 'US'} onChange={this.handleChange.bind(this)}>
-                            {countryCodes.map((cc) => (<MenuItem key={cc} value={cc}>{codeToCountryMap[cc].name}</MenuItem>))}
+                                value={countrySelected} onChange={this.handleChange.bind(this)}>
+                            {countryCodes.map((cc) => (<MenuItem value={cc} key={cc}>{codeToCountryMap[cc].name}</MenuItem>))}
                         </Select>
                         <FormHelperText id="country-helper-text">The country where the scraper applies.</FormHelperText>
                     </FormControl>
