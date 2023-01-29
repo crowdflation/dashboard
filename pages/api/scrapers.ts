@@ -21,6 +21,8 @@ const isScraper = toi
             {
               website: toix.str.url(),
               walletAddress: toi.str.regex(/^0x[a-fA-F0-9]{40}$/),
+              searchUrl: toi.str.nonempty(),
+              datasets: toi.array.items(toi.str.nonempty()),
               scraper: toi
                   .required() // make toi reject null or undefined
                   .and(toi.obj.isplain()) // forces that the value is a plain JS object
@@ -71,14 +73,21 @@ type SimpleCSSScraper = {
   itemSelector:string;
   parsers: Record<string,CSSIndex>;
   requiredFields:string[];
+  searchUrl:string;
+  datasets:string[];
   copyFields:Record<string,string>
 };
 
 export async function getScrapers(db) {
-  return await db
+  return (await db
       .collection('_scrapers')
       .find({type: 'simple-css'})
-      .toArray();
+      .toArray()).map((scraper) => {
+        return {
+          ...scraper,
+          walletAddress: null
+        };
+      });
 }
 
 export async function handleDataRequest(req: NextApiRequest, res: NextApiResponse<any>) {
@@ -122,19 +131,24 @@ export async function handleDataRequest(req: NextApiRequest, res: NextApiRespons
       throw new Error(`Item with the same domain name ${domain} but different scraper name has been found ${foundDifferentName.name}. Please use the same name for the same vendor, to help with price comparison`);
     }
 
-    const filter = {..._.pick(item, ['name', 'website', 'walletAddress']), type:'simple-css'};
+    const filter = {'scraper.name': item.scraper.name, type:'simple-css'};
 
     //TODO:find by contents hash
     const found = await db
         .collection(collection).findOne(filter);
 
+
     console.log('found', found);
     if (!found) {
       await db.collection(collection).insertOne({...item, added: new Date(), uuid: uuidv4(), domain, type:'simple-css'});
     } else {
+      // TODO: allow different names for same vendor
+      if(found.walletAddress!==item.walletAddress)  {
+        throw new Error(`Item with the same name ${item.name} already exists, but the wallet address does not match. Please choose a new scraper name or use the same wallet to update the existing scraper`);
+      }
+
       // TODO: check signature
-      // console.log('updating', found, item);
-      await db.collection(collection).updateOne(filter, {$set: item});
+      await db.collection(collection).updateOne(filter, {$set: {...item, updated: new Date()}});
     }
     return res.status(200).json({});
   }

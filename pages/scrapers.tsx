@@ -24,7 +24,7 @@ import {getScrapers} from './api/scrapers'
 export async function getServerSideProps() {
     const {db} = await connectToDatabase();
     const scrapers = (await getScrapers(db)).map((s) => {
-            const res = {...s, ...s.scraper, added: s.added.toISOString() };
+            const res = {...s, ...s.scraper, added: s.added.toISOString(), updated: s.updated?.toISOString() || null };
             delete res.scraper;
             delete res._id;
             return res;
@@ -62,11 +62,15 @@ class Scrapers extends Component {
 
 
     handleChangeJSON = (e: any) => {
-        console.log('handleChange e.target.value',e.target.value);
-        this.setState({
-            ...this.state,
-            inputData: {...(this.state as any).inputData,[e.target.name]: JSON.parse(e.target.value)}
-        });
+        try {
+            console.log('handleChange e.target.value', e.target.value);
+            this.setState({
+                ...this.state,
+                inputData: {...(this.state as any).inputData, [e.target.name]: JSON.parse(e.target.value)}
+            });
+        } catch (e) {
+            console.log('error handleChangeJSON', e);
+        }
     }
 
     handleChangeInputData = (e: any) => {
@@ -130,6 +134,7 @@ class Scrapers extends Component {
     }
 
     useAsTemplate = (t) => {
+        console.log('useAsTemplate', t);
         this.setState({...this.state, inputData: t});
     }
 
@@ -144,22 +149,34 @@ class Scrapers extends Component {
             requiredFields,
             copyFields,
             website,
-            walletAddress
+            walletAddress,
+            datasets,
+            searchUrl
         } = (this.state as any).inputData;
+
+        console.log('save', (this.state as any).inputData);
         const {scrapers} = this.state as any;
         // Make a request for a user with a given ID
         axios.post('/api/scrapers', {
             website,
             walletAddress,
+            searchUrl,
+            datasets: datasets && JSON.parse(datasets),
             scraper: {name, country, urlRegex, itemSelector, parsers, requiredFields, copyFields}
         })
-            .then(() => {
-                const newScrapers = scrapers.slice();
-                newScrapers.push((this.state as any).inputData);
+            .then(async () => {
+
+                const {data} = await axios.get('/api/scrapers');
+
                 const newState = {
                     ...this.state,
-                    scrapers: newScrapers,
-                    inputData: { walletAddress, country },
+                    scrapers: JSON.parse(data).map((s) => {
+                        const res = {...s, ...s.scraper, added: s.added.toISOString(), updated: s.updated?.toISOString() || null };
+                        delete res.scraper;
+                        delete res._id;
+                        return res;
+                    }),
+                    inputData: (that.state as any).inputData,
                     success: 'Item added',
                     error: null,
                 };
@@ -255,11 +272,13 @@ class Scrapers extends Component {
                                                        requiredFields,
                                                        copyFields,
                                                        website,
-                                                       added
+                                                       added,
+                                                       searchUrl,
+                                                       datasets
                                                    }) => (
                             <Table.Row key={_id}>
                                 <Table.Cell>{name}</Table.Cell>
-                                <Table.Cell>{codeToCountryMap[country].name}</Table.Cell>
+                                <Table.Cell>{codeToCountryMap[country]?.name}</Table.Cell>
                                 <Table.Cell>{urlRegex}</Table.Cell>
                                 <Table.Cell>{itemSelector}</Table.Cell>
                                 <Table.Cell>{JSON.stringify(parsers, null, 2)}</Table.Cell>
@@ -277,7 +296,9 @@ class Scrapers extends Component {
                                         requiredFields,
                                         copyFields,
                                         website,
-                                        added
+                                        added,
+                                        searchUrl,
+                                        datasets
                                     })}>Use as Template
                                     </button>
                                 </Table.Cell>
@@ -376,6 +397,18 @@ class Scrapers extends Component {
                         <Input aria-describedby="name-helper-text" name='website' value={inputData.website}
                                onChange={this.handleChange.bind(this)} placeholder="https://www.albertsons.com"/>
                         <FormHelperText id="name-helper-text">Which website is this scraper for</FormHelperText>
+                    </FormControl>
+                    <FormControl>
+                        <h4>Search URL</h4>
+                        <Input aria-describedby="name-helper-text" name='searchUrl' value={inputData.searchUrl}
+                               onChange={this.handleChange.bind(this)} placeholder="${website}/shop/search-results.html?q=${product}"/>
+                        <FormHelperText id="name-helper-text">What is the URL template for search</FormHelperText>
+                    </FormControl>
+                    <FormControl>
+                        <h4>Datasets</h4>
+                        <Input aria-describedby="name-helper-text" name='datasets' value={inputData.datasets}
+                               onChange={this.handleChange.bind(this)} placeholder='["groceries.txt"]'/>
+                        <FormHelperText id="name-helper-text">What datasets to use</FormHelperText>
                     </FormControl>
                     <FormControl>
                         <h4>Wallet Address</h4>
