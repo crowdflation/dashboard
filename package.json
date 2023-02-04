@@ -36,6 +36,7 @@
     "cors": "^2.8.5",
     "dayjs": "^1.10.7",
     "dns": "^0.2.2",
+    "elasticsearch": "^16.7.3",
     "express": "^4.17.1",
     "geoip-lite": "^1.4.6",
     "google-maps-react": "^2.0.6",

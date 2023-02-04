@@ -9,6 +9,39 @@ import { connectToDatabase } from "../../../../lib/util/mongodb";
 import axios from "axios";
 import {cleanupPriceName} from "../../../../lib/util/utils";
 import {sha256} from "js-sha256";
+import { Client } from 'elasticsearch';
+const client = new Client({
+  host: process.env.ELASTIC_SEARCH_URL,
+  ssl:{ rejectUnauthorized: false, pfx: [] },
+  //log: 'trace'
+});
+
+async function indexProvidedProduct(product, vendorName, country) {
+  const productDocument = {
+    name: product.name,
+    vendor: vendorName,
+    country: country || 'US',
+    dateTime: product.dateTime,
+    price: product.price
+  };
+  const id = `${vendorName}-${product.name}`;
+  try {
+    if(!product.name || !vendorName) {
+        throw new Error(`Product must have name and vendor ${id}` );
+    }
+
+    // upsert the product if exists and update the dateTime
+    await client.index({
+      index: 'products',
+      id,
+      body: productDocument,
+      refresh: true
+    });
+    console.log('indexed', id, product.dateTime);
+  } catch (e) {
+    console.log('Error indexing product', e, id, productDocument);
+  }
+}
 
 // Require the cloudinary library
 const cloudinary = require('cloudinary').v2;
@@ -222,6 +255,8 @@ export async function handleDataRequest(vendor: string | string[], country: any,
         //If item is found just increment the counter
         await db.collection(vendor).updateOne({...item, country: countryFilter}, {$inc: {count: 1}});
       }
+
+      indexProvidedProduct(item, vendor, country);
     }
 
     await db.collection('_vendors').updateOne(
@@ -232,6 +267,9 @@ export async function handleDataRequest(vendor: string | string[], country: any,
       });
 
     res.status(200).json({});
+
+
+
 
     const namesNotCategorised:string[] = [];
     await Promise.all(Object.keys(namesFound).map(async (name)=> {
@@ -302,6 +340,7 @@ export async function handleDataRequest(vendor: string | string[], country: any,
     }));
 
     console.debug('itemExtractedUpdated', itemExtractedUpdated);
+
 
     return;
   }
