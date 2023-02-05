@@ -54,9 +54,24 @@ export default async function handler(
   res: NextApiResponse<any>
 ) {
 
-  const {all} = req.query;
+  const {query} = req.query;
   // Run the middleware
   await runMiddleware(req, res, cors);
   const dataObj = await getLastUpdateFromScrapers();
-  return res.status(200).send(JSON.stringify(dataObj, null, 2))
+  const containsSomeRecords = dataObj.some(d => d.result === 'hasRecords');
+  const containsOutdatedRecords = dataObj.some(d => d.result === 'outdatedRecords');
+  let statusCode = 200;
+  switch (query) {
+    case 'hasRecords':
+        if(!containsSomeRecords) {
+          statusCode = 404;
+        }
+        break;
+    case 'noOutdatedRecords':
+        if(containsOutdatedRecords) {
+            statusCode = 404;
+        }
+  }
+
+  return res.status(statusCode).send(JSON.stringify(dataObj, null, 2))
 }
