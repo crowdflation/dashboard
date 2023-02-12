@@ -130,6 +130,41 @@ async function extractUnitsFromModel(namesNotExtracted: string[], language) {
   throw new Error("Timeout trying to access the model")
 }
 
+// fixme: use image size instead or better detection
+const ignoreHashes = ["00cbd2f5b027d51cc10299a5f6b289a596b575d20de51dacb659394689bda6c4",
+  "07478069299cbf2bef40b4a9b688ae5acced0507d42e7517fb42e9159c4c3219",
+  "0dc362022df09090fcfe6cfa2c76b2ff7a7933a1d0d780ac599f77bbf25702bd",
+  "1b748b46137a24d4eb3bd4dc8d0c6a25a56828126cbe79e5c3951aa0c65e27f3",
+  "41113253d1bfbb6aef0459127af57a17056636ed415bf166e66c6682c0c36f76",
+  "43deb15255abe3114458dea4321d98aec1d00b7271c4a93f0dc07013d1748e89",
+  "4ae5a7e0e561e5b4f1b803a0ab3464b8b90a7442e46a9fc0aa12c430f4227878",
+  "53e0a2b40392880cc4e006bf741b8359d30b846d3f4a918e07d959235a160d89",
+  "567035580f90a4e58ac9c003bdb3378bfb1099cba2087d31be02f21d97631661",
+  "75ae7298c996feb703e4d97791d2d6669c3fa1ec6020253d4f9890435dab4e4e",
+  "7eea2b501c071e9b24054119500b45d0ea258bd4e6ecec1cc53c686fe8f66633",
+  "87609592acab58787d04cd496977f73d35e3b1debfc43e2cbdd056327cf6b9e4",
+  "8f6b75bb28295ec0eeee4a031e8ef1c83f765df61f08796ae0ba2aef09277440",
+  "950acc29d6f1a48b7e45d92e0f183dd0714ee8095576aff709cbb817a44e238e",
+  "a38d3ee7d11cd9356d4fab658b40cff46a11ee7d9b689356cab0946677275cea",
+  "aa0a9f4a1136f9986a383cfa1040cfa81718c036d98dbc5dcde0c80e6a3632cd",
+  "b692c543bb690fa8ea9c43c98f01b956772e8133623c5d0723be494c88e52d4b",
+  "b735350a370e85a17ac6fd3f47972a51d7e535d19945aeef2f9bdb86ed7d199b",
+  "be629491d505c15cb5c727fbf6a383f48b6eafdfa954767b3a86726fb788294a",
+  "c198f4f027239c3042683ddff811623666e18e108fd2be0145e436d3a8ac4253",
+  "c391dac8888052bf5f2cf49cc4ecb54a82418ca3d0a8eafdbc48ec9273fd7df6",
+  "c8c2aa346c748d4e862472f2ff4a6727e418b46c614182447859005699efabce",
+  "cba7ec4b68e9fb171bd043ae1ea1caeabca434ea50c60c4425cb2bedf84d5e56",
+  "cf62e1ce268b679339ee13b6d43d9e3fa8035dea05ab175279a3c50166460f5d",
+  "d01b16315fcd34fbd858d7a3914022f306c8ee59d779cb1424c0076a8353be38",
+  "d5a5273ae8b1b00cc00ec0719d8c9c496173ff0e858c1a1d4ca85785cfa1338d",
+  "defafd77cb993a107701af97d527ebe124512e8ec145539963ca61bfe2341bf4",
+  "df4e1e2e81d07161d612e44f5347b939e02814e7cec1188a7828650d3ffdc9e3",
+  "ea2616b63df907752f5b80327029aa1aed9ad346c8c113f2e82f834177ad879b",
+  "eaa4051904acefdd5fc24ea45e6d8c503bdfed37309818ae6062dda707d5f232",
+  "ec04bf1760978a3b80afddda823417564a2dc7f52be031a1ac7bda279d9a337a",
+  "f7bdeca12df4f25565cf15da2983fc42c458bc6a2e62c760fed60549ce137b5d",
+  "ff3effd56c01fc74bf6e5ac4bf059e415b5130f31ff1c8e5c7eeadd12c729185"];
+
 export async function handleDataRequest(vendor: string | string[], country: any, page=0, limit=200, req: NextApiRequest, res: NextApiResponse<any>) {
   if (!vendor || _.includes(vendor, '_')) {
     return res.status(400).json({error: 'Non-allowed vendor name'});
@@ -220,6 +255,14 @@ export async function handleDataRequest(vendor: string | string[], country: any,
         item.imgHash = imgHash;
         const imageMetadata = {imgHash, vendor, name: item.name};
         const image = await db.collection('_images').findOne(imageMetadata);
+
+        // check if in ignoreHashes
+        if(_.includes(ignoreHashes, imgHash)) {
+          // do not upload ignored
+          continue;
+        }
+
+
         if(!image && !imagesFound[imgHash]) {
           const options = {
             public_id: imgHash,
