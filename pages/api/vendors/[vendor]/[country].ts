@@ -10,6 +10,8 @@ import axios from "axios";
 import {cleanupPriceName} from "../../../../lib/util/utils";
 import {sha256} from "js-sha256";
 import { Client } from 'elasticsearch';
+import { loadImage } from 'canvas';
+
 const client = new Client({
   host: process.env.ELASTIC_SEARCH_URL,
   ssl:{ rejectUnauthorized: false, pfx: [] },
@@ -128,6 +130,12 @@ async function extractUnitsFromModel(namesNotExtracted: string[], language) {
     }
   }
   throw new Error("Timeout trying to access the model")
+}
+
+async function getImageSizeNode(base64Image) {
+  const { loadImage } = require('canvas');
+  const image = await loadImage(base64Image);
+  return {width: image.width, height: image.height};
 }
 
 // fixme: use image size instead or better detection
@@ -262,6 +270,12 @@ export async function handleDataRequest(vendor: string | string[], country: any,
           continue;
         }
 
+        const {width, height} = await getImageSizeNode(img);
+        const minWidthAndHeight = parseInt(process.env.MIN_WIDTH_AND_HEIGHT as string) || 120;
+        if(width < minWidthAndHeight || height < minWidthAndHeight) {
+            // do not upload too small
+            continue;
+        }
 
         if(!image && !imagesFound[imgHash]) {
           const options = {
@@ -323,6 +337,7 @@ export async function handleDataRequest(vendor: string | string[], country: any,
     }));
 
     const categorised = await getCategoriesFromModel(namesNotCategorised, language);
+    const modelVersion = 0.2;
     const confidenceThreshold = (parseFloat(process.env.CATEGORISATOION_CONFIDENCE_TRESHOLD as string)) || 0.8;
 
     let itemCategoriesUpdated = 0;
@@ -336,7 +351,7 @@ export async function handleDataRequest(vendor: string | string[], country: any,
         if(category) {
           await db.collection('_categories').updateOne(
               {name: key, country: countryFilter},
-              {$set: {name: key, category, country, language, vendor}},
+              {$set: {name: key, category, country, language, vendor, modelVersion}},
               {
                 upsert: true
               });
