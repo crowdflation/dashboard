@@ -10,7 +10,9 @@ import axios from "axios";
 import {cleanupPriceName} from "../../../../lib/util/utils";
 import {sha256} from "js-sha256";
 import { Client } from 'elasticsearch';
-import { loadImage } from 'canvas';
+import sizeOf from 'image-size';
+import * as fs from "fs";
+
 
 const client = new Client({
   host: process.env.ELASTIC_SEARCH_URL,
@@ -110,8 +112,6 @@ async function getCategoriesFromModel(namesNotCategorised: string[], language) {
   }
   throw new Error("Timeout trying to access the model")
 }
-
-
 async function extractUnitsFromModel(namesNotExtracted: string[], language) {
   if(!namesNotExtracted?.length) {
     return [];
@@ -133,9 +133,31 @@ async function extractUnitsFromModel(namesNotExtracted: string[], language) {
 }
 
 async function getImageSizeNode(base64Image) {
-  const { loadImage } = require('canvas');
-  const image = await loadImage(base64Image);
-  return {width: image.width, height: image.height};
+  try {
+    console.log('getting image size', base64Image.length, base64Image.substring(0, 100));
+
+    // remove from beginning of the string "data:image/png;base64,"
+    base64Image = base64Image.substring(22);
+
+    // convert base64 to buffer
+    const buffer = Buffer.from(base64Image, 'base64');
+
+    // generate random name for the file
+    const fileName = Math.random().toString(36).substring(7);
+    const filePath = `/tmp/${fileName}.png`;
+
+    // save buffer to file path
+    fs.writeFileSync(filePath, buffer);
+
+    const dimensions = sizeOf(filePath);
+
+    // delete the file
+    fs.rmSync(filePath);
+    return dimensions;
+  } catch (e) {
+    console.log('Error getting image size', e);
+    return {};
+  }
 }
 
 // fixme: use image size instead or better detection
