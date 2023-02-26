@@ -63,7 +63,7 @@ const cors = Cors({
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '50mb' // Set desired value here
+      sizeLimit: '100mb' // Set desired value here
     }
   }
 }
@@ -132,7 +132,12 @@ async function extractUnitsFromModel(namesNotExtracted: string[], language) {
   throw new Error("Timeout trying to access the model")
 }
 
-async function getImageSizeNode(base64Image) {
+type Size = {
+  width: number;
+  height: number;
+}
+
+async function getImageSizeNode(base64Image): Promise<Size> {
   try {
     console.log('getting image size', base64Image.length, base64Image.substring(0, 100));
 
@@ -153,10 +158,10 @@ async function getImageSizeNode(base64Image) {
 
     // delete the file
     fs.rmSync(filePath);
-    return dimensions;
+    return { width: dimensions.width as number, height: dimensions.height as number };
   } catch (e) {
     console.log('Error getting image size', e);
-    return {};
+    return { width: 0, height: 0 };
   }
 }
 
