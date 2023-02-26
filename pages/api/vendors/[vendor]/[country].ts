@@ -79,9 +79,10 @@ function validateAndDenormalise(location:{latitude:number,longitude:number }) {
   const roughLocation = location?{latitude:parseFloat(location.latitude?.toString()).toFixed(3), longitude: parseFloat(location.longitude?.toString()).toFixed(3)}:null;
 
   return function(item:any) {
-    if(!item.name || !item.price) {
-      throw new Error('Submission data must have name and price fields');
+    if(!item.name || !item.price || !_.isString(item.name) || !(_.isString(item.price) || _.isNumber(item.price)) || !_.trim(item.name, ' \t\r\n')) {
+      throw new Error('Submission data must have name and price fields and they have to be valid types (string, number) with data');
     }
+
     return {...item, locationArray: [roughLocation?.longitude, roughLocation?.latitude], location: roughLocation, dateTime}
   }
 }
