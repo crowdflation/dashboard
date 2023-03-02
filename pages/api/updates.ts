@@ -24,11 +24,13 @@ export async function getLastUpdateFromScrapers() {
   return Promise.all(scrapers.map(async (scraper) => {
     const name = scraper.scraper.name;
     const lastUpdate = await db.collection(name).find({dateTime: {$gte: from, $lt: to}}).sort({dateTime: -1}).limit(1).toArray();
+    const count = await db.collection(name).find({dateTime: {$gte: from, $lt: to}}).count();
     if(lastUpdate.length) {
       return {
         name: name,
         lastUpdate: lastUpdate[0].dateTime,
-        result: 'hasRecords'
+        result: 'hasRecords',
+        count
       }
     } else {
       const reallyLastUpdate = await db.collection(name).find({}).sort({dateTime: -1}).limit(1).toArray();

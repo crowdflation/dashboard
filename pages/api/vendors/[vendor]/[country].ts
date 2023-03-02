@@ -7,7 +7,7 @@ import { countries, countryCodes, countryCodesMap } from '../../../../data/count
 import { countryToLanguage } from '../../../../data/languages'
 import { connectToDatabase } from "../../../../lib/util/mongodb";
 import axios from "axios";
-import {cleanupPriceName} from "../../../../lib/util/utils";
+import {cleanupPriceName, getPriceValue} from "../../../../lib/util/utils";
 import {sha256} from "js-sha256";
 import { Client } from 'elasticsearch';
 import sizeOf from 'image-size';
@@ -26,7 +26,8 @@ async function indexProvidedProduct(product, vendorName, country) {
     vendor: vendorName,
     country: country || 'US',
     dateTime: product.dateTime,
-    price: product.price
+    price: product.price,
+    priceValue: getPriceValue(product.priceValue),
   };
   const id = `${vendorName}-${product.name}`;
   try {
