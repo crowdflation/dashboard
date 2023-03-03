@@ -21,13 +21,18 @@ const client = new Client({
 });
 
 async function indexProvidedProduct(product, vendorName, country) {
+  const priceValue = getPriceValue(product.priceValue);
+  if(!priceValue || !product.name) {
+    return;
+  }
+
   const productDocument = {
     name: product.name,
     vendor: vendorName,
     country: country || 'US',
     dateTime: product.dateTime,
     price: product.price,
-    priceValue: getPriceValue(product.priceValue),
+    priceValue,
   };
   const id = `${vendorName}-${product.name}`;
   try {
