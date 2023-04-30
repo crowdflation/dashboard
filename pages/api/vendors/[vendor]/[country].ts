@@ -207,6 +207,42 @@ const ignoreHashes = ["00cbd2f5b027d51cc10299a5f6b289a596b575d20de51dacb65939468
   "f7bdeca12df4f25565cf15da2983fc42c458bc6a2e62c760fed60549ce137b5d",
   "ff3effd56c01fc74bf6e5ac4bf059e415b5130f31ff1c8e5c7eeadd12c729185"];
 
+
+function combineNameAndVendor(name, vendor) {
+  return `${name} ${vendor}`;
+}
+
+const blankHash = 'aa0a9f4a1136f9986a383cfa1040cfa81718c036d98dbc5dcde0c80e6a3632cd';
+
+function getProductImageUrl(imgHash) {
+  if(!imgHash) {
+    return null;
+  }
+  return `https://res.cloudinary.com/dpjegpzyq/image/upload/v1671495698/${imgHash}.jpg`;
+}
+
+async function enrichProductImages(allProductData: any[], db) {
+  // get images for products
+  const imgNames = allProductData.map((p) => p.name);
+  const imgFilter = {name: {$in: imgNames}};
+  const images = await db.collection('_images').find(imgFilter).toArray();
+  const imgHashToImg = {};
+  images.forEach((i) => {
+    if (i.imgHash !== blankHash) {
+      imgHashToImg[combineNameAndVendor(i.name, i.vendor)] = i.imgHash;
+    }
+  });
+  allProductData.forEach((p) => {
+    let imgHash = p.imgHash;
+    if (!p.imgHash && imgHashToImg[combineNameAndVendor(p.name, p.vendor)]) {
+      imgHash = imgHashToImg[combineNameAndVendor(p.name, p.vendor)];
+    }
+    if(imgHash) {
+      p.imageUrl = getProductImageUrl(imgHash);
+    }
+  });
+}
+
 export async function handleDataRequest(vendor: string | string[], country: any, page=0, limit=200, req: NextApiRequest, res: NextApiResponse<any>) {
   if (!vendor || _.includes(vendor, '_')) {
     return res.status(400).json({error: 'Non-allowed vendor name'});
@@ -276,10 +312,12 @@ export async function handleDataRequest(vendor: string | string[], country: any,
             .skip(offset)
             .limit(limit)
             .toArray();
+
+        await enrichProductImages(prices, db);
       }
 
       //TODO: put status code in constants
-      return res.status(200).json(JSON.stringify({totalItems, totalPages, currentPage, prices}, null, 2));
+      return res.status(200).json({totalItems, totalPages, currentPage, prices});
     /*} catch (e) {
       console.log('Error during get request handling',e, JSON.stringify(e, null, 2), (e as any).toString());
       return res.status(400).json({error: (e as any)?.toString()});
