@@ -313,7 +313,7 @@ export async function handleDataRequest(vendor: string | string[], country: any,
             .limit(limit)
             .toArray();
 
-        await enrichProductImages(prices, db);
+        await enrichProductImages(prices as unknown as any[], db);
       }
 
       //TODO: put status code in constants
