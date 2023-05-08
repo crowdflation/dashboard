@@ -58,7 +58,6 @@ class Layout extends Component<MyComponentProps> {
             <h1><Link href='/'><a className={styles.headerLink}>Crowdflation</a></Link></h1>
           </div>
           <div className={styles.subtitle}>
-            <h2>Decentralized Inflation Data</h2>
           </div>
           <div>
             <Tabs
