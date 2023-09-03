@@ -69,7 +69,6 @@ class Layout extends Component<MyComponentProps> {
                 '& .MuiTabs-flexContainer': {justifyContent: "center"}
               }}
             >
-              <LinkTab label="Inflation Dashboard" href="/inflation" />
               <LinkTab label="FAQ" href="/faq" />
               {/* <LinkTab label="Code" href="/code" /> */}
             </Tabs>
